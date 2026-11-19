@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>체위·상태 태그 선택기</title>
+<style>
+:root{--bg:#f6f6f8;--card:#fff;--fg:#1d1d22;--muted:#6b6b76;--line:#dcdce3;--acc:#5b5bd6;--acc-bg:#ebebfc;--off:#c4c4cc;--key:#c2410c}
+@media (prefers-color-scheme:dark){:root{--bg:#141418;--card:#1e1e24;--fg:#e8e8ee;--muted:#9a9aa6;--line:#33333c;--acc:#8b8bff;--acc-bg:#2a2a48;--off:#55555f;--key:#fb923c}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 "Malgun Gothic",system-ui,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:16px;display:grid;grid-template-columns:1fr 360px;gap:16px}
+@media (max-width:860px){main{grid-template-columns:1fr}}
+h1{font-size:18px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:12px;margin-bottom:12px}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+section h2{font-size:14px;margin:0 0 8px;display:flex;justify-content:space-between;align-items:center}
+section h2 small{color:var(--muted);font-weight:normal}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.pbtn{border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:6px;padding:5px 10px;cursor:pointer;font:inherit}
+.pbtn:hover{border-color:var(--acc)}
+.pbtn.on{background:var(--acc-bg);border-color:var(--acc);color:var(--acc);font-weight:bold}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.tags:empty{display:none}
+.chip{border:1px solid var(--acc);background:var(--acc-bg);color:var(--fg);border-radius:12px;padding:1px 9px;font-size:12px;cursor:pointer;user-select:none}
+.chip.off{border-color:var(--line);background:transparent;color:var(--off);text-decoration:line-through}
+.chip.key{border-color:var(--key);color:var(--key);font-weight:bold}
+aside{position:sticky;top:16px;align-self:start}
+textarea{width:100%;min-height:200px;resize:vertical;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px;font:12px/1.5 Consolas,monospace}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:7px 14px;cursor:pointer;font:inherit;font-weight:bold}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-weight:normal}
+label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px}
+input[type=number]{width:60px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:2px 4px}
+.hint{font-size:12px;color:var(--muted);margin-top:10px}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:6px 14px;border-radius:6px;opacity:0;transition:opacity .2s;pointer-events:none}
+</style>
+</head>
+<body>
+<main>
+<div>
+  <h1>체위·상태 태그 선택기</h1>
+  <div class="sub">프리셋을 고른 뒤 태그 칩을 눌러 빼거나 넣으세요. 체위는 하나만, 상태는 여러 개 고를 수 있습니다.</div>
+  <div id="groups"></div>
+</div>
+<aside>
+  <section>
+    <h2>결과 프롬프트 <small id="count"></small></h2>
+    <textarea id="out" spellcheck="false"></textarea>
+    <div class="row">
+      <label><input type="checkbox" id="emph" checked> 핵심 태그 가중치</label>
+      <input type="number" id="w" value="1.2" step="0.05" min="1" max="2">
+    </div>
+    <div class="row">
+      <button class="btn" id="copy">복사</button>
+      <button class="btn ghost" id="reset">초기화</button>
+    </div>
+    <div class="hint">BooruComfy 긍정 프롬프트 칸에 붙여넣으세요 (Ctrl+V).<br>
+    같은 프리셋은 BooruComfy 프리셋 목록(<b>체위_…</b>, <b>상태_…</b>)에도 등록되어 있습니다 — 체위는 [불러오기], 상태는 [덧붙이기].</div>
+  </section>
+</aside>
+</main>
+<div id="toast"></div>
+<script>
+const KEY = new Set(["missionary","mating press","doggy style","prone bone","cowgirl position","reverse cowgirl","spooning","standing sex","suspended congress","ahegao"]);
+const GROUPS = [
+ {title:"1. 정상위 (Missionary)", kind:"pose", items:[
+  ["기본","missionary, heterosexual, 1boy, 1girl, lying on back, spread legs, between legs, bent knees, missionary position, sex, vaginal, looking at partner"],
+  ["1인칭 (POV)","missionary, pov, heterosexual, 1boy, 1girl, girl lying on back, spread legs, knees up, looking at viewer, eye contact, hands on shoulders, sex, vaginal"],
+  ["다리올림 (Mating Press)","mating press, missionary, heterosexual, 1boy, 1girl, lying on back, legs up, ankles over shoulders, folded, deep penetration, bent over, grabbing ankles, sex"]]},
+ {title:"2. 후배위 (Doggy Style)", kind:"pose", items:[
+  ["기본","doggy style, heterosexual, 1boy, 1girl, on all fours, from behind, bent over, arched back, grabbing hips, ass focus, sex, vaginal"],
+  ["뒤돌아봄","doggy style, heterosexual, 1boy, 1girl, on all fours, from behind, looking back, looking at partner, over shoulder, arched back, sex"],
+  ["엎드림 (Prone Bone)","prone bone, heterosexual, 1boy, 1girl, lying on stomach, from behind, pinned down, flat on bed, heavy weight, body press, sex, vaginal"]]},
+ {title:"3. 기승위 & 역기승위", kind:"pose", items:[
+  ["기승위 기본","cowgirl position, heterosexual, 1boy, 1girl, girl on top, straddling, sitting on lap, boy lying on back, hands on chest, bouncing, sex, vaginal"],
+  ["기승위 상체숙임","cowgirl position, heterosexual, 1boy, 1girl, girl on top, straddling, leaning forward, chest to chest, hugging, kissing, intimate, sex"],
+  ["역기승위","reverse cowgirl, heterosexual, 1boy, 1girl, girl on top, straddling, facing away, back view, arched back, looking back, ass focus, sex"]]},
+ {title:"4. 좌위 & 측위", kind:"pose", items:[
+  ["대면좌위","sitting, heterosexual, 1boy, 1girl, facing each other, straddling, legs wrapped around waist, hugging, arms around neck, intimate, sex"],
+  ["배면좌위","sitting, heterosexual, 1boy, 1girl, from behind, leaning back against chest, spread legs, fondling breasts, neck bite, sex"],
+  ["측위 (Spooning)","spooning, heterosexual, 1boy, 1girl, lying on side, from behind, cuddling, lifted leg, one leg up, intimate, sex"]]},
+ {title:"5. 입위 (Standing)", kind:"pose", items:[
+  ["벽밀착","standing sex, heterosexual, 1boy, 1girl, against wall, from behind, bent over, hands on wall, lifted leg, sex"],
+  ["한쪽다리들기","standing sex, heterosexual, 1boy, 1girl, facing each other, leg up, lifted leg, holding leg, against wall, sex"],
+  ["들박 (Suspended)","suspended congress, standing sex, heterosexual, 1boy, 1girl, carrying, lifted, legs wrapped around waist, arms around neck, floating, sex"]]},
+ {title:"6. 신체 반응 · 상태", kind:"state", items:[
+  ["1단계 초기흥분","light blush, parted lips, heavy breathing, slight sweat, glossy skin, dilated pupils, shy, hesitant"],
+  ["2단계 고조","heavy blush, half-closed eyes, furrowed brow, open mouth, panting, sweaty body, glistening skin, messy hair, gripping sheets, arched back"],
+  ["3단계 절정직전","full-face blush, trembling, twitching, clenched teeth, biting lip, tears, crying with pleasure, curled toes, tense muscles, steam"],
+  ["4단계 절정붕괴","ahegao, rolled eyes, tongue out, drooling, saliva trail, incoherent, limp, exhausted, heavy sweat, cum, afterglow"],
+  ["흔적 및 복장","handprint, red mark, kiss mark, hickey, bite mark, disheveled clothes, torn clothes, lifted shirt, bra pull, panties aside"]]}
+];
+// state: selected[presetId] = Set of disabled tags
+let pose = null;               // "g-i" id of chosen pose
+const states = new Set();      // chosen state ids
+const disabled = {};           // id -> Set(tag)
+const $ = s => document.querySelector(s);
+const tagsOf = id => { const [g,i] = id.split("-").map(Number); return GROUPS[g].items[i][1].split(",").map(t=>t.trim()); };
+
+function render(){
+  $("#groups").innerHTML = GROUPS.map((g,gi)=>{
+    const chosen = g.items.map((_,ii)=>`${gi}-${ii}`).filter(id => id===pose || states.has(id));
+    return `<section><h2>${g.title}<small>${g.kind==="pose"?"하나 선택":"여러 개 선택"}</small></h2>
+      <div class="presets">${g.items.map((it,ii)=>{const id=`${gi}-${ii}`;const on=id===pose||states.has(id);
+        return `<button class="pbtn${on?" on":""}" data-id="${id}">${it[0]}</button>`}).join("")}</div>
+      ${chosen.map(id=>`<div class="tags">${tagsOf(id).map(t=>{
+        const off=disabled[id]?.has(t); return `<span class="chip${off?" off":""}${KEY.has(t)?" key":""}" data-id="${id}" data-t="${t}">${t}</span>`}).join("")}</div>`).join("")}
+    </section>`;
+  }).join("");
+  build();
+}
+function build(){
+  const ids = [...(pose?[pose]:[]), ...[...states].sort()];
+  const seen = new Set(), out = [];
+  const emph = $("#emph").checked, w = $("#w").value;
+  for (const id of ids) for (const t of tagsOf(id)) {
+    if (disabled[id]?.has(t) || seen.has(t)) continue;
+    seen.add(t); out.push(emph && KEY.has(t) ? `(${t}:${w})` : t);
+  }
+  $("#out").value = out.join(", ");
+  $("#count").textContent = out.length ? `${out.length}개 태그` : "";
+}
+$("#groups").addEventListener("click", e=>{
+  const b = e.target.closest(".pbtn"), c = e.target.closest(".chip");
+  if (b){ const id=b.dataset.id, g=GROUPS[+id.split("-")[0]];
+    if (g.kind==="pose") pose = pose===id ? null : id;
+    else states.has(id) ? states.delete(id) : states.add(id);
+    render();
+  } else if (c){ const s = disabled[c.dataset.id] ??= new Set(), t=c.dataset.t;
+    s.has(t) ? s.delete(t) : s.add(t); render(); }
+});
+$("#emph").onchange = build; $("#w").oninput = build;
+$("#reset").onclick = ()=>{ pose=null; states.clear(); for(const k in disabled) delete disabled[k]; render(); };
+$("#copy").onclick = async ()=>{
+  const v=$("#out").value; if(!v) return toast("선택된 태그가 없습니다");
+  try{ await navigator.clipboard.writeText(v); }catch{ $("#out").select(); document.execCommand("copy"); }
+  toast("복사됨 — BooruComfy에 붙여넣으세요");
+};
+function toast(m){ const t=$("#toast"); t.textContent=m; t.style.opacity=1; clearTimeout(t._h); t._h=setTimeout(()=>t.style.opacity=0,1600); }
+render();
+</script>
+</body>
+</html>
