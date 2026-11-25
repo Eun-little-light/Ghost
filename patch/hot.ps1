@@ -5,7 +5,7 @@
 param([string]$Stamp = "")
 $P = $PSScriptRoot
 $App = Split-Path $P -Parent
-$mods = @("huntlines", "huntlines2", "huntlines3", "huntctx", "huntnarr", "huntacts", "huntboth", "huntway", "huntfore", "huntpose", "huntvoice", "huntmore", "huntgen", "huntinner", "huntgen2", "huntgen3", "huntlatent", "huntreal", "huntparty", "huntrel", "huntsitu", "huntdatetoy", "huntmore2", "huntforefin", "huntcall", "huntxx", "huntchange", "huntcycle", "huntrebound")
+$mods = @("huntlines", "huntlines2", "huntlines3", "huntctx", "huntnarr", "huntacts", "huntboth", "huntway", "huntfore", "huntpose", "huntvoice", "huntmore", "huntgen", "huntinner", "huntgen2", "huntgen3", "huntlatent", "huntreal", "huntparty", "huntrel", "huntsitu", "huntdatetoy", "huntmore2", "huntforefin", "huntcall", "huntxx", "huntchange", "huntcycle", "huntrebound", "huntsitu2")
 if (-not $Stamp) { $Stamp = "hot-" + (Get-Date -Format "yyyyMMdd-HHmmss") }
 $list = @()
 foreach ($m in $mods) {

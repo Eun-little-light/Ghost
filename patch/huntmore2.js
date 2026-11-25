@@ -148,6 +148,7 @@
     },
     narr(g, near) { return g === 2 && Math.random() < 0.3 ? pk(N_LOST) : pk((near ? N_NEAR : N_FAR)[Math.min(3, Math.max(0, g))]); },
     scream,
+    lv,   // 해요체 → 반말 · 합니다체 (huntsitu2가 씀)
     _pools: { T_NEAR, T_FAR, R_NEAR, R_FAR, C_CORE, C_CORRUPT_NEAR, C_CORRUPT_FAR, M_HER, M_HUSB, N_LOST },   // huntxx.js가 더 적나라한 문장을 덧붙임
     count() { const c = (a) => a.flat().length; return { taunt: c(T_NEAR) * T_OPEN_NEAR.length + c(T_FAR) * T_OPEN_FAR.length, cream: C_CORE.length * (C_NEAR.length + C_FAR.length + 1), men: (c(M_HER) + c(M_HUSB) + c(M_FAR)) * M_TAIL.length, narr: c(N_NEAR) + c(N_FAR) }; },
   };
