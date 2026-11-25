@@ -411,6 +411,19 @@
     { id: "finish_both", part: "pose", skip: (o) => !isBoth(o), duo: 1, cloth: "main", n: (o) => `마무리 · ${o.fin.n}`, tags: (o) => `${o.place.lie ? "lying on back, legs apart, man lying beside her" : "sitting on floor, leaning against wall, man beside her"}, (after sex:1.2), ${cumLoc(o)}, cum drip, penis out, exhausted, satisfied, heavy breathing, her cheeks flushed, sweat, holding hands, full body` },
     { id: "care", part: "end", duo: 1, cloth: "none", n: () => "뒷정리", tags: (o) => o.place.care },
   ];
+  // 남편(연인)이 모르는 관계(아내의 바람 · 불륜 · 네토라레 · 장면에 없음): 하는 중에 남편 전화 받기 · 남편에게 사진 보내기
+  const unaware = (o) => /^(cheat|affair)$/.test(o.rel) || o.situ === "ntr" || !!o.absent;
+  { const i = STAGES.findIndex((s) => s.id === "ready");
+    STAGES.splice(i + 1, 0,
+      { id: "ntrcall_pre", part: "pre", optIn: 1, duo: 1, cloth: "main", skip: (o) => !unaware(o), n: () => "시작 전 남편에게 전화 걸기", tags: () => "(talking on phone:1.3), (holding phone to ear:1.2), cellphone, sitting on bed, (man behind her:1.15), (his hands groping her breasts:1.15), partially undressed, (biting lip:1.1), blush, nervous smile, from front" },
+      { id: "ntrcall", part: "pre", optIn: 1, duo: 1, cloth: "main", skip: (o) => !unaware(o), n: () => "하는 중 남편 전화 받기", tags: () => "(talking on phone:1.3), (holding phone to ear:1.2), cellphone, (covering mouth:1.15), trying to stay quiet, (sex:1.1), missionary, vaginal, lying on back, man above her, (nervous:1.1), blush, sweat, tears, from above" },
+      { id: "ntrphoto", part: "pre", optIn: 1, duo: 1, cloth: "main", skip: (o) => !unaware(o), n: () => "하면서 남편에게 사진 보내기", tags: () => "(selfie:1.3), (holding phone up:1.2), cellphone, phone screen, (taking photo:1.15), peace sign, (sex:1.1), girl on top, straddling, vaginal, (blush:1.15), half-closed eyes, smile, from below" });
+  }
+  { const i = STAGES.findIndex((s) => s.id === "meet1");
+    STAGES.splice(i + 1, 0, { id: "ntrcall_date", part: "pre", optIn: 1, date: 1, call: 1, skip: (o) => !unaware(o), n: (o) => `데이트 중 남편에게 전화 걸기 (${o.date.n})` });
+    const j = STAGES.findIndex((s) => s.id === "after1");
+    STAGES.splice(j + 1, 0, { id: "ntrcall_after", part: "end", optIn: 1, duo: 1, cloth: "main", skip: (o) => !unaware(o), n: () => "끝난 뒤 남편에게 전화 걸기", tags: () => "(talking on phone:1.3), (holding phone to ear:1.2), cellphone, lying in bed, after sex, (man's arm around her:1.15), messy hair, sweat, (cum on body:1.1), satisfied smile, half-closed eyes, from above" });
+  }
   // 삽입 없는 행위에도 절정 · 사정 장면을 바로 뒤에 한 장 (그 행위를 고른 경우에만 · '만들 단계'에서 따로 끌 수 있음)
   //  m: 그의 사정 (입 · 얼굴 · 가슴 · 손 · 발 · 허벅지 · 배) / f: 그녀의 절정
   const FORE_FIN = {
@@ -487,7 +500,7 @@
     let pos;
     if (s.date) {
       const w = o.date.out ? WEATHER[o.weather].tags : "";
-      pos = ["1girl, solo", o.ch.body, wear, s.toy ? "(remote control vibrator:1.15), (vibrator under clothes:1.1), (public vibrator:1.1), (surprised:1.25), wide-eyed, (flustered:1.2), (embarrassed:1.2), (heavy blush:1.15), covering mouth, (knees together:1.1), trembling, clutching clothes, wavy mouth, sweat, people in background" : "intimate atmosphere, blush", s.toy ? "standing, upper body" : o.date.pose, dateBg(o.date, o.time), w, "cowboy shot", QUALITY];
+      pos = ["1girl, solo", o.ch.body, wear, s.toy ? "(remote control vibrator:1.15), (vibrator under clothes:1.1), (public vibrator:1.1), (surprised:1.25), wide-eyed, (flustered:1.2), (embarrassed:1.2), (heavy blush:1.15), covering mouth, (knees together:1.1), trembling, clutching clothes, wavy mouth, sweat, people in background" : "intimate atmosphere, blush", s.toy ? "standing, upper body" : s.call ? "(talking on phone:1.3), holding phone to ear, (man's hand on her thigh:1.1), sitting close, (nervous smile:1.1), blush, glancing sideways" : o.date.pose, dateBg(o.date, o.time), w, "cowboy shot", QUALITY];
       neg.push(NEG_PRE);
     } else if (s.self) {
       pos = ["1girl, solo", o.ch.body, clothTags(s.cloth, wear, o), s.tags(o), o.place.bg, QUALITY];
@@ -763,7 +776,7 @@
     const G = window.BC_GEN2; if (!G || g < 1) return "";
     const pk = (a) => a[Math.floor(Math.random() * a.length)];
     const out = [];
-    if (Math.random() < 0.45) out.push(G.narr(g, near) + ".");
+    if (!/^ntr(call|photo)/.test(sid) && Math.random() < 0.45) out.push(G.narr(g, near) + ".");
     if (Math.random() < (near ? 0.6 : 0.4)) out.push(`"${G.taunt(g, si, near, who)}"`);   // 남편 · 남자친구가 없을 땐 이름이 너무 자주 나오지 않게
     if (/^(climax|finish)/.test(sid) && Math.random() < 0.8) out.push(`"${G.cream(si, near, who)}"`);
     if (menOn && Math.random() < 0.6) out.push(`${pk(near ? ML_NEAR : ML_FAR)}. "${G.men(g, near, who)}"`);
@@ -778,7 +791,8 @@
     const m = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/);
     const third = o.rel === "cheat" || o.rel === "cheatwatch";   // 행위하는 사람은 '그'(다른 남자) · 서술 속 '당신'은 남편
     let body = m[2];
-    if (third || Math.random() < 0.7) body = pk(R.narr[g]) + ". " + body;
+    const callSc = /^ntr(call|photo)/.test(sid);   // 전화 · 사진 장면은 앞 서술이 장면과 엇갈려서 뺌
+    if (!callSc && (third || Math.random() < 0.7)) body = pk(R.narr[g]) + ". " + body;
     if (Math.random() < (o.rel === "cheatwatch" ? 0.75 : 0.55)) body += `\n"${String(pk(R.say[g])).split("|")[si] || ""}"`;
     if (g >= 1 && window.BC_YOUCMP && /^(cheatwatch|cheat|affair)$/.test(o.rel) && Math.random() < 0.55) body += `\n"${BC_YOUCMP(o.rel === "cheatwatch" ? (Math.random() < 0.5 ? "당신" : "여보") : "남편", si, g)}"`;
     if (/^(cheat|cheatwatch|affair)$/.test(o.rel) && !(o.rel === "cheatwatch" && watchOn(o))) body += gen2Add(sid, g, si, o.rel === "cheatwatch", "남편", o.rel !== "affair");
@@ -798,7 +812,7 @@
     const others = (o.extras || []).map(givenName), A = others[0] || "그 여자";
     const fill = (x) => String(x).replace(/\{a\}/g, josa(A, "이", "가")).replace(/\{e\}/g, josa(A, "은", "는")).replace(/\{l\}/g, josa(A, "을", "를")).replace(/\{A\}/g, A);
     let body = m[2];
-    body = fill(pk(R.narr[g])) + ". " + body;
+    if (!/^ntr(call|photo)/.test(sid)) body = fill(pk(R.narr[g])) + ". " + body;
     if (Math.random() < 0.6) body += `\n"${String(pk(R.say[g])).split("|")[si] || ""}"`;
     // 부부 스와핑: 상대 아내의 말 — 원래 아내(그녀)를 놀리는 말 · 당신에게 "내가 더 좋지?"
     if (R.wife && g >= 1) {
@@ -869,7 +883,7 @@
       let t = lineOf0(sid, ch, watchOn(o) ? { ...o, nb: o.nb - 1, party: o.party - 1 } : o);   // 행위하는 남자 수는 한 명 적게
       // 당신이 행위하지 않는 경우(지켜보는 남편 · 아내의 바람 · 네토라레 · 부부 스와핑): 기본 서술의 행위자 '당신' → '그'를 한 번만 (뒤에 붙는 서술 속 '당신'은 그대로)
       const SR = o && o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ];
-      if (t && ((o && o.absent) || watchOn(o) || /^(cheat|cheatwatch)$/.test(o && o.rel) || (SR && SR.third)) && !/^(video|self)/.test(sid)) { const m0 = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/); t = (m0[1] || "") + unYou(m0[2]); }
+      if (t && ((o && o.absent) || watchOn(o) || /^(cheat|cheatwatch)$/.test(o && o.rel) || (SR && SR.third)) && !/^(video|self|ntrcall|ntrphoto)/.test(sid)) { const m0 = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/); t = (m0[1] || "") + unYou(m0[2]); }
       t = relLine(t, sid, ch, o);
       t = situLine(t, sid, ch, o);
       // 남편(당신)을 뺀 다른 남자가 둘 이상이면 그녀가 부르는 '이이' → '이분들'
@@ -898,11 +912,32 @@
     const pk = (a) => (a && a.length ? a[Math.floor(Math.random() * a.length)] : "");
     const parts = [pk(K.narr) + ".", pk(K.narr2 || K.narr) + ".", pk(F.react[st.finWho]) + "."];
     const snd = F.sound && F.sound[st.finWho] ? `"${pk(F.sound[st.finWho])}"` : "";
-    const say = String(pk(K.say)).split("|")[si] || "";
+    const sv = String(pk(K.say)).split("|"), say = sv[si] || sv[0] || "";   // 말투가 하나뿐인 문장은 그대로
     return `[${st.n(o)}]` + [...new Set(parts)].join(" ") + (snd ? " " + snd : "") + (say ? `\n"${say}"` : "");
+  };
+  const callLine = (sid, ch, o) => {
+    const KEY = { ntrcall: "call", ntrcall_date: "callDate", ntrcall_pre: "callPre", ntrcall_after: "callAfter", ntrphoto: "photo" }[sid];
+    const C = window.BC_NTRCALL && BC_NTRCALL[KEY]; if (!C) return "";
+    const si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0;
+    const pk = (a) => (a && a.length ? a[Math.floor(Math.random() * a.length)] : "");
+    const H = o && o.rel === "affair" ? "남편" : "당신", Cn = o && o.situ === "ntr" ? "자기" : "여보";
+    const aff = o && o.rel === "affair";   // 불륜: 바람 상대가 당신이라 서술 속 '그'를 '당신'으로
+    const f = (x) => { let s = String(x).replace(/\{H\}/g, H).replace(/\{C\}/g, Cn).replace(/남편가/g, "남편이"); if (aff) s = s.replace(/그가/g, "당신이").replace(/그에게/g, "당신에게").replace(/그는/g, "당신은").replace(/그의/g, "당신의"); return s; };
+    const sp = (a) => { const v = String(pk(a)).split("|"); return f(v[si] || v[0] || ""); };
+    const out = [f(pk(C.narr)) + ". " + f(pk(C.during)) + "."];
+    if (/^ntrcall/.test(sid)) {
+      out.push(`전화기 너머 ${H === "당신" ? "당신" : "남편"}의 목소리. "${f(pk(C.husb))}"`, `"${sp(C.say)}"`, `${aff ? "당신이" : "그가"} 그녀의 귓가에 속삭인다. "${f(pk(C.whisper))}"`);
+      if (C.after && Math.random() < 0.7) out.push(f(pk(C.after)) + ".", `"${sp(C.after_say)}"`);
+    } else {
+      out.push(`그녀가 보낸 메시지: '${f(pk(C.msg))}'`, `${H === "당신" ? "당신" : "남편"}의 답장: '${f(pk(C.reply))}'`, `"${sp(C.say)}"`);
+      if (Math.random() < 0.6) out.push(`${aff ? "당신이" : "그가"} 그녀의 귓가에 속삭인다. "${f(pk(C.whisper))}"`);
+    }
+    const st = STAGES.find((x) => x.id === sid);
+    return `[${st ? st.n(o) : sid}]` + out.join("\n");
   };
   const lineOf0 = (sid, ch, o) => {
     if (/_fin$/.test(sid)) return foreFinLine(sid, ch, o);
+    if (/^ntr(call|photo)/.test(sid)) return callLine(sid, ch, o);
     if (fmtSel === "wayward" && o && window.BC_WAY) return wayLine(sid, ch, o);
     const L = (window.BC_HUNT_LINES || {})[sid]; if (!L) return "";
     const w = o ? stageWear(sid, ch, o) : "", sp = speechOf(ch);
