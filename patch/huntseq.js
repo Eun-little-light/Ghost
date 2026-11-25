@@ -96,7 +96,7 @@
     intense: ["rolling eyes, tongue out, drooling", "ahegao, heart-shaped pupils", "(heart-shaped pupils:1.1), open mouth, tongue out, flushed", "ahegao, rolling eyes, tears, drooling, sweat"],
     dazed: ["half-closed eyes, drooling, exhausted", "(heart-shaped pupils:1.05), dazed smile, flushed", "empty eyes, tongue out, drooling, slack expression", "@_@, dazed, sweat, heavy blush"],
   };
-  const FACE = "(natural facial expression:1.05), detailed eyes";   // 절정 표정과 부딪치지 않게 'subtle'은 뺌   // 사실적인 표정일 때만 붙임
+  const FACE = "(expressive face:1.1), detailed eyes";   // 예전 natural facial expression은 표정을 늘 비슷하게 눌러서 바꿈   // 절정 표정과 부딪치지 않게 'subtle'은 뺌   // 사실적인 표정일 때만 붙임
   const EXPR_USE = {
     video1: ["sweet", "shy", "teasing"], video2: ["shy", "teasing"], meet1: ["sweet", "shy", "teasing"], meet2: ["shy", "sweet", "teasing"],
     kiss: ["shy", "sweet"], neck: ["shy", "teasing", "pleasure"], caress: ["shy", "needy", "teasing"],
@@ -557,7 +557,7 @@
     }
     if (o.dur && DURING[o.dur] && DURING[o.dur].tags) pos.push(DURING[o.dur].tags);
     for (const k of o.traits || []) { const L = LATENT[k]; if (L && L.t && !s.solo) pos.push(L.t[latGroup(s)] || ""); }
-    const ex = exprFor(s.id, o.face || "mix", [...(((window.BC_VOICE || {})[o.ch && o.ch.id] || {}).tone || []), ...(o.traits || []).flatMap((k) => (LATENT[k] || {}).tone || [])]); pos.push(ex, ex && !EXPR_LOUD_SET.has(ex) ? FACE : "");
+    const ex = exprFor(s.id, o.face || "mix", [...(((window.BC_VOICE || {})[o.ch && o.ch.id] || {}).tone || []), ...(o.traits || []).flatMap((k) => (LATENT[k] || {}).tone || [])]); pos.push(emphExpr(ex), ex && !EXPR_LOUD_SET.has(ex) ? FACE : "");
     let P = pos.filter(Boolean).join(", ");
     for (const k of acts) if (ACTS[k].swap && si >= STAGES.findIndex((x) => x.act === k)) P = P.replace(ACTS[k].swap[0], ACTS[k].swap[1]);
     if (o.anal && s.part === "pose") P = P.replace(/\(vaginal sex:1\.2\)/g, "(anal sex:1.3), anal").replace(/penis in pussy/g, "penis in anus").replace(/pussy focus/g, "ass focus").replace(/\(cum in pussy:1\.4\)/g, "(cum in ass:1.3)").replace(/cum in pussy/g, "cum in ass").replace(/\(penis on pussy:1\.25\)/g, "(penis on anus:1.2)").replace(/imminent vaginal/g, "imminent anal");
