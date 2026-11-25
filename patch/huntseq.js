@@ -547,6 +547,8 @@
     if (o.rel && o.rel !== "none" && window.BC_REL && BC_REL[o.rel] && !s.solo) pos.splice(pos.length - 1, 0, BC_REL[o.rel].tags);
     // 지켜보는 남편: 그녀가 화면 너머 남편과 눈을 맞춤 (남편은 화면 밖 · 시점)
     if (o.watchP && !s.date && !s.self && !s.solo && s.meet == null) pos.splice(1, 0, "(looking at viewer:1.25), eye contact, (pov:1.05), viewer out of frame");
+    // 위험일 (오히려 원함) · 안에 사정: 그녀가 다리로 허리를 감아 껴안음
+    if (cycleSel === "riskyWant" && /^(climax|finish)/.test(s.id) && o.fin === FINISH.inside && !s.solo) pos.splice(pos.length - 1, 0, "(leg lock:1.25), (legs wrapped around his waist:1.2), crossed ankles, holding him close");
     // 다인(3인 이상): 머리 · 얼굴이 하나 더 생기거나 몸이 붙는 것 막기
     if (o.party > 2 && !s.solo && !s.self) neg.push("(extra head:1.3), (two heads:1.3), multiple heads, conjoined, extra face, fused bodies, extra arms, extra legs");
     // 여성 여럿 + 남성 여럿 (2:2 스와핑 · 난교): 1인칭(pov)이 아니라 모두가 보이는 넓은 구도
