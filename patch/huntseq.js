@@ -559,7 +559,7 @@
       }
     }
     // 다인원 상황 분위기
-    if (o.situ && o.situ !== "none" && o.party > 2 && window.BC_SITU && BC_SITU[o.situ] && !s.solo && !s.date && s.meet == null) pos.splice(pos.length - 1, 0, BC_SITU[o.situ].tags);
+    if (o.situ && o.situ !== "none" && (o.party > 2 || o.absent) && window.BC_SITU && BC_SITU[o.situ] && !s.solo && !s.date && s.meet == null) pos.splice(pos.length - 1, 0, BC_SITU[o.situ].tags);
     // 관계 분위기 (부부면 반지)
     if (o.rel && o.rel !== "none" && window.BC_REL && BC_REL[o.rel] && !s.solo) pos.splice(pos.length - 1, 0, BC_REL[o.rel].tags);
     // 지켜보는 남편: 그녀가 화면 너머 남편과 눈을 맞춤 (남편은 화면 밖 · 시점)
@@ -847,7 +847,7 @@
   };
   // 다인원 상황: 상황 서술(앞) · 그녀의 말 · 비교하는 말 · "○○보다 ~해서 더 좋아"
   const situLine = (t, sid, ch, o) => {
-    const R = o && o.situ && o.situ !== "none" && o.party > 2 && window.BC_SITU && BC_SITU[o.situ];
+    const R = o && o.situ && o.situ !== "none" && (o.party > 2 || o.absent) && window.BC_SITU && BC_SITU[o.situ];
     if (!R || !t || /^(video|self)/.test(sid)) return t;
     const g = sidG(sid), si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0;
     const pk = pickU;
@@ -873,9 +873,10 @@
       if (R.leaveN && Math.random() < 0.45) body += `\n${fill(pk(R.leaveN[li]))}.`;
     }
     { const X = window.BC_SITU2 && BC_SITU2[o.situ];   // 조합 대사 — 고른 장소 · 복장 이름이 들어감
-      if (X) { const cx = { P: (o.place && o.place.n) || "이곳", O: OUTFITS[o.outfit] || "옷" }; body += "\n" + fill(fresh(() => X.narr(g, cx))) + "."; if (Math.random() < 0.85) body += `\n"${fill(fresh(() => X.say(g, cx, si)))}"`; } }
+      if (X) { const O = ({ work: "업무복", lounge: "실내복", date: "데이트 옷", officeDate: "출근 옷" }[o.outfit] || OUTFITS[o.outfit] || "옷").replace(/ \(.*\)$/, ""), P = (o.place && o.place.n) || "이곳", cx = { P, O }, cxS = { P: P.replace(/^그녀의 /, si === 2 ? "내 " : "제 "), O }; body += "\n" + fill(fresh(() => X.narr(g, cx))) + "."; if (Math.random() < 0.85) body += `\n"${fill(fresh(() => X.say(g, cxS, si)))}"`; } }
     if (/^(swap|ntr|ntori)$/.test(o.situ)) { const nr = nearOf(o); body += gen2Add(sid, g, si, nr, nr ? "남편" : "남자친구", true); }
     if (o.situ === "swap" && g >= 2 && window.BC_YOUCMP && Math.random() < 0.4) body += `\n그녀가 당신 쪽을 보며 말한다. "${BC_YOUCMP("여보", si, g)}"`;
+    if (o.nb === 1) body = body.replace(/남자들 사이/g, "남자 품").replace(/(그|낯선|모르는|처음 보는) 남자들/g, "$1 남자").replace(/남자들/g, "그 남자").replace(/그 손들/g, "그 손").replace(/다들 /g, "").replace(/, (다 같이|모두)…/g, "…").replace(/앞뒤로 그 남자에게/g, "그 남자에게").replace(/입과 아래가 동시에 채워진다/g, "가장 깊은 곳까지 채워진다");   // 상대가 한 명(1남 · 바람 상대)
     return (m[1] || "") + body;
   };
   const dateToyLine = (ch, o, sid = "datetoy") => {
@@ -883,7 +884,7 @@
     const step = sid === "datetoy" ? "give" : sid.slice(3), ST = D.steps && D.steps[step];
     const si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0;
     const pk = pickU;
-    const SRx = o && o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ];
+    const SRx = o && o.situ && (o.party > 2 || o.absent) && window.BC_SITU && BC_SITU[o.situ];
     const other = (o && o.absent) || /^(cheat|rebound)$/.test(o && o.rel) || (SRx && SRx.third) || ((watchOn(o) || (o && o.rel === "cheatwatch")) && Math.random() < 0.5);
     const W = other ? D.other : D.you, place = (o && o.date && o.date.n) || "데이트";
     const fill = (x) => String(x).replace(/\{P\}/g, place);
@@ -937,21 +938,21 @@
     }
     // 자지 크기
     if (sizeSel !== "normal" && window.BC_SIZE && BC_SIZE[sizeSel] && t && /^(ready|pose|climax)/.test(sid) && Math.random() < 0.6) {
-      const Z = BC_SIZE[sizeSel], si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, v = String(pickU((() => { const SRz = o && o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ]; return o && (watchOn(o) || /^(cheat|cheatwatch|rebound)$/.test(o.rel) || o.absent || o.situ === "swap" || (SRz && SRz.third)) ? Z.sayOther : Z.say; })())).split("|");
+      const Z = BC_SIZE[sizeSel], si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, v = String(pickU((() => { const SRz = o && o.situ && (o.party > 2 || o.absent) && window.BC_SITU && BC_SITU[o.situ]; return o && (watchOn(o) || /^(cheat|cheatwatch|rebound)$/.test(o.rel) || o.absent || o.situ === "swap" || (SRz && SRz.third)) ? Z.sayOther : Z.say; })())).split("|");
       t += `\n${pickU(Z.narr)}.\n"${v[si] || v[0]}"`;
     }
     // 그녀의 날 (안전일 · 위험일)
     if (cycleSel !== "none" && window.BC_CYCLE && BC_CYCLE[cycleSel] && t) {
       const C = BC_CYCLE[cycleSel], si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, pk = pickU;
       const sv = (a) => { const v = String(pk(a)).split("|"); return v[si] || v[0]; };
-      const SRc = o && o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ];
+      const SRc = o && o.situ && (o.party > 2 || o.absent) && window.BC_SITU && BC_SITU[o.situ];
       const otherP = !!o && (watchOn(o) || /^(cheat|cheatwatch|rebound)$/.test(o.rel) || o.absent || o.situ === "swap" || !!(SRc && SRc.third));
       if (/^(kiss|ready)$/.test(sid) && Math.random() < 0.7) t += `\n"${sv(C.pre)}"`;
       if (/^(climax|finish)/.test(sid) && o && o.fin === FINISH.inside) t += `\n${otherP ? pk(C.narr) : pk(C.narr).replace(/그가/g, "당신이").replace(/그의/g, "당신의")}.\n"${sv(otherP ? C.cumOther : C.cum)}"`;   // 상대가 당신이면 서술 속 그 → 당신
     }
     // 상대 남자 호칭은 맨 마지막에 (뒤에 붙는 그녀의 날 · 지켜보는 남편 대사까지) (뒤에 붙는 지켜보는 남편 대사까지): 한 명이면 이이 · 여럿이면 이분들 · '자기' 옵션
     if (o && o.nb) {
-      const SRp = o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ], sw = o.situ === "swap", third = (o && o.absent) || watchOn(o) || /^(cheat|cheatwatch|rebound)$/.test(o.rel) || (SRp && SRp.third);
+      const SRp = o.situ && (o.party > 2 || o.absent) && window.BC_SITU && BC_SITU[o.situ], sw = o.situ === "swap", third = (o && o.absent) || watchOn(o) || /^(cheat|cheatwatch|rebound)$/.test(o.rel) || (SRp && SRp.third);
       const others = sw ? o.nb - 1 : third ? (watchOn(o) ? o.nb - 1 : o.nb) : o.nb - 1;
       if (others >= 2) t = String(t).replace(/이이가/g, "이분들이").replace(/이이는/g, "이분들은").replace(/이이를/g, "이분들을").replace(/이이(?!들)/g, "이분들");
       else if (callJagi) t = String(t).split('"').map((seg, i) => (i % 2 ? seg.replace(/이분(?!들)|이이/g, "자기") : seg)).join('"');
@@ -975,7 +976,7 @@
     try {
       let t = lineOf0(sid, ch, watchOn(o) ? { ...o, nb: o.nb - 1, party: o.party - 1 } : o);   // 행위하는 남자 수는 한 명 적게
       // 당신이 행위하지 않는 경우(지켜보는 남편 · 아내의 바람 · 네토라레 · 부부 스와핑): 기본 서술의 행위자 '당신' → '그'를 한 번만 (뒤에 붙는 서술 속 '당신'은 그대로)
-      const SR = o && o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ];
+      const SR = o && o.situ && (o.party > 2 || o.absent) && window.BC_SITU && BC_SITU[o.situ];
       if (t && ((o && o.absent) || watchOn(o) || /^(cheat|cheatwatch|rebound)$/.test(o && o.rel) || (SR && SR.third)) && !/^(video|self|ntrcall|ntrphoto)/.test(sid)) { const m0 = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/); t = (m0[1] || "") + unYou(m0[2]); }
       t = relLine(t, sid, ch, o);
       t = situLine(t, sid, ch, o);
@@ -1090,7 +1091,7 @@
       <small class="muted">남성 — 당신도 그중 한 명 · 남성은 얼굴 없이</small>${seg("hsPmode", BOYS, sel.pboys)}
       <small class="muted">당신의 역할 (남성 2명 이상일 때) — 지켜보는 남편: 남편이 허락한 관계 · 당신은 남성 수에 들어가지만 바로 앞에서 지켜보기만 하고 나머지 남자들이 함께함 (3남 = 당신 + 남자 2명) · 장면에 없음: 당신은 그 자리에 없고(모름) 남성 수는 모두 다른 남자</small>${seg("hsRole", ROLES, sel.proles)}
       <label class="muted" style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" id="hsCallJagi"${ls.get("calljagi", false) ? " checked" : ""}> 호칭: 남편은 '여보', 상대 남자는 '자기'로 부르기 (끄면 '이이 · 이분들')</label>
-      <small class="muted">상황 설정 (3인 이상일 때) — 네토라레는 당신이 장면에 없어서 남성 수 = 그녀와 함께하는 남자 수 · 스와핑은 2여 2남 이상만</small>${seg("hsSitu", SITUS, sel.situs)}
+      <small class="muted">상황 설정 (3인 이상 · 네토라레는 1남 (바람 · 불륜 상대)도) — 네토라레는 당신이 장면에 없어서 남성 수 = 그녀와 함께하는 남자 수 · 스와핑은 2여 2남 이상만</small>${seg("hsSitu", SITUS, sel.situs)}
 </div>
     <div class="field"><label>머리 색 <small class="muted">(캐릭터 프롬프트의 머리 색을 바꿈 · 여러 개 고르면 색마다 따로 묶어서 생성)</small></label>${seg("hsHair", HAIRS, sel.hairs)}</div>
     <div class="field"><label>눈 색</label>${seg("hsEye", EYES, sel.eyes)}</div>
@@ -1159,7 +1160,7 @@
     const RL = S.proles && S.proles.length ? S.proles : ["join"];
     const RS = S.rels && S.rels.length ? S.rels : ["none"];
     const SU = S.situs && S.situs.length ? S.situs : ["none"];
-    for (const rel of RS) for (const ng of GN) for (const bk of BN) for (const nb of [bk === "1o" ? 1 : Number(bk)]) for (const rl of (bk === "1o" ? ["absent"] : nb > 1 ? RL : ["join"])) for (const situ of (ng + nb > 2 ? SU : ["none"])) {
+    for (const rel of RS) for (const ng of GN) for (const bk of BN) for (const nb of [bk === "1o" ? 1 : Number(bk)]) for (const rl of (bk === "1o" ? ["absent"] : nb > 1 ? RL : ["join"])) for (const situ of (ng + nb > 2 ? SU : bk === "1o" ? (SU.filter((k) => k === "ntr").length ? ["ntr"] : ["none"]) : ["none"])) {
       if (situ === "swap" && !(ng >= 2 && nb >= 2)) continue;
       const watch = rl === "watch", absent = rl === "absent";
       if (ng > 1) { const pool = [...cs, ...huntCs.filter((c) => !cs.some((x) => x.id === c.id))]; units.push({ ch: cs[0], ng, nb, watch, absent, rel, situ, extras: pool.slice(1, ng) }); }
