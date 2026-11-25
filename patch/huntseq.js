@@ -109,9 +109,12 @@
   };
   const EXPR_LOUD_SET = new Set(Object.values(EXPR_LOUD).flat());
   let lastExpr = "";
+  // 표정 앞쪽 3개 태그에 가중치 (다른 태그에 묻혀 표정이 늘 비슷하게 나오지 않게) · 이미 가중치가 있으면 그대로
+  const emphExpr = (ex) => String(ex || "").split(/,\s*/).filter(Boolean).map((t, i) => (i < 3 && !/[()]/.test(t) ? `(${t}:1.2)` : t)).join(", ");
   const exprFor = (sid, mode, tone) => {
     const src = mode === "real" ? [EXPR] : mode === "loud" ? [EXPR_LOUD] : [EXPR, EXPR_LOUD];
     const use = EXPR_USE[sid] || [], cats = [...use, ...use.filter((k) => (tone || []).includes(k))];   // 캐릭터 성격에 맞는 표정은 두 배로
+    if (/^(pose|climax|deny|finish_both)/.test(sid) && Math.random() < 0.5) cats.push("intense", "intense");   // 체위 · 절정은 절반 확률로 더 격한 표정 쪽으로
     const XP = window.BC_EXPR_PARTS;
     if (XP && mode !== "loud" && cats.length && Math.random() < (mode === "real" ? 0.8 : 0.55)) {
       const cats0 = cats[Math.floor(Math.random() * cats.length)], P = XP[cats0];
