@@ -1126,6 +1126,7 @@
       const chx = hc === "char" && ec === "char" ? ch : { ...ch, body: recolor(recolor(ch.body, "hair", hc), "eye", ec) };
       const b = { ...o, ch: chx, outfit: of, place: PLACES[pl], cm, nudeMain: cm === "nude", acts: S.acts || [], traits: S.traits || [], bust: bs, face: fc, party: U.ng + U.nb, ng: U.ng, nb: U.nb, pmode: U.nb > 1 ? (U.ng > 1 ? "mix" : "male") : "fem", watch: !!U.watch, absent: !!U.absent, rel: U.rel || "none", situ: U.situ || "none", extras: U.extras };
       for (const s of STAGES.filter((s) => s.part === "pre" && use(s) && ok(s, b))) {
+        if ((outs.length ? outs : ["work"]).indexOf(of) > 0 && (s.video || s.date || s.meet != null)) continue;   // 갈아입기 전(영상통화 · 데이트 · 장소 도착)은 데이트 옷이라 복장마다 같음 → 첫 복장에서만
         if (s.date) for (const d of S.dates) for (const t of S.times) for (const w of (DATES[d].out ? S.weathers : ["clear"])) jobs.push({ s, o: { ...b, date: DATES[d], time: t, weather: w }, g });
         else if (s.toolable) for (const t of S.tools) jobs.push({ s, o: { ...b, tool: t }, g });
         else jobs.push({ s, o: b, g });
