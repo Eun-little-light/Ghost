@@ -31,8 +31,8 @@
   //  · 겉옷 · 아래(치마 / 바지 / 반바지 / 원피스)를 읽어서 태그를 고름
   function garment(w) {
     const t = String(w || "").toLowerCase();
-    if (/lingerie|garter belt/.test(t) && !/\b(dress|shirt|blouse|skirt|pants|shorts)\b/.test(t)) return { top: "linger", bot: "linger", outer: "" };   // 란제리만 입음
-    const dress = /\bdress\b|sundress/.test(t);
+    if (/lingerie|garter belt|bikini|bodystocking|babydoll|negligee/.test(t) && !/\b(dress|shirt|blouse|skirt|pants|shorts)\b/.test(t)) return { top: "linger", bot: "linger", outer: "" };   // 란제리만 입음
+    const dress = /\bdress\b|sundress|leotard|bodysuit|qipao/.test(t);
     const button = /\b(shirt|blouse)\b/.test(t.replace(/t-shirt|sweatshirt/g, ""));
     const pull = /t-shirt|sweatshirt|sweater|knit|turtleneck|hoodie|camisole|crop top|cropped knit|tank top|sports bra|ribbed/.test(t);
     let outer = /blazer|jacket|coat|cardigan|\bvest\b/.test(t) && !/zip hoodie/.test(t) ? (t.match(/blazer|jacket|coat|cardigan|vest/) || ["jacket"])[0] : "";
@@ -318,11 +318,21 @@
     egg: { n: "로터", caress: "(egg vibrator:1.25), vibrator cord, remote control vibrator, vibrator under panties", self: "(egg vibrator:1.25), vibrator on clitoris, vibrator cord, sex toy" },
     dildo: { n: "딜도", caress: "(holding dildo:1.2), teasing with dildo, rubbing dildo against panties, sex toy", self: "(dildo:1.3), (dildo in pussy:1.2), holding dildo, sex toy" },
   };
-  const OUTFITS = { work: "일터", casual: "평상복", date: "데이트", officeDate: "퇴근 데이트", lounge: "집에서 입는 옷", lingerieBlack: "란제리 (검정)", lingerieWhite: "란제리 (흰색)" };
+  const OUTFITS = { work: "일터", casual: "평상복", date: "데이트", officeDate: "퇴근 데이트", lounge: "집에서 입는 옷", lingerieBlack: "란제리 (검정)", lingerieWhite: "란제리 (흰색)",
+    babydoll: "비치는 베이비돌", negligee: "비치는 네글리제", bodystocking: "바디스타킹", microBikini: "마이크로 비키니", bunny: "바니걸", maid: "메이드복", nurse: "간호사복", china: "차이나 드레스", latex: "라텍스 바디슈트" };
   // 란제리 — 브라 · 팬티 · 가터벨트 · 밴드 스타킹 한 벌. 만남(데이트 · 장소 도착 · 영상통화)은 데이트 옷 차림, 키스부터 란제리
   const LINGERIE = {
     lingerieBlack: "(black lace lingerie:1.2), black lace bra, black lace panties, (black garter belt:1.2), garter straps, black thighhighs, lace-trimmed legwear",
     lingerieWhite: "(white lace lingerie:1.2), white lace bra, white lace panties, (white garter belt:1.2), garter straps, white thighhighs, lace-trimmed legwear",
+    babydoll: "(see-through babydoll:1.2), sheer pink lingerie, frilled babydoll, lace panties, bare shoulders, navel visible through fabric",
+    negligee: "(see-through negligee:1.2), white sheer nightgown lingerie, thin straps, lace trim, nipples visible through fabric, bare legs",
+    bodystocking: "(black bodystocking:1.25), fishnet bodystocking lingerie, see-through, full-body fishnet, high heels",
+    microBikini: "(micro bikini:1.25), string bikini, side-tie bikini bottom, tiny triangle bikini top, navel, shiny skin, oiled skin",
+    bunny: "(playboy bunny:1.25), black strapless leotard, fake rabbit ears, (fishnet pantyhose:1.1), detached collar, bowtie, wrist cuffs, high heels",
+    maid: "(maid:1.2), black short maid dress, frilled white apron, maid headdress, puffy short sleeves, white thighhighs, mary janes",
+    nurse: "(nurse:1.2), white short nurse dress, nurse cap, white thighhighs, unbuttoned collar, cleavage",
+    china: "(china dress:1.2), red qipao, side slit, pelvic curtain, bare legs, sleeveless, high heels",
+    latex: "(black latex bodysuit:1.25), shiny clothes, front zipper, elbow gloves, high-heeled boots, cleavage",
   };
   const LOUNGE = "loungewear, oversized white t-shirt, black dolphin shorts, barefoot";   // Hunt 그림 공방 '집에서 입는 옷'
   // 그림 공방(미리 뽑기)의 데이트 장면 — 배경은 Hunt 장소 풍경(때별), 자세는 Hunt 데이트 장면(없는 곳은 같은 형식으로 만듦), out: 바깥(날씨 적용)
@@ -535,7 +545,7 @@
     let P = pos.filter(Boolean).join(", ");
     for (const k of acts) if (ACTS[k].swap && si >= STAGES.findIndex((x) => x.act === k)) P = P.replace(ACTS[k].swap[0], ACTS[k].swap[1]);
     if (o.anal && s.part === "pose") P = P.replace(/\(vaginal sex:1\.2\)/g, "(anal sex:1.3), anal").replace(/penis in pussy/g, "penis in anus").replace(/pussy focus/g, "ass focus").replace(/\(cum in pussy:1\.4\)/g, "(cum in ass:1.3)").replace(/cum in pussy/g, "cum in ass").replace(/\(penis on pussy:1\.25\)/g, "(penis on anus:1.2)").replace(/imminent vaginal/g, "imminent anal");
-    if (linger && !s.date && !s.solo && s.meet == null) P = P.replace(/fully clothed/g, "wearing only lingerie").replace(/, crotch hole/g, "").replace(/pantyhose/g, "thighhighs");
+    if (linger && garment(LINGERIE[o.outfit]).top === "linger" && !s.date && !s.solo && s.meet == null) P = P.replace(/fully clothed/g, "wearing only lingerie").replace(/, crotch hole/g, "").replace(/pantyhose/g, "thighhighs");
     return { positive: P, negative: neg.filter(Boolean).join(", "), duo: !!s.duo, phone: !!s.solo };
   }
 
@@ -989,7 +999,7 @@
 
   const selChars = () => { const cs = chars(); return sel.chars.map((id) => cs.find((c) => c.id === id)).filter(Boolean); };
   const curChar = () => selChars()[0];
-  const availOutfits = (ch) => (ch && ch.outfits ? Object.fromEntries(Object.entries(OUTFITS).filter(([k]) => k === "lounge" || LINGERIE[k] || ch.outfits[k])) : { work: "기본 복장", lounge: OUTFITS.lounge, lingerieBlack: OUTFITS.lingerieBlack, lingerieWhite: OUTFITS.lingerieWhite });
+  const availOutfits = (ch) => (ch && ch.outfits ? Object.fromEntries(Object.entries(OUTFITS).filter(([k]) => k === "lounge" || LINGERIE[k] || ch.outfits[k])) : { work: "기본 복장", lounge: OUTFITS.lounge, ...Object.fromEntries(Object.keys(LINGERIE).map((k) => [k, OUTFITS[k]])) });
   const unionOutfits = () => Object.assign({}, ...selChars().map(availOutfits));
   const base = () => ({ place: PLACES[sel.places[0]], fin: FINISH[sel.fins[0]], pose: POSES[sel.poses[0]], ch: curChar() || { body: "", wear: "", neg: "" }, outfit: sel.outfits[0], tool: sel.tools[0], cx: sel.climaxes[0], undress, cm: sel.clothes[0], nudeMain: sel.clothes[0] === "nude", date: DATES[sel.dates[0]], time: sel.times[0], weather: sel.weathers[0], video });
   // 만들 장 목록: 복장 × 관계 장소마다 → 공통(pre, 데이트 장소·도구마다) → 체위마다(pose, 사정 위치마다) → 마지막(end)
