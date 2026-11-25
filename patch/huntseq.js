@@ -428,8 +428,15 @@
       { id: "ntrcall", part: "pre", optIn: 1, duo: 1, cloth: "main", skip: (o) => !unaware(o), n: () => "하는 중 남편 전화 받기", tags: () => "(talking on phone:1.3), (holding phone to ear:1.2), cellphone, (covering mouth:1.15), trying to stay quiet, (sex:1.1), missionary, vaginal, lying on back, man above her, (nervous:1.1), blush, sweat, tears, from above" },
       { id: "ntrphoto", part: "pre", optIn: 1, duo: 1, cloth: "main", skip: (o) => !unaware(o), n: () => "하면서 남편에게 사진 보내기", tags: () => "(selfie:1.3), (holding phone up:1.2), cellphone, phone screen, (taking photo:1.15), peace sign, (sex:1.1), girl on top, straddling, vaginal, (blush:1.15), half-closed eyes, smile, from below" });
   }
+  // 두 번째 복장부터 갈아입는 곳 — 고른 장소 안의 다른 자리 · 방 (장소 배경 태그는 그대로 붙임) · 절반은 상대가 갈아입혀 줌
+  const CHANGE_SPOTS = [
+    { n: "침대 옆", t: "standing beside the bed" },
+    { n: "소파 앞", t: "standing in front of the sofa" },
+    { n: "전신 거울 앞", t: "(full-length mirror:1.15), reflection, standing in front of the mirror" },
+    { n: "창가", t: "standing by the window, curtains" },
+  ];
   { const k = STAGES.findIndex((s) => s.id === "kiss");
-    STAGES.splice(k, 0, { id: "change", part: "pre", solo: 1, change: 1, skip: (o) => o.outfit === "date", n: (o) => `옷 갈아입기 · ${OUTFITS[o.outfit] || ""}`, tags: () => "(showing off outfit:1.15), standing, full body, (shy:1.1), blush, hands behind back, looking at viewer, bathroom doorway, hotel room, warm light" });
+    STAGES.splice(k, 0, { id: "change", part: "pre", solo: 1, change: 1, skip: (o) => o.outfit === "date", n: (o) => `옷 갈아입기 · ${OUTFITS[o.outfit] || ""}`, tags: (o) => `(showing off outfit:1.15), standing, full body, (shy:1.1), blush, hands behind back, looking at viewer, ${o.outIdx > 0 ? `${(o.spot || CHANGE_SPOTS[0]).t}, ${o.dressBy ? "(man dressing her:1.2), (his hands adjusting her clothes:1.15), man standing behind her, faceless male, male hands" : "clothes on the floor"}, ${o.place.bg}` : `bathroom doorway, ${o.place.bg}`}` });   // 두 번째 복장부터는 침실에서 갈아입음
   }
   { const i = STAGES.findIndex((s) => s.id === "meet1");
     STAGES.splice(i + 1, 0, { id: "ntrcall_date", part: "pre", optIn: 1, date: 1, call: 1, skip: (o) => !unaware(o), n: (o) => `데이트 중 남편에게 전화 걸기 (${o.date.n})` });
@@ -978,9 +985,11 @@
     if (sid === "change" && window.BC_CHANGE) {
       const w = wearOf(ch, o.outfit), kind = garment(w).top === "linger" ? "linger" : LINGERIE[o.outfit] ? "costume" : "normal";
       const si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, pk = (a) => a[Math.floor(Math.random() * a.length)];
-      const nm = ({ work: "업무복", casual: "평상복", officeDate: "퇴근 데이트 옷", lounge: "집에서 입는 옷" })[o.outfit] || OUTFITS[o.outfit] || "옷", f = (x) => String(x).replace(/\{O\}/g, nm).replace(/(복|옷)으로/g, "$1으로").replace(/([^복옷])으로/g, "$1로");
-      const v = String(pk(BC_CHANGE.say[kind])).split("|");
-      return `[옷 갈아입기 · ${nm}]${f(pk(BC_CHANGE.narr[kind]))}.\n"${f(v[si] || v[0])}"`;
+      const nm = ({ work: "업무복", casual: "평상복", officeDate: "퇴근 데이트 옷", lounge: "집에서 입는 옷" })[o.outfit] || OUTFITS[o.outfit] || "옷", jj = (nm.charCodeAt(nm.length - 1) - 0xac00) % 28, bat = jj !== 0, f = (x) => String(x).replace(/\{O\}(으로|로)/g, nm + (bat && jj !== 8 ? "으로" : "로")).replace(/\{O\}(을|를)/g, nm + (bat ? "을" : "를")).replace(/\{O\}(이|가)/g, nm + (bat ? "이" : "가")).replace(/\{O\}/g, nm).replace(/\{S\}/g, (o.spot || {}).n || "침대 옆");
+      const sayPool = o.outIdx > 0 && o.dressBy && BC_CHANGE.sayDress ? BC_CHANGE.sayDress : BC_CHANGE.say[kind].filter((x) => !(o.outIdx > 0 && /데이트 옷|데이트 내내/.test(x)));
+      const v = String(pk(sayPool.length ? sayPool : BC_CHANGE.say[kind])).split("|");
+      const N = o.outIdx > 0 ? (o.dressBy && BC_CHANGE.narrDress ? BC_CHANGE.narrDress : (BC_CHANGE.narrBed || BC_CHANGE.narr)[kind]) : BC_CHANGE.narr[kind];   // 두 번째 복장부터는 방 안 · 절반은 갈아입혀 줌
+      return `[옷 갈아입기 · ${nm}]${f(pk(N))}.\n"${f(v[si] || v[0])}"`;
     }
     if (fmtSel === "wayward" && o && window.BC_WAY) return wayLine(sid, ch, o);
     const L = (window.BC_HUNT_LINES || {})[sid]; if (!L) return "";
@@ -1124,7 +1133,7 @@
       const rLab = (U.rel && U.rel !== "none" ? ` · ${RELS[U.rel].split(" (")[0]}` : "") + (U.situ && U.situ !== "none" ? ` · ${SITUS[U.situ].split(" (")[0]}` : "");
       const g = many || manyP ? `${String(ch.n).split(" · ")[0]}${rLab}${pLab} · ${OUTFITS[of]} · ${PLACES[pl].n} · ${CLOTH_MAIN[cm].n.split(" (")[0]}${(S.busts || []).length > 1 ? " · 가슴 " + BUSTS[bs] : ""}${(S.faces || []).length > 1 ? " · 표정 " + FACES[fc].split(" (")[0] : ""}${(S.hairs || []).length > 1 ? " · 머리 " + HAIRS[hc] : ""}${(S.eyes || []).length > 1 ? " · 눈 " + EYES[ec] : ""}` : "";
       const chx = hc === "char" && ec === "char" ? ch : { ...ch, body: recolor(recolor(ch.body, "hair", hc), "eye", ec) };
-      const b = { ...o, ch: chx, outfit: of, place: PLACES[pl], cm, nudeMain: cm === "nude", acts: S.acts || [], traits: S.traits || [], bust: bs, face: fc, party: U.ng + U.nb, ng: U.ng, nb: U.nb, pmode: U.nb > 1 ? (U.ng > 1 ? "mix" : "male") : "fem", watch: !!U.watch, absent: !!U.absent, rel: U.rel || "none", situ: U.situ || "none", extras: U.extras };
+      const b = { ...o, ch: chx, outfit: of, place: PLACES[pl], cm, nudeMain: cm === "nude", acts: S.acts || [], traits: S.traits || [], bust: bs, face: fc, outIdx: (outs.length ? outs : ["work"]).indexOf(of), spot: CHANGE_SPOTS[Math.floor(Math.random() * CHANGE_SPOTS.length)], dressBy: Math.random() < 0.5, party: U.ng + U.nb, ng: U.ng, nb: U.nb, pmode: U.nb > 1 ? (U.ng > 1 ? "mix" : "male") : "fem", watch: !!U.watch, absent: !!U.absent, rel: U.rel || "none", situ: U.situ || "none", extras: U.extras };
       for (const s of STAGES.filter((s) => s.part === "pre" && use(s) && ok(s, b))) {
         if ((outs.length ? outs : ["work"]).indexOf(of) > 0 && (s.video || s.date || s.meet != null)) continue;   // 갈아입기 전(영상통화 · 데이트 · 장소 도착)은 데이트 옷이라 복장마다 같음 → 첫 복장에서만
         if (s.date) for (const d of S.dates) for (const t of S.times) for (const w of (DATES[d].out ? S.weathers : ["clear"])) jobs.push({ s, o: { ...b, date: DATES[d], time: t, weather: w }, g });
