@@ -419,6 +419,9 @@
       { id: "ntrcall", part: "pre", optIn: 1, duo: 1, cloth: "main", skip: (o) => !unaware(o), n: () => "하는 중 남편 전화 받기", tags: () => "(talking on phone:1.3), (holding phone to ear:1.2), cellphone, (covering mouth:1.15), trying to stay quiet, (sex:1.1), missionary, vaginal, lying on back, man above her, (nervous:1.1), blush, sweat, tears, from above" },
       { id: "ntrphoto", part: "pre", optIn: 1, duo: 1, cloth: "main", skip: (o) => !unaware(o), n: () => "하면서 남편에게 사진 보내기", tags: () => "(selfie:1.3), (holding phone up:1.2), cellphone, phone screen, (taking photo:1.15), peace sign, (sex:1.1), girl on top, straddling, vaginal, (blush:1.15), half-closed eyes, smile, from below" });
   }
+  { const k = STAGES.findIndex((s) => s.id === "kiss");
+    STAGES.splice(k, 0, { id: "change", part: "pre", solo: 1, change: 1, skip: (o) => o.outfit === "date", n: (o) => `옷 갈아입기 · ${OUTFITS[o.outfit] || ""}`, tags: () => "(showing off outfit:1.15), standing, full body, (shy:1.1), blush, hands behind back, looking at viewer, bathroom doorway, hotel room, warm light" });
+  }
   { const i = STAGES.findIndex((s) => s.id === "meet1");
     STAGES.splice(i + 1, 0, { id: "ntrcall_date", part: "pre", optIn: 1, date: 1, call: 1, skip: (o) => !unaware(o), n: (o) => `데이트 중 남편에게 전화 걸기 (${o.date.n})` });
     const j = STAGES.findIndex((s) => s.id === "after1");
@@ -494,7 +497,7 @@
     if (o.ch && o.ch.body && !/\(\w+ eyes:/.test(o.ch.body)) o = { ...o, ch: { ...o.ch, body: o.ch.body.replace(/\b([a-z]+ eyes)\b/, "($1:1.15)") } };   // 눈 색이 바뀌지 않게
     const acts = (o.acts || []).filter((k) => ACTS[k] && !(ACTS[k].skip && ACTS[k].skip(o)));
     const linger = !!LINGERIE[o.outfit];
-    let wear = wearOf(o.ch, s.date || s.meet != null || (linger && s.solo) ? "date" : o.outfit);   // 데이트 · 장소 도착은 데이트 옷, 키스부터 고른 복장으로 갈아입음
+    let wear = wearOf(o.ch, s.date || s.meet != null || (linger && s.solo && !s.change) ? "date" : o.outfit);   // 데이트 · 장소 도착은 데이트 옷, 키스부터 고른 복장으로 갈아입음
     for (const k of acts) if (ACTS[k].wear && !/pantyhose|stockings|thighhighs|tights/.test(wear)) wear += ", " + ACTS[k].wear;
     const neg = [NEG_BASE, o.ch.neg];
     let pos;
@@ -938,6 +941,13 @@
   const lineOf0 = (sid, ch, o) => {
     if (/_fin$/.test(sid)) return foreFinLine(sid, ch, o);
     if (/^ntr(call|photo)/.test(sid)) return callLine(sid, ch, o);
+    if (sid === "change" && window.BC_CHANGE) {
+      const w = wearOf(ch, o.outfit), kind = garment(w).top === "linger" ? "linger" : LINGERIE[o.outfit] ? "costume" : "normal";
+      const si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, pk = (a) => a[Math.floor(Math.random() * a.length)];
+      const nm = ({ work: "업무복", casual: "평상복", officeDate: "퇴근 데이트 옷", lounge: "집에서 입는 옷" })[o.outfit] || OUTFITS[o.outfit] || "옷", f = (x) => String(x).replace(/\{O\}/g, nm).replace(/(복|옷)으로/g, "$1으로").replace(/([^복옷])으로/g, "$1로");
+      const v = String(pk(BC_CHANGE.say[kind])).split("|");
+      return `[옷 갈아입기 · ${nm}]${f(pk(BC_CHANGE.narr[kind]))}.\n"${f(v[si] || v[0])}"`;
+    }
     if (fmtSel === "wayward" && o && window.BC_WAY) return wayLine(sid, ch, o);
     const L = (window.BC_HUNT_LINES || {})[sid]; if (!L) return "";
     const w = o ? stageWear(sid, ch, o) : "", sp = speechOf(ch);
