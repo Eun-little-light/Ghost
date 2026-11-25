@@ -886,13 +886,6 @@
       const body = m[2].split("\n").map((ln) => (ln.match(/"[^"]*"|[^"]+/g) || []).map((tk) => (tk[0] === '"' ? (NEAR_BAN.test(tk) ? "" : tk) : tk.split(/(?<=[.!?…])\s+/).filter((c) => !NEAR_BAN.test(c)).join(" "))).join(" ").replace(/\s{2,}/g, " ").trim()).filter((ln) => ln && ln !== '""').join("\n");
       t = (m[1] || "") + body;
     }
-    // 상대 남자 호칭은 맨 마지막에 한 번 더 (뒤에 붙는 지켜보는 남편 대사까지): 한 명이면 이이 · 여럿이면 이분들 · '자기' 옵션
-    if (o && o.nb) {
-      const SRp = o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ], sw = o.situ === "swap", third = (o && o.absent) || watchOn(o) || /^(cheat|cheatwatch)$/.test(o.rel) || (SRp && SRp.third);
-      const others = sw ? o.nb - 1 : third ? (watchOn(o) ? o.nb - 1 : o.nb) : o.nb - 1;
-      if (others >= 2) t = String(t).replace(/이이가/g, "이분들이").replace(/이이는/g, "이분들은").replace(/이이를/g, "이분들을").replace(/이이(?!들)/g, "이분들");
-      else if (callJagi && others === 1 && (sw || third)) t = String(t).split('"').map((seg, i) => (i % 2 ? seg.replace(/이분(?!들)|이이/g, "자기") : seg)).join('"');
-    }
     // 부부 스와핑: 내 아내(그녀)가 말할 때 상대 아내는 늘 '언니' (따옴표 안 · 상대 아내 자신의 말은 원래 '언니'로 부름)
     if (o && o.situ === "swap" && (o.extras || []).length) {
       for (const e of o.extras) {
@@ -908,6 +901,13 @@
       const otherP = !!o && (watchOn(o) || /^(cheat|cheatwatch)$/.test(o.rel) || o.absent || o.situ === "swap" || !!(SRc && SRc.third));
       if (/^(kiss|ready)$/.test(sid) && Math.random() < 0.7) t += `\n"${sv(C.pre)}"`;
       if (/^(climax|finish)/.test(sid) && o && o.fin === FINISH.inside) t += `\n${otherP ? pk(C.narr) : pk(C.narr).replace(/그가/g, "당신이").replace(/그의/g, "당신의")}.\n"${sv(otherP ? C.cumOther : C.cum)}"`;   // 상대가 당신이면 서술 속 그 → 당신
+    }
+    // 상대 남자 호칭은 맨 마지막에 (뒤에 붙는 그녀의 날 · 지켜보는 남편 대사까지) (뒤에 붙는 지켜보는 남편 대사까지): 한 명이면 이이 · 여럿이면 이분들 · '자기' 옵션
+    if (o && o.nb) {
+      const SRp = o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ], sw = o.situ === "swap", third = (o && o.absent) || watchOn(o) || /^(cheat|cheatwatch)$/.test(o.rel) || (SRp && SRp.third);
+      const others = sw ? o.nb - 1 : third ? (watchOn(o) ? o.nb - 1 : o.nb) : o.nb - 1;
+      if (others >= 2) t = String(t).replace(/이이가/g, "이분들이").replace(/이이는/g, "이분들은").replace(/이이를/g, "이분들을").replace(/이이(?!들)/g, "이분들");
+      else if (callJagi) t = String(t).split('"').map((seg, i) => (i % 2 ? seg.replace(/이분(?!들)|이이/g, "자기") : seg)).join('"');
     }
     if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o) }) || t; } catch {} }
     return t;
