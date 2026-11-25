@@ -20,3 +20,18 @@ patch/charnames_local.js
 # 창 exe가 엔진을 풀어 두는 숨김 폴더 · 옮겨 둔 예전 버전
 .engine/
 이전 버전/
+
+# 내 빌드 전용 Hunt 인물 이름 (저장소에 올리지 않음 · 배포용엔 '✏ 인물 이름'으로 직접 정함)
+patch/huntnames_local.js
+
+# 대사 · 표정 · 인원 테스트 시트 (로컬 그림 경로 · 이름이 들어 있음)
+상황_대사_견본*.html
+표정_테스트_*.html
+다인원_테스트_*.html
+
+# 이미지는 저장소에 올리지 않음 (참고 그림 포함)
+reference/*.png
+*.png
+*.jpg
+*.jpeg
+*.webp

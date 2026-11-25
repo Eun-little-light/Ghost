@@ -12,7 +12,10 @@
   let cur = "medium";
   const norm = (t) => t.trim().replace(/^\(+|\)+$/g, "").replace(/:[\d.]+$/, "").replace(/_/g, " ").toLowerCase();
   const tagOf = (k) => (SIZES.find((s) => s[0] === k) || SIZES[1])[2];
-  function apply(positive) {
+  // k: 크기 키 (없으면 공통 설정) · "char" = 캐릭터 프롬프트의 크기 그대로 (Hunt 시퀀스에서 고름)
+  function apply(positive, k) {
+    if (k === "char") return String(positive || "");
+    const size = SIZES.some((s) => s[0] === k) ? k : cur;
     const segs = String(positive || "").split(",").map((x) => x.trim()).filter(Boolean);
     if (!segs.some((s) => /girls?\b|female|wom[ae]n/.test(norm(s.replace(/^BREAK\s+/i, ""))))) return String(positive || "");
     const out = [];
@@ -22,13 +25,13 @@
       out.push(s);
     }
     const i = out.findIndex((s) => HEAD.test(norm(s.replace(/^BREAK\s+/i, ""))));
-    out.splice(i >= 0 ? i + 1 : 0, 0, tagOf(cur));
+    out.splice(i >= 0 ? i + 1 : 0, 0, tagOf(size));
     return out.join(", ");
   }
 
   const origApi = api;
   api = function (path, opts = {}) {   // eslint-disable-line no-global-assign
-    if (path === "/api/generate" && opts.json) opts = { ...opts, json: { ...opts.json, positive: apply(opts.json.positive) } };
+    if (path === "/api/generate" && opts.json) { const { bust, ...j } = opts.json; opts = { ...opts, json: { ...j, positive: apply(j.positive, bust) } }; }
     return origApi.call(this, path, opts);
   };
 

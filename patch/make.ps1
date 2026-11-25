@@ -5,11 +5,12 @@
 param([Parameter(Mandatory = $true)][string]$Ver, [switch]$Dist)
 $P = $PSScriptRoot
 $App = Split-Path $P -Parent
+$hotStamp = "v$Ver-" + (Get-Date -Format "yyyyMMdd-HHmmss")   # 빌드 없이 대사 업데이트(hot.ps1)와 같은 스탬프
 $js = @"
 // 빌드할 때 make.ps1이 만드는 파일 — 이름 Ghost, 좌상단 로고 옆과 창 제목에 버전 표시
 (() => {
   const V = "v$Ver";
-  window.BC_VER = V;$(if ($Dist) { " window.LL_DIST = true;" })
+  window.BC_VER = V; window.__BC_HOT_EMBED = "$hotStamp";$(if ($Dist) { " window.LL_DIST = true;" })
   document.title = "Ghost " + V;
   const b = document.querySelector("header .brand");
   if (b) b.innerHTML = 'Ghost<small class="bc-ver">' + V + '</small>';
@@ -23,9 +24,9 @@ $js = @"
 })();
 "@
 [IO.File]::WriteAllText("$P\version.js", $js, (New-Object Text.UTF8Encoding $false))
-$add = @("version") + $(if (-not $Dist -and (Test-Path "$P\charnames_local.js")) { @("charnames_local") } else { @() }) + @("charnames", "tidy", "picker", "presetgrid", "hat", "bust", "faceless", "queue", "fast", "charfolder", "pastel", "pastel_items", "artists_pixiv", "artists_thumbs", "artists", "bluenight", "embed", "comfysetup", "updater", "taggroups", "hitomi", "customtags", "characters", "sequence", "regen", "editor",
+$add = @("version") + $(if (-not $Dist -and (Test-Path "$P\charnames_local.js")) { @("charnames_local") } else { @() }) + @("charnames", "tidy", "picker", "presetgrid", "hat", "bust", "faceless", "queue", "fast", "charfolder", "pastel", "pastel_items", "artists_pixiv", "artists_thumbs", "artists", "bluenight", "embed", "comfysetup", "updater", "taggroups", "hitomi", "customtags", "characters", "sequence") + $(if (-not $Dist -and (Test-Path "$P\huntnames_local.js")) { @("huntnames_local") } else { @() }) + @("huntchars", "huntlines", "huntlines2", "huntlines3", "huntctx", "huntnarr", "huntacts", "huntboth", "huntway", "huntfore", "huntpose", "huntvoice", "huntmore", "huntgen", "huntinner", "huntgen2", "huntgen3", "huntlatent", "huntreal", "huntparty", "huntrel", "huntsitu", "huntdatetoy", "huntmore2", "huntforefin", "huntseq", "hsdeck", "viewer", "hotlines", "linetag", "regen", "editor",
   "kodict1", "kodict2", "kodict3", "kodict4", "kodict5", "kodict6", "kodict7", "kodict8", "kodict9", "kodict10", "ko", "weight", "ios", "fit") | % { "$P\$_.js" }
-$DistDir = [IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "[Ghost][배포용.Rev.1]")
+$DistDir = [IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "[Ghost-대사][배포용]")   # 대사판 배포 폴더 (원래 Ghost 배포 폴더와 따로)
 if ($Dist) { [IO.Directory]::CreateDirectory($DistDir) | Out-Null; foreach ($f in [IO.Directory]::GetFiles($DistDir, "*.exe")) { [IO.File]::Delete($f) } }
 $dst = if ($Dist) { [IO.Path]::Combine($DistDir, "Ghost_v$Ver.exe") } else { "$App\Ghost_v$Ver.exe" }
 & "$P\build2.ps1" -Src "$P\BooruComfy_v1.6.1.exe" -Dst $dst -Add $add
@@ -33,6 +34,7 @@ $dst = if ($Dist) { [IO.Path]::Combine($DistDir, "Ghost_v$Ver.exe") } else { "$A
 $shellOut = [IO.Path]::Combine((Split-Path $dst -Parent), "Ghost.exe")
 try { & "$P\shell\build_shell.ps1" -Name "Ghost" -Id Ghost -Pattern '^Ghost_v([\d.]+)\.exe$' -Hint "Ghost_v*.exe" -Port 7865 -Icon ghost -Out $shellOut -Ver $Ver -DataName BooruComfy_data -Engine $dst -Clean:$Dist; $shellOk = $true }   # 엔진은 창 exe 안에 (내 빌드도)
 catch { $shellOk = $false; Write-Warning "전용 창을 만들지 못했습니다 (실행 중이면 닫고 다시): $_" }
-if ($Dist) { & "$P\dist.ps1" -App $App -Name Ghost -Exe $dst -Vbs "Ghost 실행 (ComfyUI 같이).vbs" -Data BooruComfy_data; [IO.File]::Delete($dst); "엔진은 Ghost.exe 안에 들어감 → 배포 폴더에서 $([IO.Path]::GetFileName($dst)) 지움" }
+if ($Dist) { & "$P\dist.ps1" -App $App -Name Ghost -Exe $dst -Vbs "Ghost 실행 (ComfyUI 같이).vbs" -Data BooruComfy_data; foreach ($uf in @("update.ps1", "update.txt")) { $up = [IO.Path]::Combine($DistDir, $uf); if ([IO.File]::Exists($up)) { [IO.File]::Delete($up) } }; "대사판: 자동 업데이트 파일 뺌 (원래 Ghost 릴리스로 바뀌지 않게)"; [IO.File]::Delete($dst); "엔진은 Ghost.exe 안에 들어감 → 배포 폴더에서 $([IO.Path]::GetFileName($dst)) 지움" }
 # 내 빌드: 엔진은 Ghost.exe 안에 들어갔으니 폴더의 엔진 exe는 지움 (창 exe가 .engine 숨김 폴더에 풀어 씀)
+if (-not $Dist) { & "$P\hot.ps1" -Stamp $hotStamp }   # 켜져 있는 Ghost에도 새 대사가 바로 들어감
 if ($shellOk) { [IO.File]::Delete($dst); "엔진은 Ghost.exe 안에 들어감 → $([IO.Path]::GetFileName($dst)) 지움" }
