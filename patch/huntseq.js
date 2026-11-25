@@ -252,7 +252,7 @@
   // 다인원(3인 이상) 상황 설정
   const SITUS = { none: "지정 안 함", pure: "순애", ntr: "네토라레 (그녀가 넘어감 · 당신은 장면에 없음)", ntori: "네토리 (남자친구 있는 그녀를 당신들이)", swap: "부부 스와핑 (2여 2남 이상 · 당신은 상대 아내와)" };
   let callJagi = false;   // 호칭 옵션 (UI가 그려진 뒤 저장값으로 채움)
-  const ROLES = { join: "함께함", watch: "지켜보는 남편 (허락한 관계)" };
+  const ROLES = { join: "함께함", watch: "지켜보는 남편 (허락한 관계)", absent: "장면에 없음 (당신은 모름)" };
   const watchOn = (o) => !!(o && o.watch && o.nb > 1);
   // 지켜보는 남편: 서술에서 행위하는 '당신'을 '그'(다른 남자)로 — 따옴표 안의 말은 그대로
   const unYou = (t) => String(t).split('"').map((seg, i) => (i % 2 ? seg : seg.replace(/당신은/g, "그는").replace(/당신이/g, "그가").replace(/당신의/g, "그의").replace(/당신을/g, "그를").replace(/당신에게/g, "그에게").replace(/당신과/g, "그와").replace(/당신도/g, "그도").replace(/당신만/g, "그만").replace(/당신/g, "그"))).join('"');
@@ -846,7 +846,7 @@
     }
     // 상대 남자 호칭은 맨 마지막에 한 번 더 (뒤에 붙는 지켜보는 남편 대사까지): 한 명이면 이이 · 여럿이면 이분들 · '자기' 옵션
     if (o && o.nb) {
-      const SRp = o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ], sw = o.situ === "swap", third = watchOn(o) || /^(cheat|cheatwatch)$/.test(o.rel) || (SRp && SRp.third);
+      const SRp = o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ], sw = o.situ === "swap", third = (o && o.absent) || watchOn(o) || /^(cheat|cheatwatch)$/.test(o.rel) || (SRp && SRp.third);
       const others = sw ? o.nb - 1 : third ? (watchOn(o) ? o.nb - 1 : o.nb) : o.nb - 1;
       if (others >= 2) t = String(t).replace(/이이가/g, "이분들이").replace(/이이는/g, "이분들은").replace(/이이를/g, "이분들을").replace(/이이(?!들)/g, "이분들");
       else if (callJagi && others === 1 && (sw || third)) t = String(t).split('"').map((seg, i) => (i % 2 ? seg.replace(/이분(?!들)|이이/g, "자기") : seg)).join('"');
@@ -869,11 +869,11 @@
       let t = lineOf0(sid, ch, watchOn(o) ? { ...o, nb: o.nb - 1, party: o.party - 1 } : o);   // 행위하는 남자 수는 한 명 적게
       // 당신이 행위하지 않는 경우(지켜보는 남편 · 아내의 바람 · 네토라레 · 부부 스와핑): 기본 서술의 행위자 '당신' → '그'를 한 번만 (뒤에 붙는 서술 속 '당신'은 그대로)
       const SR = o && o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ];
-      if (t && (watchOn(o) || /^(cheat|cheatwatch)$/.test(o && o.rel) || (SR && SR.third)) && !/^(video|self)/.test(sid)) { const m0 = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/); t = (m0[1] || "") + unYou(m0[2]); }
+      if (t && ((o && o.absent) || watchOn(o) || /^(cheat|cheatwatch)$/.test(o && o.rel) || (SR && SR.third)) && !/^(video|self)/.test(sid)) { const m0 = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/); t = (m0[1] || "") + unYou(m0[2]); }
       t = relLine(t, sid, ch, o);
       t = situLine(t, sid, ch, o);
       // 남편(당신)을 뺀 다른 남자가 둘 이상이면 그녀가 부르는 '이이' → '이분들'
-      { const sw = o && o.situ === "swap", third = watchOn(o) || /^(cheat|cheatwatch)$/.test(o && o.rel) || (SR && SR.third);
+      { const sw = o && o.situ === "swap", third = (o && o.absent) || watchOn(o) || /^(cheat|cheatwatch)$/.test(o && o.rel) || (SR && SR.third);
         const others = !o || !o.nb ? 0 : sw ? o.nb - 1 : third ? (watchOn(o) ? o.nb - 1 : o.nb) : o.nb - 1;
         if (others >= 2 && t) t = String(t).replace(/이이가/g, "이분들이").replace(/이이는/g, "이분들은").replace(/이이를/g, "이분들을").replace(/이이(?!들)/g, "이분들").replace(/이분(?!들)/g, "이분들");   // 그녀가 부르는 상대 남자: 한 명이면 이이 · 여럿이면 이분들
         // 호칭 옵션: 남편은 '여보', 상대 남자는 '자기' (상대가 한 명일 때) — 그녀가 하는 말(따옴표 안)에만
@@ -951,7 +951,7 @@
     <div class="field"><label>인원 구성 <small class="muted">(여성 수 × 남성 수 · 여러 개 고르면 조합마다 따로 묶어서 생성 · 1여 1남 = 그녀와 당신 둘)</small></label>
       <small class="muted">여성 — 고른 캐릭터들이 순서대로 함께 (모자라면 다른 Hunt 인물로 채움)</small>${seg("hsParty", GIRLS, sel.pgirls)}
       <small class="muted">남성 — 당신도 그중 한 명 · 남성은 얼굴 없이</small>${seg("hsPmode", BOYS, sel.pboys)}
-      <small class="muted">당신의 역할 (남성 2명 이상일 때) — 지켜보는 남편: 남편이 허락한 관계 · 당신은 남성 수에 들어가지만 바로 앞에서 지켜보기만 하고 나머지 남자들이 함께함 (3남 = 당신 + 남자 2명)</small>${seg("hsRole", ROLES, sel.proles)}
+      <small class="muted">당신의 역할 (남성 2명 이상일 때) — 지켜보는 남편: 남편이 허락한 관계 · 당신은 남성 수에 들어가지만 바로 앞에서 지켜보기만 하고 나머지 남자들이 함께함 (3남 = 당신 + 남자 2명) · 장면에 없음: 당신은 그 자리에 없고(모름) 남성 수는 모두 다른 남자</small>${seg("hsRole", ROLES, sel.proles)}
       <label class="muted" style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" id="hsCallJagi"${ls.get("calljagi", false) ? " checked" : ""}> 호칭: 남편은 '여보', 상대 남자는 '자기'로 부르기 (끄면 '이이 · 이분들')</label>
       <small class="muted">상황 설정 (3인 이상일 때) — 네토라레는 당신이 장면에 없어서 남성 수 = 그녀와 함께하는 남자 수 · 스와핑은 2여 2남 이상만</small>${seg("hsSitu", SITUS, sel.situs)}
 </div>
@@ -1021,9 +1021,9 @@
     const SU = S.situs && S.situs.length ? S.situs : ["none"];
     for (const rel of RS) for (const ng of GN) for (const nb of BN) for (const rl of (nb > 1 ? RL : ["join"])) for (const situ of (ng + nb > 2 ? SU : ["none"])) {
       if (situ === "swap" && !(ng >= 2 && nb >= 2)) continue;
-      const watch = rl === "watch";
-      if (ng > 1) { const pool = [...cs, ...huntCs.filter((c) => !cs.some((x) => x.id === c.id))]; units.push({ ch: cs[0], ng, nb, watch, rel, situ, extras: pool.slice(1, ng) }); }
-      else for (const ch of cs) units.push({ ch, ng, nb, watch, rel, situ, extras: [] });
+      const watch = rl === "watch", absent = rl === "absent";
+      if (ng > 1) { const pool = [...cs, ...huntCs.filter((c) => !cs.some((x) => x.id === c.id))]; units.push({ ch: cs[0], ng, nb, watch, absent, rel, situ, extras: pool.slice(1, ng) }); }
+      else for (const ch of cs) units.push({ ch, ng, nb, watch, absent, rel, situ, extras: [] });
     }
     const manyP = SU.some((x) => x !== "none") || RS.length > 1 || RS[0] !== "none" || GN.length * BN.length > 1 || units.some((u) => u.ng + u.nb > 2);
     // 조합이 너무 많으면 계산하지 않음 (전부 고르면 수억 묶음 → 프로그램이 멈춤) — 묶음 수만 세서 알려 줌
@@ -1039,11 +1039,11 @@
     const ch = U.ch; if (!ch) continue;
     const av = availOutfits(ch), outs = S.outfits.filter((k) => av[k]);
     for (const of of (outs.length ? outs : ["work"])) for (const pl of S.places) for (const cm of (S.clothes || [o.cm || "half"])) for (const bs of (S.busts || [o.bust || "global"])) for (const fc of (S.faces || [o.face || "mix"])) for (const hc of (S.hairs || ["char"])) for (const ec of (S.eyes || ["char"])) {
-      const pLab = U.ng + U.nb > 2 ? ` · ${U.ng}여 ${U.nb}남${U.ng > 1 ? ` (${[ch, ...U.extras].map(givenName).join("·")})` : ""}${U.watch ? " · 남편은 지켜봄" : ""}` : "";
+      const pLab = U.ng + U.nb > 2 ? ` · ${U.ng}여 ${U.nb}남${U.ng > 1 ? ` (${[ch, ...U.extras].map(givenName).join("·")})` : ""}${U.watch ? " · 남편은 지켜봄" : U.absent ? " · 당신은 없음" : ""}` : "";
       const rLab = (U.rel && U.rel !== "none" ? ` · ${RELS[U.rel].split(" (")[0]}` : "") + (U.situ && U.situ !== "none" ? ` · ${SITUS[U.situ].split(" (")[0]}` : "");
       const g = many || manyP ? `${String(ch.n).split(" · ")[0]}${rLab}${pLab} · ${OUTFITS[of]} · ${PLACES[pl].n} · ${CLOTH_MAIN[cm].n.split(" (")[0]}${(S.busts || []).length > 1 ? " · 가슴 " + BUSTS[bs] : ""}${(S.faces || []).length > 1 ? " · 표정 " + FACES[fc].split(" (")[0] : ""}${(S.hairs || []).length > 1 ? " · 머리 " + HAIRS[hc] : ""}${(S.eyes || []).length > 1 ? " · 눈 " + EYES[ec] : ""}` : "";
       const chx = hc === "char" && ec === "char" ? ch : { ...ch, body: recolor(recolor(ch.body, "hair", hc), "eye", ec) };
-      const b = { ...o, ch: chx, outfit: of, place: PLACES[pl], cm, nudeMain: cm === "nude", acts: S.acts || [], traits: S.traits || [], bust: bs, face: fc, party: U.ng + U.nb, ng: U.ng, nb: U.nb, pmode: U.nb > 1 ? (U.ng > 1 ? "mix" : "male") : "fem", watch: !!U.watch, rel: U.rel || "none", situ: U.situ || "none", extras: U.extras };
+      const b = { ...o, ch: chx, outfit: of, place: PLACES[pl], cm, nudeMain: cm === "nude", acts: S.acts || [], traits: S.traits || [], bust: bs, face: fc, party: U.ng + U.nb, ng: U.ng, nb: U.nb, pmode: U.nb > 1 ? (U.ng > 1 ? "mix" : "male") : "fem", watch: !!U.watch, absent: !!U.absent, rel: U.rel || "none", situ: U.situ || "none", extras: U.extras };
       for (const s of STAGES.filter((s) => s.part === "pre" && use(s) && ok(s, b))) {
         if (s.date) for (const d of S.dates) for (const t of S.times) for (const w of (DATES[d].out ? S.weathers : ["clear"])) jobs.push({ s, o: { ...b, date: DATES[d], time: t, weather: w }, g });
         else if (s.toolable) for (const t of S.tools) jobs.push({ s, o: { ...b, tool: t }, g });
