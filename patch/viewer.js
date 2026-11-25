@@ -252,6 +252,28 @@
 #gallery .bc-osub{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:10px;padding:4px 2px;border-bottom:1px solid var(--line,#444)}#gallery .bc-osub b{font-size:14px}#gallery .bc-osub button{margin-left:auto}
 #gallery .bc-ghd b{margin:0 6px;font-size:15px}#gallery .bc-ghd button.on{background:var(--accent);color:#000}`;
   document.head.append(css);
+  // 대사 색: 그녀 · 여자(분홍) · 남자(파랑) · 당신(초록) — 따옴표 바로 앞 문장이 '…말한다/묻는다'처럼 말하는 문장이면 그 주어로, 아니면 그녀(신음 · 혼잣말)
+  const SAY_V = /(말한다|묻는다|되묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다)\s*[.。]?\s*$/;
+  const whoOf = (pre) => {
+    const s = (String(pre).split(/[.!?…]\s+/).filter((x) => x.trim()).pop() || "").trim();
+    if (!SAY_V.test(s)) return "w";
+    if (/^당신/.test(s)) return "y";
+    if (/^(그[가는]\s|이분|이이)/.test(s) || /남자(가|는|들이|들은)\s/.test(s)) return "m";   // 주어가 남자 (\"그녀의 입에서 빠져나온 남자가\" 포함)
+    if (/^그녀/.test(s)) return "w";
+    return "w";
+  };
+  const sayHTML = (text) => String(text || "").split("\n").map((line) => {
+    const m = line.match(/^\[([^\]]+)\]/), rest = m ? line.slice(m[0].length) : line;
+    let prev = "";
+    const parts = rest.split(/("[^"]*"|『[^』]*』)/).filter(Boolean).map((p) => {
+      if (/^"/.test(p)) { const c = "s-" + whoOf(prev); prev = ""; return `<span class="${c}">${esc(p)}</span>`; }
+      if (/^『/.test(p)) return `<span class="th">${esc(p)}</span>`;
+      prev += p; return `<i>${esc(p)}</i>`;
+    }).join("");
+    return `<span class="wy">${m ? `<b class="hd">[${esc(m[1])}]</b>` : ""}${parts}</span>`;
+  }).join("");
+  window.BC_SAY_HTML = sayHTML;
+  { const c2 = document.createElement("style"); c2.textContent = ".s-w{color:#ffb3cf;font-weight:600}.s-m{color:#8fc3ff;font-weight:600}.s-y{color:#9fe39a;font-weight:600}.wy{display:block;margin-bottom:3px}.wy i{opacity:.82}"; document.head.append(c2); }
 
   // ---------- 보기 창 ----------
   let list = [], pos = 0, pure = false;
@@ -354,9 +376,7 @@
     const sd = pure ? (narrow ? "sideB" : pside === "left" ? "sideL" : "sideR") : side;
     ln.className = t ? sd : "hidden";
     { const md = $v("#modal"); if (md) { md.classList.toggle("bc-lr", !!(pure && t && sd === "sideR")); md.classList.toggle("bc-ll", !!(pure && t && sd === "sideL")); md.classList.toggle("bc-lb", !!(pure && t && sd === "sideB")); } }
-    // 서술 대사: [장소] 줄 · 행동 서술 줄은 흐리게, "말" 줄은 그대로
-    const way = (x) => { const m = x.match(/^\[([^\]]+)\](?=\S)/); const rest = m ? x.slice(m[0].length) : x; return `<span class="wy">${m ? `<b class="hd">[${esc(m[1])}]</b>` : ""}${rest.split(/("[^"]*"|『[^』]*』)/).filter(Boolean).map((p) => /^"/.test(p) ? `<span class="q">${esc(p)}</span>` : /^『/.test(p) ? `<span class="th">${esc(p)}</span>` : `<i>${esc(p)}</i>`).join("")}</span>`; };
-    const body = String(t || "").split("\n").map((x) => /^\[[^\]]+\]\S/.test(x) || /『/.test(x) ? way(x) : /^\[/.test(x) ? `<span class="pl">${esc(x)}</span>` : /^"/.test(x) ? `<span class="sp">${esc(x)}</span>` : /\n/.test(String(t)) ? `<span class="na">${esc(x)}</span>` : esc(x)).join("");
+    const body = sayHTML(t);
     ln.innerHTML = t ? `${nm ? `<span class="nm">${esc(nm)}</span>` : ""}${body}${pure ? (narrow ? "" : `<button type="button" class="sw" title="대사 패널 위치 바꾸기">${pside === "left" ? "◨ 오른쪽으로" : "◧ 왼쪽으로"}</button>`) : `<button type="button" class="sw" title="대사창 위치 바꾸기">${side === "left" ? "⬓ 아래로" : "◧ 왼쪽으로"}</button>`}` : "";
     // 아직 그림 태그로 맞추지 않은 대사면 지금 태거로 읽고 바꿔 끼움 (한 번 읽으면 저장)
     if (window.BC_LINE_TAG && BC_LINE_TAG.enabled() && !(L && L.vt) && e.images && e.images[i]) {

@@ -830,7 +830,8 @@
     if (!t) return t;
     if (nearOf(o) && !/^(video|date|datetoy)/.test(sid)) {
       const m = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/);
-      const body = m[2].split("\n").map((ln) => ln.split(/(?<=[.!?…]"?)\s+/).filter((c) => !NEAR_BAN.test(c)).join(" ")).filter((ln) => ln.trim()).join("\n");
+      // 따옴표 안 말은 통째로, 서술은 문장 단위로 걸러냄 (말 가운데가 잘려 따옴표가 깨지지 않게)
+      const body = m[2].split("\n").map((ln) => (ln.match(/"[^"]*"|[^"]+/g) || []).map((tk) => (tk[0] === '"' ? (NEAR_BAN.test(tk) ? "" : tk) : tk.split(/(?<=[.!?…])\s+/).filter((c) => !NEAR_BAN.test(c)).join(" "))).join(" ").replace(/\s{2,}/g, " ").trim()).filter((ln) => ln && ln !== '""').join("\n");
       t = (m[1] || "") + body;
     }
     // 상대 남자 호칭은 맨 마지막에 한 번 더 (뒤에 붙는 지켜보는 남편 대사까지): 한 명이면 이이 · 여럿이면 이분들 · '자기' 옵션
@@ -1224,7 +1225,7 @@
       const el = document.createElement("div");
       el.className = "hs-slot"; el.style.setProperty("--ar", `${w}/${h}`);
       el.dataset.sid = r.sid || ""; el.dataset.n = r.n || ""; el.dataset.g = r.g || "";   // 체위별 덱 나누기용
-      el.innerHTML = `<div class="hd">${r.i}. ${esc(r.n)}<span>${r.img ? "완료" : r.pid ? "멈춤" : "대기"}</span></div><div class="im">${r.img ? "" : "대기 중"}<div class="bar"></div></div><div class="ln">${esc(r.vline || r.line)}</div>`;
+      el.innerHTML = `<div class="hd">${r.i}. ${esc(r.n)}<span>${r.img ? "완료" : r.pid ? "멈춤" : "대기"}</span></div><div class="im">${r.img ? "" : "대기 중"}<div class="bar"></div></div><div class="ln">${window.BC_SAY_HTML ? BC_SAY_HTML(r.vline || r.line) : esc(r.vline || r.line)}</div>`;
       el.title = "긍정: " + r.pos + "\n\n부정: " + r.neg;
       grid.append(el);
       r._el = el;
@@ -1374,7 +1375,7 @@
       // 그림을 태거로 읽어 표정·자세에 맞는 한마디를 대사에 붙임
       const r = s.rec;
       if (r && r.line && window.BC_LINE_TAG && BC_LINE_TAG.enabled()) BC_LINE_TAG.lineFor(s.id, im, { sid: r.sid, sp: r.sp, base: r.line, n: r.cn, cid: r.cid, cn: r.cn, of: r.of }).then((t) => {
-        if (!t) return; r.vline = t; saveRun(); const ln = $q(".ln", s.el); if (ln) ln.textContent = t;
+        if (!t) return; r.vline = t; saveRun(); const ln = $q(".ln", s.el); if (ln) ln.innerHTML = window.BC_SAY_HTML ? BC_SAY_HTML(t) : esc(t);
       });
     }
   };

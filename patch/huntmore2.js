@@ -48,9 +48,9 @@
     S("부인 돌려 드릴게요. 조금 늦게/다음 주에도 빌려주실 거죠?/부인 안에 제 거 가득이에요. 잘 챙겨 주세요"),
   ];
   const M_FAR = [
-    S("남자친구한텐 뭐라고 하고 나왔어?/오늘 남친 생각 하지 마/전화 오면 받아 봐. 재밌겠다"),
-    S("남자친구 거랑 비교돼?/남자친구한테 전화해 볼까? 이대로/남친은 이런 거 모르지?/이제 우리 없이는 안 되지?/남친한테 이 소리 들려줘야 하는데/오늘 집에 못 가겠다, 그치?"),
-    S("남친한테 오늘 일 비밀이다/다음 주에도 핑계 만들어서 와/남친 옆에서도 우리 생각 하게 될걸"),
+    S("남자친구한텐 뭐라고 하고 나왔어?/오늘 남자친구 생각 하지 마/전화 오면 받아 봐. 재밌겠다"),
+    S("남자친구 거랑 비교돼?/남자친구한테 전화해 볼까? 이대로/남자친구은 이런 거 모르지?/이제 우리 없이는 안 되지?/남자친구한테 이 소리 들려줘야 하는데/오늘 집에 못 가겠다, 그치?"),
+    S("남자친구한테 오늘 일 비밀이다/다음 주에도 핑계 만들어서 와/남자친구 옆에서도 우리 생각 하게 될걸"),
   ];
   const M_TAIL = S("/");
 
@@ -123,13 +123,13 @@
   M_HER.splice(0, 3, ...join(M_HER, MORE.M_HER)); M_HUSB.splice(0, 3, ...join(M_HUSB, MORE.M_HUSB));
   N_NEAR.splice(0, 4, ...join(N_NEAR, MORE.N_NEAR)); N_FAR.splice(0, 4, ...join(N_FAR, MORE.N_FAR));
   R_NEAR.push(...MORE.R_NEAR); R_FAR.push(...MORE.R_FAR); C_NEAR.push(...MORE.C_NEAR); C_FAR.push(...MORE.C_FAR);
-  const fixWho = (t, who) => (who && who !== "남편" ? String(t).replace(/남편분/g, who === "남자친구" ? "남친분" : who + "분").replace(/남편/g, who) : t);
+  const fixWho = (t, who) => (who && who !== "남편" ? String(t).replace(/남편분/g, who === "남자친구" ? "남자친구분" : who + "분").replace(/남편/g, who) : t);
   window.BC_GEN2 = {
     taunt(g, si, near, who) {
       const gi = Math.min(2, Math.max(0, g - 1));
       let t = near ? pk(T_OPEN_NEAR) + pk(T_NEAR[gi]) : pk(T_OPEN_FAR) + pk(T_FAR[gi]);
       if (g >= 2 && Math.random() < 0.45) t = pk(near ? R_NEAR : R_FAR);   // 타락: 남편보다 이분을 더 원함
-      const body = lv(fixWho(t, who), si) + (g >= 2 ? "…!" : ".");
+      const body = lv(fixWho(t, who), si) + (/[?!]$/.test(t) ? "" : g >= 2 ? "…!" : ".");
       return g >= 2 && Math.random() < 0.5 ? scream(si) + " " + body : body;
     },
     cream(si, near, who) {
