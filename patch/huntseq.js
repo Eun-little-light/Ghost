@@ -1180,6 +1180,8 @@
       const avail = unionOutfits();
       sel.outfits = sel.outfits.filter((k) => avail[k]); if (!sel.outfits.length) sel.outfits = ["work"];
       $q("#hsOutfit").innerHTML = seg("hsOutfitSeg", avail, sel.outfits);
+      // 고른 순서(= 생성 순서) 번호
+      if (sel.outfits.length > 1) sel.outfits.forEach((k, i) => { const b = $q(`#hsOutfitSeg button[data-v="${k}"]`); if (b) b.insertAdjacentHTML("afterbegin", `<b style="margin-right:4px">${i + 1}</b>`); });
       $q("#hsOutfitSeg .all").classList.toggle("on", Object.keys(avail).every((x) => sel.outfits.includes(x)));
       $q("#hsOutfit").title = sel.outfits.map((k) => wearOf(ch, k)).join("\n") || "";
     }
