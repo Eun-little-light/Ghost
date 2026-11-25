@@ -615,12 +615,13 @@
   let multi = ls.get("multi", false), undress = ls.get("undress", true);
   let video = ls.get("video", false);
   let on = ls.get("on", {});
-  let lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), narrOn = ls.get("narrOn", true);
+  let lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), cycleSel = ls.get("cycle", "none"), narrOn = ls.get("narrOn", true);
   // 대사 형식: Hunt 방식([장소] · 서술 · "말") / Wayward 방식([단계]서술 "소리" … "말" 『속마음』 — huntway.js)
   const FMTS = { hunt: "Hunt 방식", wayward: "Wayward 방식" };
   let fmtSel = FMTS[ls.get("fmt", "hunt")] ? ls.get("fmt", "hunt") : "hunt";
   let secs = Number(ls.get("secs", 14)) || 14;   // 한 장 평균 시간(초) — 실제 생성 시간으로 계속 고쳐짐
   const SPEECH = { auto: "캐릭터 말투", polite: "존댓말", formal: "격식체", casual: "반말" };
+  const CYCLES = { none: "그녀의 날 지정 안 함", safe: "안전일", risky: "위험일" };   // 안에 사정 · 시작 전 대사가 달라짐 (한 가지만 고름)
   // 대사 = 장면 대사(huntlines.js) + 고른 선택지 문장(huntctx.js — 장소·체위·도구·옷 상태·사정 위치·복장·날씨) 최대 2개
   const keyOf = (obj, v) => Object.keys(obj).find((k) => obj[k] === v) || "";
   const CTX_KEY = { dur: (o) => o.dur || (o.anal ? "anal" : ""), date: (o) => keyOf(DATES, o.date), time: (o) => o.time, weather: (o) => (o.date && o.date.out ? o.weather : ""), outfit: (o) => o.outfit, place: (o) => keyOf(PLACES, o.place), tool: (o) => o.tool, cloth: (o) => o.cm, pose: (o) => keyOf(POSES, o.pose), fin: (o) => keyOf(FINISH, o.fin) };
@@ -897,6 +898,15 @@
         t = String(t).split('"').map((seg, i) => (i % 2 ? seg.replace(new RegExp(a + "\\s?씨", "g"), "언니").replace(new RegExp(a + "(이랑|과|와|이|가|은|는|을|를|도|하고|한테)?", "g"), (m0, j) => "언니" + ({ 이랑: "랑", 과: "랑", 와: "랑", 이: "가", 가: "가", 은: "는", 는: "는", 을: "를", 를: "를" }[j] || j || "")) : seg)).join('"');
       }
     }
+    // 그녀의 날 (안전일 · 위험일)
+    if (cycleSel !== "none" && window.BC_CYCLE && BC_CYCLE[cycleSel] && t) {
+      const C = BC_CYCLE[cycleSel], si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, pk = (a) => a[Math.floor(Math.random() * a.length)];
+      const sv = (a) => { const v = String(pk(a)).split("|"); return v[si] || v[0]; };
+      const SRc = o && o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ];
+      const otherP = !!o && (watchOn(o) || /^(cheat|cheatwatch)$/.test(o.rel) || o.absent || o.situ === "swap" || !!(SRc && SRc.third));
+      if (/^(kiss|ready)$/.test(sid) && Math.random() < 0.7) t += `\n"${sv(C.pre)}"`;
+      if (/^(climax|finish)/.test(sid) && o && o.fin === FINISH.inside) t += `\n${otherP ? pk(C.narr) : pk(C.narr).replace(/그가/g, "당신이").replace(/그의/g, "당신의")}.\n"${sv(otherP ? C.cumOther : C.cum)}"`;   // 상대가 당신이면 서술 속 그 → 당신
+    }
     if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o) }) || t; } catch {} }
     return t;
   };
@@ -1043,7 +1053,8 @@
       <label class="check"><input type="checkbox" id="hsLineOn"${lineOn ? " checked" : ""}> 장면마다 대사 붙이기</label>
       <div><small class="muted">대사 형식 — Hunt: [장소] · 그녀의 행동 서술 · "말" / Wayward: [단계]당신의 행동 · 반응 · "신음"과 서술이 번갈아 · "말"</small>${seg("hsFmt", FMTS, fmtSel, false)}</div>
       <label class="check"><input type="checkbox" id="hsNarrOn"${narrOn ? " checked" : ""}> 서술 넣기 <small class="muted">(Hunt 방식일 때)</small></label>
-      ${seg("hsSpeech", SPEECH, speechSel, false)}</div>
+      ${seg("hsSpeech", SPEECH, speechSel, false)}
+      <div style="margin-top:6px"><small class="muted">그녀의 날 — 시작 전 · 안에 사정할 때 대사가 달라짐</small>${seg("hsCycle", CYCLES, cycleSel, false)}</div></div>
     <div class="field"><label>만들 단계 <small class="muted">(1인 장면은 화풍 참조 워크플로, 2인은 Duo 워크플로)</small> <button type="button" class="mini" id="hsStagesAll">✚ 전부 켜기/끄기</button></label><div id="hsStages" class="hs-stages"></div></div>
     <div class="field"><button type="button" id="hsRun">Hunt 시퀀스 생성</button> <button type="button" class="mini" id="hsStop">중단</button> <button type="button" class="mini" id="hsResume" disabled>이어서 생성</button> <button type="button" class="mini" id="hsDiscard" disabled>시퀀스 삭제</button></div>
   </div>
@@ -1220,6 +1231,7 @@
   $q("#hsLineOn").addEventListener("change", (e) => { lineOn = e.target.checked; ls.set("lineOn", lineOn); });
   $q("#hsNarrOn").addEventListener("change", (e) => { narrOn = e.target.checked; ls.set("narrOn", narrOn); });
   bindSeg("hsSpeech", (v) => { speechSel = v; ls.set("speech", v); pick("hsSpeech", v); });
+  bindSeg("hsCycle", (v) => { cycleSel = v; ls.set("cycle", v); pick("hsCycle", v); });
   bindSeg("hsFmt", (v) => { fmtSel = v; ls.set("fmt", v); pick("hsFmt", v); });
   $q("#hsUndress").addEventListener("change", (e) => { undress = e.target.checked; ls.set("undress", undress); draw(); });
   $q("#hsStages").addEventListener("change", (e) => { const id = e.target.dataset.id; if (id) { on[id] = e.target.checked; ls.set("on", on); draw(); } });
