@@ -308,7 +308,7 @@
   const catsOf = (h) => {
     const m = map[h.id] || {}, p = String(h.positive || "").toLowerCase(), c = [];
     if (partyOf(h)) c.push("party");
-    if (/^(cheat|cheatwatch|affair)$/.test(m.rel || "")) c.push("cheat");
+    if (/^(cheat|cheatwatch|affair|rebound)$/.test(m.rel || "")) c.push("cheat");
     if (m.situ === "ntr" || (!m.situ && /netorare/.test(p))) c.push("ntr");
     if (m.situ === "ntori" || (!m.situ && /cheating \(relationship\)/.test(p))) c.push("ntori");
     if (m.situ === "swap") c.push("swap");

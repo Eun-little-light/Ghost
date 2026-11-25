@@ -251,7 +251,7 @@
   const PARTIES = GIRLS, PMODES = BOYS;
   // 당신의 역할 (남성 2명 이상일 때): 함께함 / 지켜보는 남편 — 남편이 허락한 관계 · 당신은 남성 수에 들어가지만 행위엔 다른 남자들만
   // 관계 지정 (Hunt처럼): 그림 분위기 태그 · 관계가 드러나는 서술 · 그녀의 말
-  const RELS = { none: "지정 안 함", interest: "관심 있음", some: "썸", lover: "연인", partner: "파트너 (몸이 맞는 사이)", married: "부부", affair: "불륜 (그녀는 남의 아내 · 당신이 상대)", cheat: "아내의 바람 (당신은 남편 · 장면엔 다른 남자)", cheatwatch: "아내의 바람 → 알고 허락해 지켜봄", dom: "주인(당신) · 복종(그녀)", sub: "주인(그녀) · 복종(당신)" };
+  const RELS = { none: "지정 안 함", interest: "관심 있음", some: "썸", lover: "연인", partner: "파트너 (몸이 맞는 사이)", married: "부부", affair: "불륜 (그녀는 남의 아내 · 당신이 상대)", cheat: "아내의 바람 (당신은 남편 · 장면엔 다른 남자)", cheatwatch: "아내의 바람 → 알고 허락해 지켜봄", rebound: "홧김의 새 남자 (남편에게 정이 떨어져 만난 남자가 훨씬 좋음 · 당신은 남편 · 장면에 없음)", dom: "주인(당신) · 복종(그녀)", sub: "주인(그녀) · 복종(당신)" };
   // 다인원(3인 이상) 상황 설정
   const SITUS = { none: "지정 안 함", pure: "순애", ntr: "네토라레 (그녀가 넘어감 · 당신은 장면에 없음)", ntori: "네토리 (남자친구 있는 그녀를 당신들이)", swap: "부부 스와핑 (2여 2남 이상 · 당신은 상대 아내와)" };
   let callJagi = false;   // 호칭 옵션 (UI가 그려진 뒤 저장값으로 채움)
@@ -421,7 +421,7 @@
     { id: "care", part: "end", duo: 1, cloth: "none", n: () => "뒷정리", tags: (o) => o.place.care },
   ];
   // 남편(연인)이 모르는 관계(아내의 바람 · 불륜 · 네토라레 · 장면에 없음): 하는 중에 남편 전화 받기 · 남편에게 사진 보내기
-  const unaware = (o) => /^(cheat|affair)$/.test(o.rel) || o.situ === "ntr" || !!o.absent;
+  const unaware = (o) => /^(cheat|affair|rebound)$/.test(o.rel) || o.situ === "ntr" || !!o.absent;
   { const i = STAGES.findIndex((s) => s.id === "ready");
     STAGES.splice(i + 1, 0,
       { id: "ntrcall_pre", part: "pre", optIn: 1, duo: 1, cloth: "main", skip: (o) => !unaware(o), n: () => "시작 전 남편에게 전화 걸기", tags: () => "(talking on phone:1.3), (holding phone to ear:1.2), cellphone, sitting on bed, (man behind her:1.15), (his hands groping her breasts:1.15), partially undressed, (biting lip:1.1), blush, nervous smile, from front" },
@@ -556,6 +556,7 @@
     if (o.watchP && !s.date && !s.self && !s.solo && s.meet == null) pos.splice(1, 0, "(looking at viewer:1.25), eye contact, (pov:1.05), viewer out of frame");
     // 위험일 (오히려 원함) · 안에 사정: 그녀가 다리로 허리를 감아 껴안음
     if (cycleSel === "riskyWant" && /^(climax|finish)/.test(s.id) && o.fin === FINISH.inside && !s.solo) pos.splice(pos.length - 1, 0, "(leg lock:1.25), (legs wrapped around his waist:1.2), crossed ankles, holding him close");
+    if (sizeSel !== "normal" && !s.solo && !s.self && !s.date && s.meet == null && (s.duo || o.party > 2 || /^(ready|pose|climax|finish|deny)/.test(s.id))) pos.splice(pos.length - 1, 0, sizeSel === "huge" ? "(huge penis:1.3), veiny penis, (penis size difference:1.1), (stomach bulge:1.05)" : "(large penis:1.2), thick penis");
     // 다인(3인 이상): 머리 · 얼굴이 하나 더 생기거나 몸이 붙는 것 막기
     if (o.party > 2 && !s.solo && !s.self) neg.push("(extra head:1.3), (two heads:1.3), multiple heads, conjoined, extra face, fused bodies, extra arms, extra legs");
     // 여성 여럿 + 남성 여럿 (2:2 스와핑 · 난교): 1인칭(pov)이 아니라 모두가 보이는 넓은 구도
@@ -624,18 +625,29 @@
   let multi = ls.get("multi", false), undress = ls.get("undress", true);
   let video = ls.get("video", false);
   let on = ls.get("on", {});
-  let lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), cycleSel = ls.get("cycle", "none"), narrOn = ls.get("narrOn", true);
+  let lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
   // 대사 형식: Hunt 방식([장소] · 서술 · "말") / Wayward 방식([단계]서술 "소리" … "말" 『속마음』 — huntway.js)
   const FMTS = { hunt: "Hunt 방식", wayward: "Wayward 방식" };
   let fmtSel = FMTS[ls.get("fmt", "hunt")] ? ls.get("fmt", "hunt") : "hunt";
   let secs = Number(ls.get("secs", 14)) || 14;   // 한 장 평균 시간(초) — 실제 생성 시간으로 계속 고쳐짐
   const SPEECH = { auto: "캐릭터 말투", polite: "존댓말", formal: "격식체", casual: "반말" };
+  const SIZES = { normal: "크기 보통", large: "큼", huge: "아주 큼" };   // 상대 자지 크기 — 그림 태그 · 체위 대사가 달라짐
   const CYCLES = { none: "그녀의 날 지정 안 함", safe: "안전일", risky: "위험일", riskyWant: "위험일 (오히려 원함)" };   // 안에 사정 · 시작 전 대사가 달라짐 (한 가지만 고름)
   // 대사 = 장면 대사(huntlines.js) + 고른 선택지 문장(huntctx.js — 장소·체위·도구·옷 상태·사정 위치·복장·날씨) 최대 2개
   const keyOf = (obj, v) => Object.keys(obj).find((k) => obj[k] === v) || "";
   const CTX_KEY = { dur: (o) => o.dur || (o.anal ? "anal" : ""), date: (o) => keyOf(DATES, o.date), time: (o) => o.time, weather: (o) => (o.date && o.date.out ? o.weather : ""), outfit: (o) => o.outfit, place: (o) => keyOf(PLACES, o.place), tool: (o) => o.tool, cloth: (o) => o.cm, pose: (o) => keyOf(POSES, o.pose), fin: (o) => keyOf(FINISH, o.fin) };
   const speechOf = (ch) => (speechSel !== "auto" ? speechSel : (ch && ch.speech) || "polite");
   let usedLines = new Map();   // 문장 → 쓴 횟수
+  let seenQ = null;   // 한 시퀀스를 만드는 동안 이미 나온 말("…") — 같은 말이 또 나오면 그 말은 빼고 넘어감
+  // 덧붙는 대사(관계 · 상황 · 확장 · 통화 · 로터 · 그녀의 날 · 갈아입기)도 같은 장부로 — 덜 쓴 문장부터 (무작위 시작점)
+  const pickU = (a) => {
+    if (!a || !a.length) return "";
+    const off = Math.floor(Math.random() * a.length); let best = a[off], bc = Infinity;
+    for (let i = 0; i < a.length; i++) { const x = a[(i + off) % a.length], c = usedLines.get(x) || 0; if (c < bc) { bc = c; best = x; } }
+    usedLines.set(best, bc + 1); return best;
+  };
+  // 조합으로 만드는 문장(BC_GEN2)은 이미 나온 문장이면 몇 번 다시 뽑음
+  const fresh = (fn) => { let s = ""; for (let i = 0; i < 6; i++) { s = fn(); if (!usedLines.has(s)) break; } usedLines.set(s, (usedLines.get(s) || 0) + 1); return s; };
   let fitCtx = null;
   const POSE_SIDS = ["ready", "pose1", "pose2", "deny1", "deny2", "climax", "climax_both", "after1", "after2", "finish", "finish_both"];
   const FACE_RE = /등을 끌어안|등에 손톱|어깨에 손톱|당신 등|이쪽 등|어깨를 붙잡|목에 팔|당신을 끌어안|이쪽을 끌어안|목을 끌어안|매달|눈을 맞|눈을 마주|표정을 놓치|품으로|어깨에 기대|어깨에 이마|어깨에 얼굴|가슴에 얼굴|올려다|얼굴을 두 손|허리에 다리를 감|허리를 다리로|다리로 당신 허리|다리로 이쪽 허리|올라오/;
@@ -796,12 +808,12 @@
   const ML_FAR = ["그 남자가 낮게 웃으며 말한다", "그 남자가 그녀의 귓가에 속삭인다", "그 남자가 허리를 멈추고 말한다", "그 남자가 숨을 몰아쉬며 말한다", "그 남자가 그녀의 머리칼을 쓸어 넘기며 말한다"];
   const gen2Add = (sid, g, si, near, who, menOn) => {
     const G = window.BC_GEN2; if (!G || g < 1) return "";
-    const pk = (a) => a[Math.floor(Math.random() * a.length)];
+    const pk = pickU;
     const out = [];
     if (!/^ntr(call|photo)/.test(sid) && Math.random() < 0.45) out.push(G.narr(g, near) + ".");
-    if (Math.random() < (near ? 0.6 : 0.4)) out.push(`"${G.taunt(g, si, near, who)}"`);   // 남편 · 남자친구가 없을 땐 이름이 너무 자주 나오지 않게
-    if (/^(climax|finish)/.test(sid) && Math.random() < 0.8) out.push(`"${G.cream(si, near, who)}"`);
-    if (menOn && Math.random() < 0.6) out.push(`${pk(near ? ML_NEAR : ML_FAR)}. "${G.men(g, near, who)}"`);
+    if (Math.random() < (near ? 0.6 : 0.4)) out.push(`"${fresh(() => G.taunt(g, si, near, who))}"`);   // 남편 · 남자친구가 없을 땐 이름이 너무 자주 나오지 않게
+    if (/^(climax|finish)/.test(sid) && Math.random() < 0.8) out.push(`"${fresh(() => G.cream(si, near, who))}"`);
+    if (menOn && Math.random() < 0.6) out.push(`${pk(near ? ML_NEAR : ML_FAR)}. "${fresh(() => G.men(g, near, who))}"`);
     return out.length ? "\n" + out.join("\n") : "";
   };
   // 관계가 드러나는 서술 한 줄(앞) + 그녀의 말 한 줄(뒤)
@@ -809,15 +821,15 @@
     const R = o && o.rel && o.rel !== "none" && window.BC_REL && BC_REL[o.rel];
     if (!R || !t || /^video/.test(sid)) return t;
     const g = sidG(sid), si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0;
-    const pk = (a) => (a && a.length ? a[Math.floor(Math.random() * a.length)] : "");
+    const pk = pickU;
     const m = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/);
-    const third = o.rel === "cheat" || o.rel === "cheatwatch";   // 행위하는 사람은 '그'(다른 남자) · 서술 속 '당신'은 남편
+    const third = o.rel === "cheat" || o.rel === "cheatwatch" || o.rel === "rebound";   // 행위하는 사람은 '그'(다른 남자) · 서술 속 '당신'은 남편
     let body = m[2];
     const callSc = /^ntr(call|photo)/.test(sid);   // 전화 · 사진 장면은 앞 서술이 장면과 엇갈려서 뺌
     if (!callSc && (third || Math.random() < 0.7)) body = pk(R.narr[g]) + ". " + body;
     if (Math.random() < (o.rel === "cheatwatch" ? 0.75 : 0.55)) body += `\n"${String(pk(R.say[g])).split("|")[si] || ""}"`;
-    if (g >= 1 && window.BC_YOUCMP && /^(cheatwatch|cheat|affair)$/.test(o.rel) && Math.random() < 0.55) body += `\n"${BC_YOUCMP(o.rel === "cheatwatch" ? (Math.random() < 0.5 ? "당신" : "여보") : "남편", si, g)}"`;
-    if (/^(cheat|cheatwatch|affair)$/.test(o.rel) && !(o.rel === "cheatwatch" && watchOn(o))) body += gen2Add(sid, g, si, o.rel === "cheatwatch", "남편", o.rel !== "affair");
+    if (g >= 1 && window.BC_YOUCMP && /^(cheatwatch|cheat|affair|rebound)$/.test(o.rel) && Math.random() < 0.55) body += `\n"${BC_YOUCMP(o.rel === "cheatwatch" ? (Math.random() < 0.5 ? "당신" : "여보") : "남편", si, g)}"`;
+    if (/^(cheat|cheatwatch|affair|rebound)$/.test(o.rel) && !(o.rel === "cheatwatch" && watchOn(o))) body += gen2Add(sid, g, si, o.rel === "cheatwatch", "남편", o.rel !== "affair");
     if (R.men && g >= 1 && Math.random() < 0.4) body += `\n그 남자가 당신 쪽을 보며 말한다. "${pk(R.men)}"`;
     // 불륜 · 아내의 바람: 관계 중 남편과 상대를 비교하는 말
     if (R.cmp && R.cmp[g] && R.cmp[g].length && (g >= 1 ? Math.random() < 0.75 : Math.random() < 0.3)) body += `\n"${String(pk(R.cmp[g])).split("|")[si] || ""}"`;
@@ -828,7 +840,7 @@
     const R = o && o.situ && o.situ !== "none" && o.party > 2 && window.BC_SITU && BC_SITU[o.situ];
     if (!R || !t || /^(video|self)/.test(sid)) return t;
     const g = sidG(sid), si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0;
-    const pk = (a) => (a && a.length ? a[Math.floor(Math.random() * a.length)] : "");
+    const pk = pickU;
     const m = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/);
     // {A} = 다른 그녀(스와핑: 상대 아내) 이름
     const others = (o.extras || []).map(givenName), A = others[0] || "그 여자";
@@ -858,9 +870,9 @@
     const D = window.BC_DATETOY; if (!D) return "";
     const step = sid === "datetoy" ? "give" : sid.slice(3), ST = D.steps && D.steps[step];
     const si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0;
-    const pk = (a) => (a && a.length ? a[Math.floor(Math.random() * a.length)] : "");
+    const pk = pickU;
     const SRx = o && o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ];
-    const other = /^(cheat)$/.test(o && o.rel) || (SRx && SRx.third) || ((watchOn(o) || (o && o.rel === "cheatwatch")) && Math.random() < 0.5);
+    const other = /^(cheat|rebound)$/.test(o && o.rel) || (SRx && SRx.third) || ((watchOn(o) || (o && o.rel === "cheatwatch")) && Math.random() < 0.5);
     const W = other ? D.other : D.you, place = (o && o.date && o.date.n) || "데이트";
     const fill = (x) => String(x).replace(/\{P\}/g, place);
     if (ST) {   // 단계별: {M} 리모컨을 쥔 사람 (당신 / 그 남자)
@@ -885,8 +897,19 @@
   const nearOf = (o) => !!o && (watchOn(o) || o.rel === "cheatwatch" || o.situ === "swap");
   // 마지막 손질: 남편이 보고 있으면 남자친구 · 전화 · 몰래 얘기가 든 문장은 뺌 + 빌드 없이 바꿀 수 있는 후처리(BC_POST · 대사 업데이트로 들어옴)
   const NEAR_BAN = /남자친구|남친|전화|휴대폰|메시지|문자|야근|출장|들킬|몰래|답장|핑계/;
+  const CLOTH_WORDS = [[/블라우스/, /blouse|shirt/], [/셔츠/, /shirt|blouse/], [/단추/, /shirt|blouse|cardigan|coat|jacket|blazer|button/], [/치마|치맛자락/, /skirt|dress|qipao|maid|nurse/], [/원피스/, /\bdress\b|qipao/], [/바지|청바지|슬랙스/, /pants|slacks|jeans|shorts/], [/니트|스웨터/, /knit|sweater/], [/재킷|블레이저/, /jacket|blazer/], [/앞치마/, /apron/], [/가디건/, /cardigan/]];
+  const clothFit = (t, sid, ch, o) => {
+    if (!o || !ch || /^(video|date|meet|datetoy|dt_)/.test(sid)) return t;
+    const w = String(stageWear(sid, ch, o) || "").toLowerCase(); if (!w) return t;
+    const bad = CLOTH_WORDS.filter(([, en]) => !en.test(w)).map(([ko]) => ko);
+    if (!bad.length) return t;
+    const m = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/);
+    const body = m[2].split("\n").map((ln) => (ln.match(/"[^"]*"|[^"]+/g) || []).map((tk) => (tk[0] === '"' ? (bad.some((r) => r.test(tk)) ? "" : tk) : tk.split(/(?<=[.!?…])\s+/).filter((c) => !bad.some((r) => r.test(c))).join(" "))).join(" ").replace(/\s{2,}/g, " ").trim()).filter((ln) => ln && ln !== '""').join("\n");
+    return body.trim() ? (m[1] || "") + body : t;   // 다 빠지면 원래 대사 그대로
+  };
   const postLine = (t, sid, ch, o) => {
     if (!t) return t;
+    t = clothFit(t, sid, ch, o);
     if (nearOf(o) && !/^(video|date|datetoy)/.test(sid)) {
       const m = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/);
       // 따옴표 안 말은 통째로, 서술은 문장 단위로 걸러냄 (말 가운데가 잘려 따옴표가 깨지지 않게)
@@ -900,21 +923,31 @@
         t = String(t).split('"').map((seg, i) => (i % 2 ? seg.replace(new RegExp(a + "\\s?씨", "g"), "언니").replace(new RegExp(a + "(이랑|과|와|이|가|은|는|을|를|도|하고|한테)?", "g"), (m0, j) => "언니" + ({ 이랑: "랑", 과: "랑", 와: "랑", 이: "가", 가: "가", 은: "는", 는: "는", 을: "를", 를: "를" }[j] || j || "")) : seg)).join('"');
       }
     }
+    // 자지 크기
+    if (sizeSel !== "normal" && window.BC_SIZE && BC_SIZE[sizeSel] && t && /^(ready|pose|climax)/.test(sid) && Math.random() < 0.6) {
+      const Z = BC_SIZE[sizeSel], si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, v = String(pickU((() => { const SRz = o && o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ]; return o && (watchOn(o) || /^(cheat|cheatwatch|rebound)$/.test(o.rel) || o.absent || o.situ === "swap" || (SRz && SRz.third)) ? Z.sayOther : Z.say; })())).split("|");
+      t += `\n${pickU(Z.narr)}.\n"${v[si] || v[0]}"`;
+    }
     // 그녀의 날 (안전일 · 위험일)
     if (cycleSel !== "none" && window.BC_CYCLE && BC_CYCLE[cycleSel] && t) {
-      const C = BC_CYCLE[cycleSel], si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, pk = (a) => a[Math.floor(Math.random() * a.length)];
+      const C = BC_CYCLE[cycleSel], si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, pk = pickU;
       const sv = (a) => { const v = String(pk(a)).split("|"); return v[si] || v[0]; };
       const SRc = o && o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ];
-      const otherP = !!o && (watchOn(o) || /^(cheat|cheatwatch)$/.test(o.rel) || o.absent || o.situ === "swap" || !!(SRc && SRc.third));
+      const otherP = !!o && (watchOn(o) || /^(cheat|cheatwatch|rebound)$/.test(o.rel) || o.absent || o.situ === "swap" || !!(SRc && SRc.third));
       if (/^(kiss|ready)$/.test(sid) && Math.random() < 0.7) t += `\n"${sv(C.pre)}"`;
       if (/^(climax|finish)/.test(sid) && o && o.fin === FINISH.inside) t += `\n${otherP ? pk(C.narr) : pk(C.narr).replace(/그가/g, "당신이").replace(/그의/g, "당신의")}.\n"${sv(otherP ? C.cumOther : C.cum)}"`;   // 상대가 당신이면 서술 속 그 → 당신
     }
     // 상대 남자 호칭은 맨 마지막에 (뒤에 붙는 그녀의 날 · 지켜보는 남편 대사까지) (뒤에 붙는 지켜보는 남편 대사까지): 한 명이면 이이 · 여럿이면 이분들 · '자기' 옵션
     if (o && o.nb) {
-      const SRp = o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ], sw = o.situ === "swap", third = (o && o.absent) || watchOn(o) || /^(cheat|cheatwatch)$/.test(o.rel) || (SRp && SRp.third);
+      const SRp = o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ], sw = o.situ === "swap", third = (o && o.absent) || watchOn(o) || /^(cheat|cheatwatch|rebound)$/.test(o.rel) || (SRp && SRp.third);
       const others = sw ? o.nb - 1 : third ? (watchOn(o) ? o.nb - 1 : o.nb) : o.nb - 1;
       if (others >= 2) t = String(t).replace(/이이가/g, "이분들이").replace(/이이는/g, "이분들은").replace(/이이를/g, "이분들을").replace(/이이(?!들)/g, "이분들");
       else if (callJagi) t = String(t).split('"').map((seg, i) => (i % 2 ? seg.replace(/이분(?!들)|이이/g, "자기") : seg)).join('"');
+    }
+    if (seenQ && t) {   // 이미 나온 말은 빼고, 말이 빠져 '…말한다.'만 남은 줄도 뺌 (다 빠지면 그대로)
+      const SV = /(말한다|묻는다|속삭인다|중얼거린다|웃는다|건넨다|되묻는다)\.?\s*$/;
+      const lines = String(t).split("\n").map((ln) => { const had = /"/.test(ln); const s = ln.replace(/"[^"]{6,}"/g, (q) => (seenQ.has(q) ? "" : q)).replace(/\s{2,}/g, " ").trim(); return had && !/"/.test(s) && SV.test(s) ? "" : s; }).filter(Boolean);
+      if (lines.join("").trim()) { t = lines.join("\n"); (t.match(/"[^"]{6,}"/g) || []).forEach((q) => seenQ.add(q)); }
     }
     if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o) }) || t; } catch {} }
     return t;
@@ -927,18 +960,18 @@
       let t = lineOf0(sid, ch, watchOn(o) ? { ...o, nb: o.nb - 1, party: o.party - 1 } : o);   // 행위하는 남자 수는 한 명 적게
       // 당신이 행위하지 않는 경우(지켜보는 남편 · 아내의 바람 · 네토라레 · 부부 스와핑): 기본 서술의 행위자 '당신' → '그'를 한 번만 (뒤에 붙는 서술 속 '당신'은 그대로)
       const SR = o && o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ];
-      if (t && ((o && o.absent) || watchOn(o) || /^(cheat|cheatwatch)$/.test(o && o.rel) || (SR && SR.third)) && !/^(video|self|ntrcall|ntrphoto)/.test(sid)) { const m0 = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/); t = (m0[1] || "") + unYou(m0[2]); }
+      if (t && ((o && o.absent) || watchOn(o) || /^(cheat|cheatwatch|rebound)$/.test(o && o.rel) || (SR && SR.third)) && !/^(video|self|ntrcall|ntrphoto)/.test(sid)) { const m0 = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/); t = (m0[1] || "") + unYou(m0[2]); }
       t = relLine(t, sid, ch, o);
       t = situLine(t, sid, ch, o);
       // 남편(당신)을 뺀 다른 남자가 둘 이상이면 그녀가 부르는 '이이' → '이분들'
-      { const sw = o && o.situ === "swap", third = (o && o.absent) || watchOn(o) || /^(cheat|cheatwatch)$/.test(o && o.rel) || (SR && SR.third);
+      { const sw = o && o.situ === "swap", third = (o && o.absent) || watchOn(o) || /^(cheat|cheatwatch|rebound)$/.test(o && o.rel) || (SR && SR.third);
         const others = !o || !o.nb ? 0 : sw ? o.nb - 1 : third ? (watchOn(o) ? o.nb - 1 : o.nb) : o.nb - 1;
         if (others >= 2 && t) t = String(t).replace(/이이가/g, "이분들이").replace(/이이는/g, "이분들은").replace(/이이를/g, "이분들을").replace(/이이(?!들)/g, "이분들").replace(/이분(?!들)/g, "이분들");   // 그녀가 부르는 상대 남자: 한 명이면 이이 · 여럿이면 이분들
         // 호칭 옵션: 남편은 '여보', 상대 남자는 '자기' (상대가 한 명일 때) — 그녀가 하는 말(따옴표 안)에만
         if (callJagi && t && others >= 1 && (sw || third)) t = String(t).split('"').map((seg, i) => (i % 2 ? (others === 1 ? seg.replace(/이분|이이/g, "자기") : seg).replace(/당신께서|당신께|당신한테|당신에게/g, "여보한테").replace(/당신이랑/g, "여보랑").replace(/당신과/g, "여보랑").replace(/당신이/g, "여보가").replace(/당신은/g, "여보는").replace(/당신을/g, "여보를").replace(/당신/g, "여보") : seg)).join('"'); }
       if (!watchOn(o) || /^(video|self|date)/.test(sid) || !window.BC_PARTY || !BC_PARTY.watch) return t;
       const W = BC_PARTY.watch, g = sidG(sid), si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0;
-      const pk = (a) => (a && a.length ? a[Math.floor(Math.random() * a.length)] : "");
+      const pk = pickU;
       const add = [pk(W.narr[g]) + "."];
       if (Math.random() < 0.6) add.push(`그녀가 당신을 보며 말한다. "${String(pk(W.say[g])).split("|")[si] || ""}"`);
       if (g >= 1 && window.BC_YOUCMP && Math.random() < 0.55) add.push(`그녀가 당신과 눈을 맞춘 채 말한다. "${BC_YOUCMP(Math.random() < 0.5 ? "당신" : "여보", si, g)}"`);
@@ -953,7 +986,7 @@
     if (!F || !st) return "";
     const K = F[base] || F[st.finWho === "m" ? "_m" : "_f"]; if (!K) return "";
     const si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0;
-    const pk = (a) => (a && a.length ? a[Math.floor(Math.random() * a.length)] : "");
+    const pk = pickU;
     const parts = [pk(K.narr) + ".", pk(K.narr2 || K.narr) + ".", pk(F.react[st.finWho]) + "."];
     const snd = F.sound && F.sound[st.finWho] ? `"${pk(F.sound[st.finWho])}"` : "";
     const sv = String(pk(K.say)).split("|"), say = sv[si] || sv[0] || "";   // 말투가 하나뿐인 문장은 그대로
@@ -963,7 +996,7 @@
     const KEY = { ntrcall: "call", ntrcall_date: "callDate", ntrcall_pre: "callPre", ntrcall_after: "callAfter", ntrphoto: "photo" }[sid];
     const C = window.BC_NTRCALL && BC_NTRCALL[KEY]; if (!C) return "";
     const si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0;
-    const pk = (a) => (a && a.length ? a[Math.floor(Math.random() * a.length)] : "");
+    const pk = pickU;
     const H = o && o.rel === "affair" ? "남편" : "당신", Cn = o && o.situ === "ntr" ? "자기" : "여보";
     const aff = o && o.rel === "affair";   // 불륜: 바람 상대가 당신이라 서술 속 '그'를 '당신'으로
     const f = (x) => { let s = String(x).replace(/\{H\}/g, H).replace(/\{C\}/g, Cn).replace(/남편가/g, "남편이"); if (aff) s = s.replace(/그가/g, "당신이").replace(/그에게/g, "당신에게").replace(/그는/g, "당신은").replace(/그의/g, "당신의"); return s; };
@@ -984,7 +1017,7 @@
     if (/^ntr(call|photo)/.test(sid)) return callLine(sid, ch, o);
     if (sid === "change" && window.BC_CHANGE) {
       const w = wearOf(ch, o.outfit), kind = garment(w).top === "linger" ? "linger" : LINGERIE[o.outfit] ? "costume" : "normal";
-      const si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, pk = (a) => a[Math.floor(Math.random() * a.length)];
+      const si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, pk = pickU;
       const nm = ({ work: "업무복", casual: "평상복", officeDate: "퇴근 데이트 옷", lounge: "집에서 입는 옷" })[o.outfit] || OUTFITS[o.outfit] || "옷", jj = (nm.charCodeAt(nm.length - 1) - 0xac00) % 28, bat = jj !== 0, f = (x) => String(x).replace(/\{O\}(으로|로)/g, nm + (bat && jj !== 8 ? "으로" : "로")).replace(/\{O\}(을|를)/g, nm + (bat ? "을" : "를")).replace(/\{O\}(이|가)/g, nm + (bat ? "이" : "가")).replace(/\{O\}/g, nm).replace(/\{S\}/g, (o.spot || {}).n || "침대 옆");
       const sayPool = o.outIdx > 0 && o.dressBy && BC_CHANGE.sayDress ? BC_CHANGE.sayDress : BC_CHANGE.say[kind].filter((x) => !(o.outIdx > 0 && /데이트 옷|데이트 내내/.test(x)));
       const v = String(pk(sayPool.length ? sayPool : BC_CHANGE.say[kind])).split("|");
@@ -1065,7 +1098,8 @@
       <div><small class="muted">대사 형식 — Hunt: [장소] · 그녀의 행동 서술 · "말" / Wayward: [단계]당신의 행동 · 반응 · "신음"과 서술이 번갈아 · "말"</small>${seg("hsFmt", FMTS, fmtSel, false)}</div>
       <label class="check"><input type="checkbox" id="hsNarrOn"${narrOn ? " checked" : ""}> 서술 넣기 <small class="muted">(Hunt 방식일 때)</small></label>
       ${seg("hsSpeech", SPEECH, speechSel, false)}
-      <div style="margin-top:6px"><small class="muted">그녀의 날 — 시작 전 · 안에 사정할 때 대사가 달라짐</small>${seg("hsCycle", CYCLES, cycleSel, false)}</div></div>
+      <div style="margin-top:6px"><small class="muted">그녀의 날 — 시작 전 · 안에 사정할 때 대사가 달라짐</small>${seg("hsCycle", CYCLES, cycleSel, false)}</div>
+      <div style="margin-top:6px"><small class="muted">상대 자지 크기 — 그림과 삽입 · 절정 대사가 달라짐</small>${seg("hsSize", SIZES, sizeSel, false)}</div></div>
     <div class="field"><label>만들 단계 <small class="muted">(1인 장면은 화풍 참조 워크플로, 2인은 Duo 워크플로)</small> <button type="button" class="mini" id="hsStagesAll">✚ 전부 켜기/끄기</button></label><div id="hsStages" class="hs-stages"></div></div>
     <div class="field"><button type="button" id="hsRun">Hunt 시퀀스 생성</button> <button type="button" class="mini" id="hsStop">중단</button> <button type="button" class="mini" id="hsResume" disabled>이어서 생성</button> <button type="button" class="mini" id="hsDiscard" disabled>시퀀스 삭제</button></div>
   </div>
@@ -1246,6 +1280,7 @@
   $q("#hsNarrOn").addEventListener("change", (e) => { narrOn = e.target.checked; ls.set("narrOn", narrOn); });
   bindSeg("hsSpeech", (v) => { speechSel = v; ls.set("speech", v); pick("hsSpeech", v); });
   bindSeg("hsCycle", (v) => { cycleSel = v; ls.set("cycle", v); pick("hsCycle", v); });
+  bindSeg("hsSize", (v) => { sizeSel = v; ls.set("psize", v); pick("hsSize", v); });
   bindSeg("hsFmt", (v) => { fmtSel = v; ls.set("fmt", v); pick("hsFmt", v); });
   $q("#hsUndress").addEventListener("change", (e) => { undress = e.target.checked; ls.set("undress", undress); draw(); });
   $q("#hsStages").addEventListener("change", (e) => { const id = e.target.dataset.id; if (id) { on[id] = e.target.checked; ls.set("on", on); draw(); } });
@@ -1310,13 +1345,15 @@
   };
   // 목록 만들기: 장마다 프롬프트와 대사를 지금 정해 둠
   function makeRecs(jobs) {
-    usedLines = new Map(); usedWhole = new Set();
-    return jobs.map((j, i) => {
+    usedLines = new Map(); usedWhole = new Set(); seenQ = new Set();
+    const out = jobs.map((j, i) => {
       const b = build(j.s, j.o), jc = j.o.ch, cname = String(jc.n).split(" · ")[0];
-      return { i: i + 1, n: j.s.n(j.o), pos: b.positive, neg: b.negative, duo: b.duo, bust: j.o.bust || "global", line: lineOn ? lineOf(j.s.id, jc, j.o) : "", sid: j.s.id, sp: speechOf(jc), cid: jc.id, cn: cname, of: OUTFITS[j.o.outfit] || j.o.outfit, g: j.g || "", rel: j.o.rel && j.o.rel !== "none" ? j.o.rel : "", situ: j.o.situ && j.o.situ !== "none" ? j.o.situ : "", ng: j.o.ng || 1, nb: j.o.nb || 1, watch: !!j.o.watch, mem: [cname, ...((j.o.extras || []).map((e) => String(e.n).split(" · ")[0]))],
+      return { i: i + 1, n: j.s.n(j.o), pos: b.positive, neg: b.negative, duo: b.duo, bust: j.o.bust || "global", line: lineOn ? lineOf(j.s.id, jc, j.o) : "", sid: j.s.id, sp: speechOf(jc), cid: jc.id, cn: cname, of: OUTFITS[j.o.outfit] || j.o.outfit, g: j.g || "", rel: j.o.rel && j.o.rel !== "none" ? j.o.rel : "", situ: j.o.situ && j.o.situ !== "none" ? j.o.situ : "", ng: j.o.ng || 1, nb: j.o.nb || 1, watch: !!j.o.watch, absent: !!j.o.absent, mem: [cname, ...((j.o.extras || []).map((e) => String(e.n).split(" · ")[0]))],
         pc: (() => { const nE = watchOn(j.o) ? j.o.nb - 1 : j.o.nb; return j.o.ng + nE > 2 && !j.s.self && !j.s.solo ? ((j.s.date || j.s.meet != null) ? (j.o.ng > 1 ? [j.o.ng, 0] : null) : [j.o.ng, nE]) : null; })(),
         ph: sel.poses.length > 1 ? (j.pk ? POSES[j.pk].n : j.s.part === "end" ? "마무리" : "") : "" };
     });
+    seenQ = null;
+    return out;
   }
   // 칸 그리기 (이미 끝난 장은 그림, 나머지는 대기)
   function drawGrid() {
@@ -1362,7 +1399,7 @@
         const res = await api("/api/generate", { json: { workflow: pickWf(r.duo), positive: r.pos, negative: r.neg, params, randomSeed: true, ...(r.bust && r.bust !== "global" ? { bust: r.bust } : {}) } });
         r.pid = res.prompt_id; s.id = r.pid; r.err = 0; saveRun();
         // 보기 창 · 갤러리 폴더용 정보 (대사 · 캐릭터 · 복장)
-        if (window.BC_LINE) BC_LINE.set(r.pid, { t: r.line, n: r.cn, cid: r.cid, cn: r.cn, of: r.of, rel: r.rel, situ: r.situ, ng: r.ng, nb: r.nb, watch: r.watch, mem: r.mem });
+        if (window.BC_LINE) BC_LINE.set(r.pid, { t: r.line, n: r.cn, cid: r.cid, cn: r.cn, of: r.of, rel: r.rel, situ: r.situ, ng: r.ng, nb: r.nb, watch: r.watch, absent: r.absent, mem: r.mem });
         byId.set(r.pid, s); state.myPrompts && state.myPrompts.add(r.pid);
         setSlot(s, "", "대기열"); sent++;
       }
@@ -1446,7 +1483,7 @@
       const params = r.duo ? { width: 1216, height: 832, batch: 1 } : { width: 832, height: 1216, batch: 1 };
       const res = await api("/api/generate", { json: { workflow: pickWf(r.duo), positive: r.pos, negative: r.neg, params, randomSeed: true, ...(r.bust && r.bust !== "global" ? { bust: r.bust } : {}) } });
       r.pid = res.prompt_id; s.id = r.pid; s.checked = 0; saveRun();
-      if (window.BC_LINE) BC_LINE.set(r.pid, { t: r.line, n: r.cn, cid: r.cid, cn: r.cn, of: r.of, rel: r.rel, situ: r.situ, ng: r.ng, nb: r.nb, watch: r.watch, mem: r.mem });
+      if (window.BC_LINE) BC_LINE.set(r.pid, { t: r.line, n: r.cn, cid: r.cid, cn: r.cn, of: r.of, rel: r.rel, situ: r.situ, ng: r.ng, nb: r.nb, watch: r.watch, absent: r.absent, mem: r.mem });
       byId.set(r.pid, s); state.myPrompts && state.myPrompts.add(r.pid);
       setSlot(s, "", `인원 다시 ${r.tries}/3 (${r.cnt} → ${wg}여${wb ? ` ${wb}남` : ""})`);
     } catch (e) { r.img = im; saveRun(); setSlot(s, "done", "완료 (다시 요청 실패)", 1); showImg(s, im); }
@@ -1528,7 +1565,8 @@
     const dur = Object.keys(DURING).find((k) => DURING[k].tags && hitAll(p, DURING[k].tags, 1)) || "";
     const cm = /completely nude/.test(p) ? "nude" : /no shirt/.test(p) ? "topless" : "half";
     const tool = /magic wand/.test(p) ? "wand" : /egg vibrator/.test(p) ? "egg" : /dildo/.test(p) ? "dildo" : "none";
-    const o = { ch, place, pose, fin, outfit, date, dur, cm, tool, nudeMain: cm === "nude", time: /evening|dusk/.test(p) ? "evening" : /daytime|morning/.test(p) ? "day" : "night", weather: /rain/.test(p) ? "rain" : /snow/.test(p) ? "snow" : "clear", cx: /simultaneous orgasm/.test(p) ? "both" : "yes", anal: /anal sex/.test(p), acts: [], undress: true };
+    const ng = meta.ng || 1, nb = meta.nb || 1, extras = (meta.mem || []).slice(1).map((n) => cs.find((c) => String(c.n).split(" · ")[0] === n)).filter(Boolean);
+    const o = { ch, place, pose, fin, outfit, date, dur, cm, tool, rel: meta.rel || "none", situ: meta.situ || "none", ng, nb, party: ng + nb, pmode: nb > 1 ? (ng > 1 ? "mix" : "male") : "fem", watch: !!meta.watch, absent: !!meta.absent, extras, nudeMain: cm === "nude", time: /evening|dusk/.test(p) ? "evening" : /daytime|morning/.test(p) ? "day" : "night", weather: /rain/.test(p) ? "rain" : /snow/.test(p) ? "snow" : "clear", cx: /simultaneous orgasm/.test(p) ? "both" : "yes", anal: /anal sex/.test(p), acts: [], undress: true };
     return { sid, ch, o, meta, g };
   }
   function rewrite(entry, fmt, noSave, keepPrev) {
