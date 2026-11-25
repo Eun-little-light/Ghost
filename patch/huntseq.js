@@ -884,7 +884,7 @@
     const si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0;
     const pk = pickU;
     const SRx = o && o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ];
-    const other = /^(cheat|rebound)$/.test(o && o.rel) || (SRx && SRx.third) || ((watchOn(o) || (o && o.rel === "cheatwatch")) && Math.random() < 0.5);
+    const other = (o && o.absent) || /^(cheat|rebound)$/.test(o && o.rel) || (SRx && SRx.third) || ((watchOn(o) || (o && o.rel === "cheatwatch")) && Math.random() < 0.5);
     const W = other ? D.other : D.you, place = (o && o.date && o.date.n) || "데이트";
     const fill = (x) => String(x).replace(/\{P\}/g, place);
     if (ST) {   // 단계별: {M} 리모컨을 쥔 사람 (당신 / 그 남자)

@@ -123,7 +123,13 @@
   M_HER.splice(0, 3, ...join(M_HER, MORE.M_HER)); M_HUSB.splice(0, 3, ...join(M_HUSB, MORE.M_HUSB));
   N_NEAR.splice(0, 4, ...join(N_NEAR, MORE.N_NEAR)); N_FAR.splice(0, 4, ...join(N_FAR, MORE.N_FAR));
   R_NEAR.push(...MORE.R_NEAR); R_FAR.push(...MORE.R_FAR); C_NEAR.push(...MORE.C_NEAR); C_FAR.push(...MORE.C_FAR);
-  const fixWho = (t, who) => (who && who !== "남편" ? String(t).replace(/남편분/g, who === "남자친구" ? "남자친구분" : who + "분").replace(/남편/g, who) : t);
+  // 남편 → who 로 바꿀 때 받침 없는 말(남자친구)이면 조사도 맞춤 (남편은 → 남자친구는)
+  const JO = { 은: "는", 을: "를", 과: "와", 이랑: "랑", 으로: "로", 이에요: "예요", 이야: "야", 이다: "다", 이: "가" };
+  const fixWho = (t, who) => {
+    if (!who || who === "남편") return t;
+    const nb = (who.charCodeAt(who.length - 1) - 0xac00) % 28 === 0;
+    return String(t).replace(/남편분/g, who + "분").replace(/남편(이에요|이랑|으로|이야|이다|은|을|과|이(?![었라지면]))?/g, (m, j) => who + (j && nb ? JO[j] : j || ""));
+  };
   window.BC_GEN2 = {
     taunt(g, si, near, who) {
       const gi = Math.min(2, Math.max(0, g - 1));
