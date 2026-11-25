@@ -621,7 +621,7 @@
   let fmtSel = FMTS[ls.get("fmt", "hunt")] ? ls.get("fmt", "hunt") : "hunt";
   let secs = Number(ls.get("secs", 14)) || 14;   // 한 장 평균 시간(초) — 실제 생성 시간으로 계속 고쳐짐
   const SPEECH = { auto: "캐릭터 말투", polite: "존댓말", formal: "격식체", casual: "반말" };
-  const CYCLES = { none: "그녀의 날 지정 안 함", safe: "안전일", risky: "위험일" };   // 안에 사정 · 시작 전 대사가 달라짐 (한 가지만 고름)
+  const CYCLES = { none: "그녀의 날 지정 안 함", safe: "안전일", risky: "위험일", riskyWant: "위험일 (오히려 원함)" };   // 안에 사정 · 시작 전 대사가 달라짐 (한 가지만 고름)
   // 대사 = 장면 대사(huntlines.js) + 고른 선택지 문장(huntctx.js — 장소·체위·도구·옷 상태·사정 위치·복장·날씨) 최대 2개
   const keyOf = (obj, v) => Object.keys(obj).find((k) => obj[k] === v) || "";
   const CTX_KEY = { dur: (o) => o.dur || (o.anal ? "anal" : ""), date: (o) => keyOf(DATES, o.date), time: (o) => o.time, weather: (o) => (o.date && o.date.out ? o.weather : ""), outfit: (o) => o.outfit, place: (o) => keyOf(PLACES, o.place), tool: (o) => o.tool, cloth: (o) => o.cm, pose: (o) => keyOf(POSES, o.pose), fin: (o) => keyOf(FINISH, o.fin) };
