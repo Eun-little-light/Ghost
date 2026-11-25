@@ -244,7 +244,7 @@
   // 인원수 · 구성 (3 · 4 · 5인) — fem: 당신 + 여성 여러 명 · male: 그녀 + 남성 여러 명 (서로 원해서 함께)
   // 인원 구성: 여성 수 × 남성 수 (예: 3여 1남 · 1여 4남 · 2여 2남) — 당신은 남성 중 한 명 · 모두 서로 원해서 함께
   const GIRLS = { 1: "1여", 2: "2여", 3: "3여", 4: "4여" };
-  const BOYS = { 1: "1남 (당신)", 2: "2남", 3: "3남", 4: "4남" };
+  const BOYS = { 1: "1남 (당신)", "1o": "1남 (바람 · 불륜 상대)", 2: "2남", 3: "3남", 4: "4남" };
   const PARTIES = GIRLS, PMODES = BOYS;
   // 당신의 역할 (남성 2명 이상일 때): 함께함 / 지켜보는 남편 — 남편이 허락한 관계 · 당신은 남성 수에 들어가지만 행위엔 다른 남자들만
   // 관계 지정 (Hunt처럼): 그림 분위기 태그 · 관계가 드러나는 서술 · 그녀의 말
@@ -996,7 +996,7 @@
     <div class="field"><label>인원 구성 <small class="muted">(여성 수 × 남성 수 · 여러 개 고르면 조합마다 따로 묶어서 생성 · 1여 1남 = 그녀와 당신 둘)</small></label>
       <small class="muted">여성 — 고른 캐릭터들이 순서대로 함께 (모자라면 다른 Hunt 인물로 채움)</small>${seg("hsParty", GIRLS, sel.pgirls)}
       <small class="muted">남성 — 당신도 그중 한 명 · 남성은 얼굴 없이</small>${seg("hsPmode", BOYS, sel.pboys)}
-      <small class="muted">당신의 역할 — 1남: 함께함(당신) · 장면에 없음(상대는 바람 상대 같은 다른 남자) / 남성 2명 이상: 지켜보는 남편도 — 지켜보는 남편: 남편이 허락한 관계 · 당신은 남성 수에 들어가지만 바로 앞에서 지켜보기만 하고 나머지 남자들이 함께함 (3남 = 당신 + 남자 2명) · 장면에 없음: 당신은 그 자리에 없고(모름) 남성 수는 모두 다른 남자</small>${seg("hsRole", ROLES, sel.proles)}
+      <small class="muted">당신의 역할 (남성 2명 이상일 때) — 지켜보는 남편: 남편이 허락한 관계 · 당신은 남성 수에 들어가지만 바로 앞에서 지켜보기만 하고 나머지 남자들이 함께함 (3남 = 당신 + 남자 2명) · 장면에 없음: 당신은 그 자리에 없고(모름) 남성 수는 모두 다른 남자</small>${seg("hsRole", ROLES, sel.proles)}
       <label class="muted" style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" id="hsCallJagi"${ls.get("calljagi", false) ? " checked" : ""}> 호칭: 남편은 '여보', 상대 남자는 '자기'로 부르기 (끄면 '이이 · 이분들')</label>
       <small class="muted">상황 설정 (3인 이상일 때) — 네토라레는 당신이 장면에 없어서 남성 수 = 그녀와 함께하는 남자 수 · 스와핑은 2여 2남 이상만</small>${seg("hsSitu", SITUS, sel.situs)}
 </div>
@@ -1059,13 +1059,13 @@
     const jobs = [];
     const cs = S === sel ? selChars() : [o.ch];
     const many = cs.length > 1 || S.outfits.length > 1 || S.places.length > 1 || (S.clothes || []).length > 1 || (S.busts || []).length > 1 || (S.faces || []).length > 1 || (S.hairs || []).length > 1 || (S.eyes || []).length > 1;
-    const GN = (S.pgirls && S.pgirls.length ? S.pgirls : ["1"]).map(Number), BN = (S.pboys && S.pboys.length ? S.pboys : ["1"]).map(Number);
+    const GN = (S.pgirls && S.pgirls.length ? S.pgirls : ["1"]).map(Number), BN = (S.pboys && S.pboys.length ? S.pboys : ["1"]).map(String);
     const huntCs = chars().filter((c) => c.group === "hunt");
     const units = [];
     const RL = S.proles && S.proles.length ? S.proles : ["join"];
     const RS = S.rels && S.rels.length ? S.rels : ["none"];
     const SU = S.situs && S.situs.length ? S.situs : ["none"];
-    for (const rel of RS) for (const ng of GN) for (const nb of BN) for (const rl of (nb > 1 ? RL : (RL.filter((x) => x !== "watch").length ? RL.filter((x) => x !== "watch") : ["join"]))) for (const situ of (ng + nb > 2 ? SU : ["none"])) {
+    for (const rel of RS) for (const ng of GN) for (const bk of BN) for (const nb of [bk === "1o" ? 1 : Number(bk)]) for (const rl of (bk === "1o" ? ["absent"] : nb > 1 ? RL : ["join"])) for (const situ of (ng + nb > 2 ? SU : ["none"])) {
       if (situ === "swap" && !(ng >= 2 && nb >= 2)) continue;
       const watch = rl === "watch", absent = rl === "absent";
       if (ng > 1) { const pool = [...cs, ...huntCs.filter((c) => !cs.some((x) => x.id === c.id))]; units.push({ ch: cs[0], ng, nb, watch, absent, rel, situ, extras: pool.slice(1, ng) }); }
