@@ -252,7 +252,7 @@
   // 다인원(3인 이상) 상황 설정
   const SITUS = { none: "지정 안 함", pure: "순애", ntr: "네토라레 (그녀가 넘어감 · 당신은 장면에 없음)", ntori: "네토리 (남자친구 있는 그녀를 당신들이)", swap: "부부 스와핑 (2여 2남 이상 · 당신은 상대 아내와)" };
   let callJagi = false;   // 호칭 옵션 (UI가 그려진 뒤 저장값으로 채움)
-  const ROLES = { join: "함께함", watch: "지켜보는 남편 (허락한 관계)", absent: "장면에 없음 (당신은 모름)" };
+  const ROLES = { join: "함께함", watch: "지켜보는 남편 (허락한 관계)", absent: "장면에 없음 (당신은 모름 · 상대는 다른 남자)" };
   const watchOn = (o) => !!(o && o.watch && o.nb > 1);
   // 지켜보는 남편: 서술에서 행위하는 '당신'을 '그'(다른 남자)로 — 따옴표 안의 말은 그대로
   const unYou = (t) => String(t).split('"').map((seg, i) => (i % 2 ? seg : seg.replace(/당신은/g, "그는").replace(/당신이/g, "그가").replace(/당신의/g, "그의").replace(/당신을/g, "그를").replace(/당신에게/g, "그에게").replace(/당신과/g, "그와").replace(/당신도/g, "그도").replace(/당신만/g, "그만").replace(/당신/g, "그"))).join('"');
@@ -996,7 +996,7 @@
     <div class="field"><label>인원 구성 <small class="muted">(여성 수 × 남성 수 · 여러 개 고르면 조합마다 따로 묶어서 생성 · 1여 1남 = 그녀와 당신 둘)</small></label>
       <small class="muted">여성 — 고른 캐릭터들이 순서대로 함께 (모자라면 다른 Hunt 인물로 채움)</small>${seg("hsParty", GIRLS, sel.pgirls)}
       <small class="muted">남성 — 당신도 그중 한 명 · 남성은 얼굴 없이</small>${seg("hsPmode", BOYS, sel.pboys)}
-      <small class="muted">당신의 역할 (남성 2명 이상일 때) — 지켜보는 남편: 남편이 허락한 관계 · 당신은 남성 수에 들어가지만 바로 앞에서 지켜보기만 하고 나머지 남자들이 함께함 (3남 = 당신 + 남자 2명) · 장면에 없음: 당신은 그 자리에 없고(모름) 남성 수는 모두 다른 남자</small>${seg("hsRole", ROLES, sel.proles)}
+      <small class="muted">당신의 역할 — 1남: 함께함(당신) · 장면에 없음(상대는 바람 상대 같은 다른 남자) / 남성 2명 이상: 지켜보는 남편도 — 지켜보는 남편: 남편이 허락한 관계 · 당신은 남성 수에 들어가지만 바로 앞에서 지켜보기만 하고 나머지 남자들이 함께함 (3남 = 당신 + 남자 2명) · 장면에 없음: 당신은 그 자리에 없고(모름) 남성 수는 모두 다른 남자</small>${seg("hsRole", ROLES, sel.proles)}
       <label class="muted" style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" id="hsCallJagi"${ls.get("calljagi", false) ? " checked" : ""}> 호칭: 남편은 '여보', 상대 남자는 '자기'로 부르기 (끄면 '이이 · 이분들')</label>
       <small class="muted">상황 설정 (3인 이상일 때) — 네토라레는 당신이 장면에 없어서 남성 수 = 그녀와 함께하는 남자 수 · 스와핑은 2여 2남 이상만</small>${seg("hsSitu", SITUS, sel.situs)}
 </div>
@@ -1044,7 +1044,8 @@
 
   const selChars = () => { const cs = chars(); return sel.chars.map((id) => cs.find((c) => c.id === id)).filter(Boolean); };
   const curChar = () => selChars()[0];
-  const availOutfits = (ch) => (ch && ch.outfits ? Object.fromEntries(Object.entries(OUTFITS).filter(([k]) => k === "lounge" || LINGERIE[k] || ch.outfits[k])) : { work: "기본 복장", lounge: OUTFITS.lounge, ...Object.fromEntries(Object.keys(LINGERIE).map((k) => [k, OUTFITS[k]])) });
+  // 데이트 옷은 데이트 · 장소 도착 장면에서만 입으므로 고를 복장 목록에서 뺌
+  const availOutfits = (ch) => (ch && ch.outfits ? Object.fromEntries(Object.entries(OUTFITS).filter(([k]) => k !== "date" && (k === "lounge" || LINGERIE[k] || ch.outfits[k]))) : { work: "기본 복장", lounge: OUTFITS.lounge, ...Object.fromEntries(Object.keys(LINGERIE).map((k) => [k, OUTFITS[k]])) });
   const unionOutfits = () => Object.assign({}, ...selChars().map(availOutfits));
   const base = () => ({ place: PLACES[sel.places[0]], fin: FINISH[sel.fins[0]], pose: POSES[sel.poses[0]], ch: curChar() || { body: "", wear: "", neg: "" }, outfit: sel.outfits[0], tool: sel.tools[0], cx: sel.climaxes[0], undress, cm: sel.clothes[0], nudeMain: sel.clothes[0] === "nude", date: DATES[sel.dates[0]], time: sel.times[0], weather: sel.weathers[0], video });
   // 만들 장 목록: 복장 × 관계 장소마다 → 공통(pre, 데이트 장소·도구마다) → 체위마다(pose, 사정 위치마다) → 마지막(end)
@@ -1064,13 +1065,13 @@
     const RL = S.proles && S.proles.length ? S.proles : ["join"];
     const RS = S.rels && S.rels.length ? S.rels : ["none"];
     const SU = S.situs && S.situs.length ? S.situs : ["none"];
-    for (const rel of RS) for (const ng of GN) for (const nb of BN) for (const rl of (nb > 1 ? RL : ["join"])) for (const situ of (ng + nb > 2 ? SU : ["none"])) {
+    for (const rel of RS) for (const ng of GN) for (const nb of BN) for (const rl of (nb > 1 ? RL : (RL.filter((x) => x !== "watch").length ? RL.filter((x) => x !== "watch") : ["join"]))) for (const situ of (ng + nb > 2 ? SU : ["none"])) {
       if (situ === "swap" && !(ng >= 2 && nb >= 2)) continue;
       const watch = rl === "watch", absent = rl === "absent";
       if (ng > 1) { const pool = [...cs, ...huntCs.filter((c) => !cs.some((x) => x.id === c.id))]; units.push({ ch: cs[0], ng, nb, watch, absent, rel, situ, extras: pool.slice(1, ng) }); }
       else for (const ch of cs) units.push({ ch, ng, nb, watch, absent, rel, situ, extras: [] });
     }
-    const manyP = SU.some((x) => x !== "none") || RS.length > 1 || RS[0] !== "none" || GN.length * BN.length > 1 || units.some((u) => u.ng + u.nb > 2);
+    const manyP = units.some((u) => u.absent) || SU.some((x) => x !== "none") || RS.length > 1 || RS[0] !== "none" || GN.length * BN.length > 1 || units.some((u) => u.ng + u.nb > 2);
     // 조합이 너무 많으면 계산하지 않음 (전부 고르면 수억 묶음 → 프로그램이 멈춤) — 묶음 수만 세서 알려 줌
     {
       const L = (a, d = 1) => (a && a.length) || d;
@@ -1084,7 +1085,7 @@
     const ch = U.ch; if (!ch) continue;
     const av = availOutfits(ch), outs = S.outfits.filter((k) => av[k]);
     for (const of of (outs.length ? outs : ["work"])) for (const pl of S.places) for (const cm of (S.clothes || [o.cm || "half"])) for (const bs of (S.busts || [o.bust || "global"])) for (const fc of (S.faces || [o.face || "mix"])) for (const hc of (S.hairs || ["char"])) for (const ec of (S.eyes || ["char"])) {
-      const pLab = U.ng + U.nb > 2 ? ` · ${U.ng}여 ${U.nb}남${U.ng > 1 ? ` (${[ch, ...U.extras].map(givenName).join("·")})` : ""}${U.watch ? " · 남편은 지켜봄" : U.absent ? " · 당신은 없음" : ""}` : "";
+      const pLab = U.ng + U.nb > 2 ? ` · ${U.ng}여 ${U.nb}남${U.ng > 1 ? ` (${[ch, ...U.extras].map(givenName).join("·")})` : ""}${U.watch ? " · 남편은 지켜봄" : U.absent ? " · 당신은 없음" : ""}` : U.absent ? " · 상대는 다른 남자" : "";
       const rLab = (U.rel && U.rel !== "none" ? ` · ${RELS[U.rel].split(" (")[0]}` : "") + (U.situ && U.situ !== "none" ? ` · ${SITUS[U.situ].split(" (")[0]}` : "");
       const g = many || manyP ? `${String(ch.n).split(" · ")[0]}${rLab}${pLab} · ${OUTFITS[of]} · ${PLACES[pl].n} · ${CLOTH_MAIN[cm].n.split(" (")[0]}${(S.busts || []).length > 1 ? " · 가슴 " + BUSTS[bs] : ""}${(S.faces || []).length > 1 ? " · 표정 " + FACES[fc].split(" (")[0] : ""}${(S.hairs || []).length > 1 ? " · 머리 " + HAIRS[hc] : ""}${(S.eyes || []).length > 1 ? " · 눈 " + EYES[ec] : ""}` : "";
       const chx = hc === "char" && ec === "char" ? ch : { ...ch, body: recolor(recolor(ch.body, "hair", hc), "eye", ec) };
