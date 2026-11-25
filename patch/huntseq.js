@@ -494,7 +494,7 @@
     if (o.ch && o.ch.body && !/\(\w+ eyes:/.test(o.ch.body)) o = { ...o, ch: { ...o.ch, body: o.ch.body.replace(/\b([a-z]+ eyes)\b/, "($1:1.15)") } };   // 눈 색이 바뀌지 않게
     const acts = (o.acts || []).filter((k) => ACTS[k] && !(ACTS[k].skip && ACTS[k].skip(o)));
     const linger = !!LINGERIE[o.outfit];
-    let wear = wearOf(o.ch, linger && (s.date || s.meet != null || s.solo) ? "date" : o.outfit);
+    let wear = wearOf(o.ch, s.date || s.meet != null || (linger && s.solo) ? "date" : o.outfit);   // 데이트 · 장소 도착은 데이트 옷, 키스부터 고른 복장으로 갈아입음
     for (const k of acts) if (ACTS[k].wear && !/pantyhose|stockings|thighhighs|tights/.test(wear)) wear += ", " + ACTS[k].wear;
     const neg = [NEG_BASE, o.ch.neg];
     let pos;
@@ -520,7 +520,7 @@
     if (o.party > 2) {
       if (o.ng > 1 && !s.self && !s.solo) {
         if (s.date || s.meet != null) pos[0] = `(${gTag(o.ng)}:1.3), (multiple girls:1.1)`;
-        for (const e of o.extras || []) pos.push(`BREAK 1girl, ${e.body}, ${s.date || s.meet != null ? wearOf(e, linger ? "date" : o.outfit) : clothTags(s.cloth, wearOf(e, o.outfit), o)}`);
+        for (const e of o.extras || []) pos.push(`BREAK 1girl, ${e.body}, ${s.date || s.meet != null ? wearOf(e, "date") : clothTags(s.cloth, wearOf(e, o.outfit), o)}`);
       }
       if (!s.self && !s.solo && !(o.ng === 1 && (s.date || s.meet != null))) neg.push(wrongCount(o, s.date || s.meet != null));
       // 구경꾼 없이 전원 참여 — 행위 장면에서는 모두가 서로 닿아 있게
@@ -645,7 +645,7 @@
     if (k && (lv == null || lv < 4) && Math.random() < 0.3 && !x.includes(bare)) x = k + " " + x;
     return x;
   };
-  const stageWear = (sid, ch, o) => (LINGERIE[o.outfit] && /^(meet|video)/.test(sid) ? wearOf(ch, "date") : wearOf(ch, o.outfit));
+  const stageWear = (sid, ch, o) => (/^meet/.test(sid) || (LINGERIE[o.outfit] && /^video/.test(sid)) ? wearOf(ch, "date") : wearOf(ch, o.outfit));
   const rnd = (a, wear, onlyFresh) => {
     if (!a || !a.length) return "";
     let c = a;
