@@ -364,7 +364,13 @@
     { id: "video2", part: "pre", video: 1, solo: 1, n: () => "영상통화 · 2", tags: (o) => `video call, (phone screen:1.1), selfie angle, holding phone, looking at viewer, close-up, sitting on bed, bedroom, warm light, ${G.open[garment(wearOf(o.ch, o.outfit)).top]}, (lace bra:1.3), blush, biting lip` },
     // 만남 첫 장 = 그림 공방의 데이트 장면 (장소 · 때 · 날씨)
     { id: "meet1", part: "pre", n: (o) => `데이트 · ${o.date.n}`, date: 1 },
-    { id: "datetoy", part: "pre", optIn: 1, n: (o) => `데이트 · 몰래 로터 (${o.date.n})`, date: 1, toy: 1 },
+    { id: "datetoy", part: "pre", optIn: 1, date: 1, toy: 1, n: (o) => `몰래 로터 ① 건네받기 (${o.date.n})`, tp: "sitting at table, upper body", tt: "(man's hand offering a small pink vibrator:1.2), remote control vibrator, (surprised:1.15), (blush:1.15), looking down at the vibrator, flustered, hand over mouth" },
+    { id: "dt_wear", part: "pre", after: "datetoy", date: 1, toy: 1, lewd: 1, n: () => "몰래 로터 ② 화장실에서 넣기", tp: "(public restroom:1.2), toilet stall, standing, one leg raised, from side", tt: "(inserting vibrator:1.25), (skirt lift:1.15), (panties pulled down:1.15), pink vibrator, (embarrassed:1.2), biting lip, heavy blush, looking back nervously, door" },
+    { id: "dt_back", part: "pre", after: "datetoy", date: 1, toy: 1, n: () => "몰래 로터 ③ 넣고 돌아와 앉기", tp: "sitting at table, (knees together:1.15), hands on lap, upper body", tt: "(hidden vibrator:1.1), (nervous smile:1.15), (blush:1.15), avoiding eye contact, fidgeting, adjusting skirt" },
+    { id: "dt_low", part: "pre", after: "datetoy", date: 1, toy: 1, n: () => "몰래 로터 ④ 약하게", tp: "sitting at table, upper body", tt: "(remote control vibrator:1.1), (vibrator under clothes:1.1), (surprised:1.2), wide-eyed, (light blush:1.1), squirming, holding cup, trying to act normal" },
+    { id: "dt_mid", part: "pre", after: "datetoy", date: 1, toy: 1, n: () => "몰래 로터 ⑤ 중간", tp: "sitting, leaning forward, cowboy shot", tt: "(vibrator under clothes:1.1), (trembling:1.2), (heavy blush:1.2), biting lip, teary eyes, (legs pressed together:1.2), clutching table edge, sweat, wavy mouth, people in background" },
+    { id: "dt_high", part: "pre", after: "datetoy", date: 1, toy: 1, n: () => "몰래 로터 ⑥ 강하게", tp: "standing, hunched over, cowboy shot", tt: "(vibrator under clothes:1.15), (trembling:1.3), (full-face blush:1.25), (open mouth:1.15), drooling, (teary eyes:1.2), (knees shaking:1.2), covering mouth, hand between legs, people in background" },
+    { id: "dt_cum", part: "pre", after: "datetoy", date: 1, toy: 1, n: () => "몰래 로터 ⑦ 데이트 중 절정", tp: "(crouching:1.1), squatting, full body", tt: "(female orgasm:1.3), (public orgasm:1.2), (trembling:1.35), (covering mouth:1.2), (wet panties:1.1), (pussy juice trickle:1.15), wet thighs, legs shaking, half-closed eyes, tears, (heavy blush:1.3), people in background, outdoors" },
     { id: "meet2", part: "pre", n: (o) => o.place.meet[1][0], meet: 1 },
     { id: "kiss", part: "pre", duo: 1, cloth: "wear", neg: NEG_PRE, n: () => "키스", tags: (o) => `(kiss:1.2), lips touching, his face turned away from viewer, back of his head, (kissing:1.2), face-to-face, ${o.place.lie ? "woman lying on back, supine, man above her, his hand beside her head" : "(woman standing against wall:1.25), back against wall, man standing close in front of her, leaning down to her"}, man kissing woman, body contact, mouth focus, fully clothed, blush, from side, close-up, upper body` },
     { id: "act_glasses", part: "pre", act: "glasses", duo: 1, cloth: "wear", neg: NEG_PRE, n: () => "안경 벗기기", tags: (o) => ACTS.glasses.tags(o) },
@@ -506,8 +512,8 @@
     let pos;
     if (s.date) {
       const w = o.date.out ? WEATHER[o.weather].tags : "";
-      pos = ["1girl, solo", o.ch.body, wear, s.toy ? "(remote control vibrator:1.15), (vibrator under clothes:1.1), (public vibrator:1.1), (surprised:1.25), wide-eyed, (flustered:1.2), (embarrassed:1.2), (heavy blush:1.15), covering mouth, (knees together:1.1), trembling, clutching clothes, wavy mouth, sweat, people in background" : "intimate atmosphere, blush", s.toy ? "standing, upper body" : s.call ? "(talking on phone:1.3), holding phone to ear, (man's hand on her thigh:1.1), sitting close, (nervous smile:1.1), blush, glancing sideways" : o.date.pose, dateBg(o.date, o.time), w, "cowboy shot", QUALITY];
-      neg.push(NEG_PRE);
+      pos = ["1girl, solo", o.ch.body, wear, s.toy ? s.tt : "intimate atmosphere, blush", s.toy ? s.tp : s.call ? "(talking on phone:1.3), holding phone to ear, (man's hand on her thigh:1.1), sitting close, (nervous smile:1.1), blush, glancing sideways" : o.date.pose, dateBg(o.date, o.time), w, "cowboy shot", QUALITY];
+      neg.push(s.lewd ? "(completely nude:1.2), nipples, sex, penis" : NEG_PRE);
     } else if (s.self) {
       pos = ["1girl, solo", o.ch.body, clothTags(s.cloth, wear, o), s.tags(o), o.place.bg, QUALITY];
       neg.push("1boy, penis, cum");
@@ -838,14 +844,27 @@
     if (o.situ === "swap" && g >= 2 && window.BC_YOUCMP && Math.random() < 0.4) body += `\n그녀가 당신 쪽을 보며 말한다. "${BC_YOUCMP("여보", si, g)}"`;
     return (m[1] || "") + body;
   };
-  const dateToyLine = (ch, o) => {
+  const dateToyLine = (ch, o, sid = "datetoy") => {
     const D = window.BC_DATETOY; if (!D) return "";
+    const step = sid === "datetoy" ? "give" : sid.slice(3), ST = D.steps && D.steps[step];
     const si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0;
     const pk = (a) => (a && a.length ? a[Math.floor(Math.random() * a.length)] : "");
     const SRx = o && o.situ && o.party > 2 && window.BC_SITU && BC_SITU[o.situ];
     const other = /^(cheat)$/.test(o && o.rel) || (SRx && SRx.third) || ((watchOn(o) || (o && o.rel === "cheatwatch")) && Math.random() < 0.5);
     const W = other ? D.other : D.you, place = (o && o.date && o.date.n) || "데이트";
     const fill = (x) => String(x).replace(/\{P\}/g, place);
+    if (ST) {   // 단계별: {M} 리모컨을 쥔 사람 (당신 / 그 남자)
+      const M = other ? { i: "그 남자가", ui: "그 남자의", ege: "그 남자에게", n: "그 남자", l: "그 남자를" } : { i: "당신이", ui: "당신의", ege: "당신에게", n: "당신", l: "당신을" };
+      const fm = (x) => fill(x).replace(/\{M이\}/g, M.i).replace(/\{M의\}/g, M.ui).replace(/\{M에게\}/g, M.ege).replace(/\{M을\}/g, M.l).replace(/\{M\}/g, M.n);
+      const sv = (a) => { const v = String(pk(a)).split("|"); return fm(v[si] || v[0] || ""); };
+      const out = [fm(pk(ST.narr)) + ". " + fm(pk(ST.narr2 || ST.narr)) + "."];
+      if (ST.pub && Math.random() < 0.6) out[0] += " " + fm(pk(ST.pub)) + ".";
+      if (ST.snd) out.push(`"${sv(ST.snd)}"`);
+      if (ST.say) out.push(`"${sv(ST.say)}"`);
+      if (other && ST.husb && !watchOn(o) && o.rel !== "cheatwatch" && Math.random() < 0.6) out.push(fm(pk(ST.husb)) + ".");
+      const stg = STAGES.find((x) => x.id === sid);
+      return `[${stg ? stg.n(o) : "몰래 로터"}]` + out.join("\n");
+    }
     const parts = [fill(pk(W.setup)) + ".", fill(pk(D.jolt)) + ".", fill(pk(D.cover)) + "."];
     if (Math.random() < 0.6) parts.push(fill(pk(D.public)) + ".");
     const say1 = String(pk(W.say)).split("|")[si] || "", say2 = String(pk(D.after)).split("|")[si] || "";
@@ -884,7 +903,7 @@
   const lineOf = (sid, ch, o) => postLine(lineOfA(sid, ch, o), sid, ch, o);
   const lineOfA = (sid, ch, o) => {
     fitCtx = o ? { o, sid } : null;
-    if (sid === "datetoy") { try { return dateToyLine(ch, o); } finally { fitCtx = null; } }
+    if (sid === "datetoy" || /^dt_/.test(sid)) { try { return dateToyLine(ch, o, sid); } finally { fitCtx = null; } }
     try {
       let t = lineOf0(sid, ch, watchOn(o) ? { ...o, nb: o.nb - 1, party: o.party - 1 } : o);   // 행위하는 남자 수는 한 명 적게
       // 당신이 행위하지 않는 경우(지켜보는 남편 · 아내의 바람 · 네토라레 · 부부 스와핑): 기본 서술의 행위자 '당신' → '그'를 한 번만 (뒤에 붙는 서술 속 '당신'은 그대로)
