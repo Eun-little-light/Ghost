@@ -23,6 +23,7 @@ patch/charnames_local.js
 
 # 내 빌드 전용 Hunt 인물 이름 (저장소에 올리지 않음 · 배포용엔 '✏ 인물 이름'으로 직접 정함)
 patch/huntnames_local.js
+patch/style_local.js
 
 # 대사 · 표정 · 인원 테스트 시트 (로컬 그림 경로 · 이름이 들어 있음)
 상황_대사_견본*.html
