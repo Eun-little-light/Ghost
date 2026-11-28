@@ -658,12 +658,12 @@
         const items = curP === "all" ? inCat : inCat.filter((h) => partyOf(h).n === +curP);
         const gm = new Map();
         for (const h of items) { const p = partyOf(h), k = `${p.n}|${p.key}`; if (!gm.has(k)) gm.set(k, { title: p.key, sub: p.n + "인", sortN: p.n, a: [] }); gm.get(k).a.push(h); }
-        groups = [...gm.values()];   // 생성순 (목록이 이미 생성 시각순 → 처음 나온 순서)
+        groups = [...gm.values()].sort((x, y) => x.sortN - y.sortN || y.a.length - x.a.length);
       } else {
         // 캐릭터별 묶음 · 소제목에 관계 · 상황 이름
         const gm = new Map();
         for (const h of inCat) { const cn = groupOf(h).cn; if (!gm.has(cn)) gm.set(cn, { title: cn, a: [] }); gm.get(cn).a.push(h); }
-        groups = [...gm.values()];   // 생성순
+        groups = [...gm.values()].sort((x, y) => (x.title === "기타") - (y.title === "기타") || y.a.length - x.a.length);
         for (const x of groups) x.sub = [...new Set(x.a.map(subOf).filter(Boolean))].join(" · ");
       }
       const shown = groups.reduce((s, x) => s + x.a.length, 0);
@@ -698,7 +698,7 @@
     if (!curC) {
       $v("#galleryCount").textContent = `캐릭터 ${folders.size}명 · ${all.length}개`;
       if (!folders.size) { g.innerHTML = '<div class="empty">기록이 없습니다</div>'; return; }
-      const sorted = [...folders.entries()];   // 생성순 (가장 최근 / 가장 오래된 그림이 있는 폴더부터)
+      const sorted = [...folders.entries()].sort((a, b) => (a[1].cn === "기타") - (b[1].cn === "기타") || b[1].items.length - a[1].items.length);
       for (const [cid, f] of sorted) {
         const outs = new Set(f.items.map((h) => groupOf(h).of));
         const el = document.createElement("div"); el.className = "g-item bc-folder"; el.dataset.cid = cid; el._items = f.items;
@@ -716,7 +716,7 @@
     }
     const f = folders.get(curC), byO = new Map();
     for (const h of f.items) { const o = groupOf(h).of; if (!byO.has(o)) byO.set(o, []); byO.get(o).push(h); }
-    const outs = [...byO.entries()];   // 생성순
+    const outs = [...byO.entries()].sort((a, b) => b[1].length - a[1].length);
     // 폴더 안: '전체'(그 캐릭터 그림 전부 · 복장별 소제목으로 나눠 보여 줌) + 복장별 묶음
     if (!curO || (curO !== ALL_O && !byO.has(curO))) curO = ALL_O;
     const isAll = curO === ALL_O, items = isAll ? f.items : byO.get(curO);
@@ -733,10 +733,8 @@
     };
     if (isAll) {
       let n = 0;
-      // 전체는 그림을 생성순 그대로 늘어놓고, 복장이 바뀌는 곳마다 소제목 (복장끼리 모으면 순서가 섞임)
-      const runs = []; for (const h of f.items) { const o = groupOf(h).of; if (!runs.length || runs[runs.length - 1][0] !== o) runs.push([o, []]); runs[runs.length - 1][1].push(h); }
-      const order = f.items;   // 보기 창에서 넘기는 순서 = 화면에 보이는 순서
-      for (const [o, a] of runs) {
+      const order = outs.flatMap(([, a]) => a);   // 보기 창에서 넘기는 순서 = 화면에 보이는 순서
+      for (const [o, a] of outs) {
         if (n >= 1200) break;
         const sh = document.createElement("div"); sh.className = "bc-osub";
         sh.innerHTML = `<b>${esc(o)}</b><span class="muted">${a.length}개</span><button type="button" class="mini" data-o="${esc(o)}">이 복장만 보기 →</button>`;
