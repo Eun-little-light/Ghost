@@ -2,6 +2,7 @@
 //  브라우저 없이 huntpost.js만 읽어 장면 검사기(BC_POST · BC_SCENE_FIX)를 돌림. 실패하면 종료 코드 1
 const fs = require('fs'), path = require('path');
 globalThis.window = globalThis;
+eval(fs.readFileSync(path.join(__dirname, '..', 'huntmore2.js'), 'utf8'));   // 반말 변환기(BC_GEN2.lv)
 eval(fs.readFileSync(path.join(__dirname, '..', 'huntpost.js'), 'utf8'));
 const NTR = { rel: 'lover', situ: 'ntr', absent: true, nb: 1, ng: 1, place: { n: '호텔 스위트룸', bg: 'hotel room, bed' }, pose: { n: '정상위' } };
 const LOVE = { rel: 'lover', place: { n: '호텔 스위트룸', bg: 'hotel room, bed' }, pose: { n: '정상위' } };
@@ -64,6 +65,7 @@ for (let i = 0; i < 30; i++) {   // 무작위가 섞여서 여러 번
 }
 if (ntoriHits < 7) fails.push(`네토리 데이트에 상황 말이 드묾 (${ntoriHits}/10)`);
 if (dateHits < 7) fails.push(`네토라레 데이트에 상황 말이 드묾 (${dateHits}/10)`);
+if (window.BC_GEN2 && BC_GEN2.lv) { const c = BC_GEN2.lv('당신이 보라고 하면… 당신을 좋아해요. 당신은 몰라요', 2); if (!/네가 보라고/.test(c) || /너이|너을|너은/.test(c)) fails.push('반말 변환: ' + c); }
 const uniq = [...new Set(fails)];
 console.log(uniq.length ? 'FAIL\n- ' + uniq.join('\n- ') : 'ALL OK (30회)');
 process.exit(uniq.length ? 1 : 0);
