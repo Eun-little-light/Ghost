@@ -351,10 +351,10 @@
     anal: { n: "애널로 (체위 전체)" },
   };
   const FINISH = {
-    inside: { n: "안에", tags: "(ejaculation:1.3), (cum in pussy:1.4), (internal cumshot:1.3), (cum overflow:1.1), penis deep inside, hips pressed together, sweat" },
-    stomach: { n: "배 위", tags: "(ejaculation:1.3), (cumshot:1.3), (pulling out:1.2), penis, (cum on stomach:1.3), cum string, sweat" },
-    thighs: { n: "허벅지", tags: "(ejaculation:1.3), (cumshot:1.3), (pulling out:1.2), penis, (cum on thighs:1.2), cum on pussy, cum string, sweat" },
-    breasts: { n: "가슴", tags: "(ejaculation:1.3), (cumshot:1.3), penis, (cum on breasts:1.2), cum string, sweat, upper body, from above" },
+    inside: { n: "안에", tags: "(ejaculation:1.3), (cum in pussy:1.4), (internal cumshot:1.3), (excessive cum:1.3), (cum overflow:1.35), (cum leaking from pussy:1.3), cum drip, cum pool, cum on thighs, penis deep inside, hips pressed together, sweat" },
+    stomach: { n: "배 위", tags: "(ejaculation:1.3), (cumshot:1.3), (pulling out:1.2), penis, (excessive cum:1.3), (cum on stomach:1.35), cum pool on stomach, cum on breasts, thick cum, cum string, sweat" },
+    thighs: { n: "허벅지", tags: "(ejaculation:1.3), (cumshot:1.3), (pulling out:1.2), penis, (excessive cum:1.3), (cum on thighs:1.35), (cum on pussy:1.2), cum drip, thick cum, cum string, sweat" },
+    breasts: { n: "가슴", tags: "(ejaculation:1.3), (cumshot:1.3), penis, (excessive cum:1.3), (cum on breasts:1.35), cum on face, cum on neck, thick cum, cum string, sweat, upper body, from above" },
   };
   // 도구 (애무 · 자위 단계) — 서로 원해서 쓰는 성인용품
   const TOOLS = {
@@ -547,7 +547,7 @@
     { id: "deny2", part: "pose", skip: (o) => o.cx !== "no" && o.cx !== "denyBoth", duo: 1, cloth: "main", n: () => "애태우기 · 2", tags: (o) => `${o.pose.tags}, penis inside, (begging:1.2), teary eyes, desperate, squirming, ${o.place.lie ? "gripping sheets" : "hands on wall"}, her cheeks flushed, heavy breathing, sweat, wet hair, unsatisfied` },
     { id: "climax", part: "pose", skip: isBoth, duo: 1, cloth: "main", n: () => "절정", tags: (o) => `${o.pose.tags}, sweat, wet hair, her cheeks flushed, orgasm, arched back, trembling, tears of pleasure` },
     // 동시 절정: 그녀와 그가 함께 — 사정 위치(안에 / 배 위 …)는 '사정 위치'에서 고른 대로
-    { id: "climax_both", part: "pose", skip: (o) => !isBoth(o), duo: 1, cloth: "main", n: (o) => `동시 절정 · ${o.fin.n}`, tags: (o) => `${o.pose.tags}, (simultaneous orgasm:1.25), (ejaculation:1.25), ${o.fin === FINISH.inside ? "(internal cumshot:1.2), cum in pussy, penis deep inside, hips pressed together" : `(pulling out:1.1), cumshot, ${cumLoc(o)}`}, both climaxing, her orgasm, arched back, trembling, holding each other, sweat, wet hair, her cheeks flushed, tears of pleasure` },
+    { id: "climax_both", part: "pose", skip: (o) => !isBoth(o), duo: 1, cloth: "main", n: (o) => `동시 절정 · ${o.fin.n}`, tags: (o) => `${o.pose.tags}, (simultaneous orgasm:1.25), (ejaculation:1.25), ${o.fin === FINISH.inside ? "(internal cumshot:1.25), (cum in pussy:1.3), (excessive cum:1.25), (cum overflow:1.3), cum leaking, penis deep inside, hips pressed together" : `(pulling out:1.1), cumshot, ${cumLoc(o)}`}, both climaxing, her orgasm, arched back, trembling, holding each other, sweat, wet hair, her cheeks flushed, tears of pleasure` },
     { id: "after1", part: "pose", duo: 1, cloth: "main", n: () => "여운 · 1", tags: (o) => `${o.pose.tags}, flushed, dazed, (afterglow:1.05), wet pussy, ${isBoth(o) ? cumLoc(o) + ", " : ""} (overstimulation:1.1), post-orgasm, sensitive, twitching, sweat` },
     { id: "after2", part: "pose", duo: 1, cloth: "main", n: () => "여운 · 2", tags: (o) => `${o.pose.tags}, flushed, dazed, (afterglow:1.05), ${isBoth(o) ? cumLoc(o) + ", " : ""} (overstimulation:1.2), post-orgasm, body jerk, legs shaking, ${o.place.lie ? "gripping sheets" : "hands on wall"}, sweat, wet hair` },
     { id: "finish", part: "pose", skip: isBoth, duo: 1, cloth: "main", n: (o) => `사정 · ${o.fin.n}`, tags: (o) => `${o.pose.stand && !o.place.lie ? "standing, back against wall" : "lying on back, spread legs"}, ${o.fin.tags}, her cheeks flushed, heavy breathing` },
@@ -581,12 +581,12 @@
   // 삽입 없는 행위에도 절정 · 사정 장면을 바로 뒤에 한 장 (그 행위를 고른 경우에만 · '만들 단계'에서 따로 끌 수 있음)
   //  m: 그의 사정 (입 · 얼굴 · 가슴 · 손 · 발 · 허벅지 · 배) / f: 그녀의 절정
   const FORE_FIN = {
-    oral: ["m", "(cum in mouth:1.25), (facial:1.1), cum on face, cum on tongue, tongue out, (ejaculation:1.15), penis, cum string, half-closed eyes, (heavy breathing:1.1), looking up at viewer"],
-    handjob: ["m", "(handjob:1.15), (ejaculation:1.25), cum on hands, cum on breasts, cum on clothes, penis, (surprised:1.05), blush, looking at viewer"],
-    paizuri: ["m", "(paizuri:1.15), (ejaculation between breasts:1.25), (cum on breasts:1.2), cum on face, penis, breasts squeezed together, looking up at viewer"],
-    footjob: ["m", "(footjob:1.15), (ejaculation:1.2), (cum on feet:1.2), soles, toes, penis, smug, blush"],
-    thighjob: ["m", "(thigh sex:1.15), (ejaculation:1.2), (cum on thighs:1.2), cum on stomach, legs together, penis"],
-    grind: ["m", "(sumata:1.15), (ejaculation:1.2), (cum on stomach:1.2), cum on pussy, (no penetration:1.2), penis, pussy juice"],
+    oral: ["m", "(cum in mouth:1.3), (excessive cum:1.25), (cum overflow from mouth:1.15), (facial:1.15), cum on face, cum on tongue, tongue out, (ejaculation:1.15), penis, cum string, half-closed eyes, (heavy breathing:1.1), looking up at viewer"],
+    handjob: ["m", "(handjob:1.15), (ejaculation:1.25), (excessive cum:1.25), cum on hands, cum on breasts, cum on clothes, penis, (surprised:1.05), blush, looking at viewer"],
+    paizuri: ["m", "(paizuri:1.15), (ejaculation between breasts:1.25), (excessive cum:1.25), (cum on breasts:1.35), cum on face, penis, breasts squeezed together, looking up at viewer"],
+    footjob: ["m", "(footjob:1.15), (ejaculation:1.2), (excessive cum:1.2), (cum on feet:1.3), soles, toes, penis, smug, blush"],
+    thighjob: ["m", "(thigh sex:1.15), (ejaculation:1.2), (excessive cum:1.2), (cum on thighs:1.3), cum on stomach, legs together, penis"],
+    grind: ["m", "(sumata:1.15), (ejaculation:1.2), (excessive cum:1.2), (cum on stomach:1.3), cum on pussy, (no penetration:1.2), penis, pussy juice"],
     sixtynine: ["m", "(69:1.2), (ejaculation:1.15), (cum in mouth:1.15), (female orgasm:1.15), trembling, cunnilingus"],
     hand: ["f", "(female orgasm:1.3), (fingering:1.15), (trembling:1.2), arched back, (pussy juice:1.2), squirting, toes curled, open mouth, tears, heavy breathing"],
     toy: ["f", "(female orgasm:1.3), (vibrator:1.15), (trembling:1.2), arched back, (pussy juice:1.2), squirting, legs shaking, toes curled, open mouth, tears"],
@@ -600,7 +600,7 @@
     STAGES.splice(i + 1, 0, { ...b, id: id + "_fin", after: id, finWho: who, n: (o) => `${b.n(o)} · ${who === "m" ? "사정" : "절정"}`, tags: (o) => `${b.tags(o)}, ${tg}` });
   }
   // 입에 받은 정액: 입안에 머금고 보여 주기 → 삼키고 반응 기다리기 (펠라치오 사정 뒤 · 마지막 사정 뒤 청소)
-  const M_HOLD = "(cum in mouth:1.35), (open mouth:1.2), (showing cum in mouth:1.2), cum pool on tongue, tongue out, cum string, kneeling, looking up at viewer, blush, half-closed eyes, pov, from above, upper body";
+  const M_HOLD = "(cum in mouth:1.35), (mouth full of cum:1.25), (excessive cum:1.15), (open mouth:1.2), (showing cum in mouth:1.2), cum pool on tongue, tongue out, cum string, kneeling, looking up at viewer, blush, half-closed eyes, pov, from above, upper body";
   const M_SWAL = "(after swallowing:1.2), (empty mouth:1.2), open mouth, tongue out, showing tongue, cum on lips, kneeling, looking up at viewer, (expectant:1.15), waiting, blush, smile, pov, from above, upper body";
   const M_NEG = "fellatio, penis in mouth, (sex:1.2), vaginal, penetration";
   { const i = STAGES.findIndex((s) => s.id === "oral_fin");
@@ -744,6 +744,7 @@
     { const attOn = o.situ === "ntr" || o.absent || /^(cheat|cheatwatch|rebound|affair)$/.test(o.rel || "");
       if (attOn && attSel === "hesitant" && /^(warm_|kiss|neck|caress|undress|ready)/.test(s.id)) pos.push("(hesitant:1.15), guilty expression, conflicted, biting lip, looking away");
       if (attOn && attSel === "rough" && /^(pose|deny|climax|oral)/.test(s.id)) pos.push("(rough sex:1.15), (hair pulling:1.1), (spanking:1.05), red handprint on ass, messy hair, eager expression"); }
+    if (o.fin === FINISH.inside && /^(care|bye|finish_both)$/.test(s.id)) pos.push("(cum leaking from pussy:1.25), cum drip, creampie, cum on thighs");   // 안에 싼 뒤: 흘러나옴
     if ((obsSel === "strong" || obsSel === "extreme") && /^(after|finish_both|clean_swallow)/.test(s.id)) pos.push(obsSel === "extreme" ? "(clinging:1.2), (hugging his arm tightly:1.15), possessive gaze, intense eyes" : "(clinging:1.1), holding his arm, possessive smile");
     for (const k of o.traits || []) { const L = LATENT[k]; if (L && L.t && !s.solo) pos.push(L.t[latGroup(s)] || ""); }
     const ex = exprFor(s.id, o.face || "mix", [...(((window.BC_VOICE || {})[o.ch && o.ch.id] || {}).tone || []), ...(o.traits || []).flatMap((k) => (LATENT[k] || {}).tone || [])]); pos.push(emphExpr(ex), ex && !EXPR_LOUD_SET.has(ex) ? FACE : "");
