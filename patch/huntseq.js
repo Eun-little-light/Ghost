@@ -741,6 +741,9 @@
       if (ACTS[k].neg) neg.push(ACTS[k].neg);
     }
     if (o.dur && DURING[o.dur] && DURING[o.dur].tags) pos.push(DURING[o.dur].tags);
+    { const attOn = o.situ === "ntr" || o.absent || /^(cheat|cheatwatch|rebound|affair)$/.test(o.rel || "");
+      if (attOn && attSel === "hesitant" && /^(warm_|kiss|neck|caress|undress|ready)/.test(s.id)) pos.push("(hesitant:1.15), guilty expression, conflicted, biting lip, looking away");
+      if (attOn && attSel === "rough" && /^(pose|deny|climax|oral)/.test(s.id)) pos.push("(rough sex:1.15), (hair pulling:1.1), (spanking:1.05), red handprint on ass, messy hair, eager expression"); }
     if ((obsSel === "strong" || obsSel === "extreme") && /^(after|finish_both|clean_swallow)/.test(s.id)) pos.push(obsSel === "extreme" ? "(clinging:1.2), (hugging his arm tightly:1.15), possessive gaze, intense eyes" : "(clinging:1.1), holding his arm, possessive smile");
     for (const k of o.traits || []) { const L = LATENT[k]; if (L && L.t && !s.solo) pos.push(L.t[latGroup(s)] || ""); }
     const ex = exprFor(s.id, o.face || "mix", [...(((window.BC_VOICE || {})[o.ch && o.ch.id] || {}).tone || []), ...(o.traits || []).flatMap((k) => (LATENT[k] || {}).tone || [])]); pos.push(emphExpr(ex), ex && !EXPR_LOUD_SET.has(ex) ? FACE : "");
@@ -793,13 +796,14 @@
   let multi = ls.get("multi", false), undress = ls.get("undress", true);
   let video = ls.get("video", false);
   let on = ls.get("on", {});
-  let sameSeed = ls.get("sameSeed", true), lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), leadSel = ls.get("leadin", "mutual"), obsSel = ls.get("obsess", "none"), lewdSel = ls.get("lewd", "crude"), arSel = ls.get("arousal", "normal"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
+  let sameSeed = ls.get("sameSeed", true), lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), leadSel = ls.get("leadin", "mutual"), obsSel = ls.get("obsess", "none"), lewdSel = ls.get("lewd", "crude"), attSel = ls.get("attitude", "none"), arSel = ls.get("arousal", "normal"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
   // 대사 형식: Hunt 방식([장소] · 서술 · "말") / Wayward 방식([단계]서술 "소리" … "말" 『속마음』 — huntway.js)
   const FMTS = { hunt: "Hunt 방식", wayward: "Wayward 방식" };
   let fmtSel = FMTS[ls.get("fmt", "hunt")] ? ls.get("fmt", "hunt") : "hunt";
   let secs = Number(ls.get("secs", 14)) || 14;   // 한 장 평균 시간(초) — 실제 생성 시간으로 계속 고쳐짐
   const SPEECH = { auto: "캐릭터 말투", polite: "존댓말", formal: "격식체", casual: "반말" };
   const MSPEECH = { casual: "남자: 반말", polite: "남자: 존댓말" };
+  const ATTITUDE = { none: "그녀의 태도: 기본", hesitant: "망설이다 스스로 넘어감", rough: "거칠게 다뤄지길 원함" };
   const LEWD = { soft: "음란도: 순하게", normal: "보통", crude: "천박하게", extreme: "아주 천박하게" };
   const AROUSAL = { low: "흥분도: 낮게 시작", normal: "보통", high: "이미 달아오름" };
   const OBSESS = { none: "집착: 없음", mild: "약간", strong: "강함", extreme: "아주 강함" };
@@ -1122,7 +1126,8 @@
       if (others >= 2) t = String(t).replace(/이이가/g, "이분들이").replace(/이이는/g, "이분들은").replace(/이이를/g, "이분들을").replace(/이이(?!들)/g, "이분들");
       else if (callJagi) t = String(t).split('"').map((seg, i) => (i % 2 ? seg.replace(/이분(?!들)|이이/g, "자기") : seg)).join('"');
     }
-    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel, cr: crSel, ob: obsSel, lw: lewdSel, ar: arSel, on: ({ work: "업무복", lounge: "실내복", officeDate: "출근 옷" }[o && o.outfit] || OUTFITS[o && o.outfit] || ""), pn: (o && o.place && o.place.n) || "" }) || t; } catch {} }   // 덧붙는 말도 아래 중복 확인을 거치게 먼저
+    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel, cr: crSel, ob: obsSel, lw: lewdSel, ar: arSel, at: attSel, on: ({ work: "업무복", lounge: "실내복", officeDate: "출근 옷" }[o && o.outfit] || OUTFITS[o && o.outfit] || ""), pn: (o && o.place && o.place.n) || "" }) || t; } catch {} }
+   // 덧붙는 말도 아래 중복 확인을 거치게 먼저
     if (seenQ && t) {   // 이미 나온 말은 빼고, 말이 빠져 '…말한다.'만 남은 줄도 뺌 (다 빠지면 그대로)
       const SV = /(말한다|묻는다|속삭인다|중얼거린다|웃는다|건넨다|되묻는다)\.?\s*$/;
       // 같은 말 판단은 앞의 신음 · 입버릇과 끝 문장부호를 떼고 (예: "아앗… 이제 못 돌아가요…!" = "이제 못 돌아가요")
@@ -1291,6 +1296,7 @@
       <div style="margin-top:6px"><small class="muted">관계 직전까지 — 술 한잔 · 대화 → 스킨십이 시작되는 순간 (누가 먼저 다가가는지)</small>${seg("hsLeadIn", LEADIN, leadSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">그녀의 집착 — 강할수록 질투 · 독점하는 말이 자주 (관계 직전부터 여운까지)</small>${seg("hsObsess", OBSESS, obsSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">음란도 — 대사의 천박함 (순하게면 센 낱말이 든 덧붙는 대사를 뺌)</small>${seg("hsLewd", LEWD, lewdSel, false)}</div>
+      <div style="margin-top:6px"><small class="muted">그녀의 태도 — 네토라레 · 아내의 바람 · 알고 허락해 지켜봄 · 불륜 · 홧김의 새 남자에서 (모두 그녀가 원해서)</small>${seg("hsAttitude", ATTITUDE, attSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">그녀의 흥분도 — 초반부터 달아올라 있는지</small>${seg("hsArousal", AROUSAL, arSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">그녀의 날 — 시작 전 · 안에 사정할 때 대사가 달라짐</small>${seg("hsCycle", CYCLES, cycleSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">상대 자지 크기 — 그림과 삽입 · 절정 대사가 달라짐</small>${seg("hsSize", SIZES, sizeSel, false)}</div></div>
@@ -1482,6 +1488,7 @@
   bindSeg("hsLeadIn", (v) => { leadSel = v; ls.set("leadin", v); pick("hsLeadIn", v); });
   bindSeg("hsObsess", (v) => { obsSel = v; ls.set("obsess", v); pick("hsObsess", v); });
   bindSeg("hsLewd", (v) => { lewdSel = v; ls.set("lewd", v); pick("hsLewd", v); });
+  bindSeg("hsAttitude", (v) => { attSel = v; ls.set("attitude", v); pick("hsAttitude", v); });
   bindSeg("hsArousal", (v) => { arSel = v; ls.set("arousal", v); pick("hsArousal", v); });
   bindSeg("hsCycle", (v) => { cycleSel = v; ls.set("cycle", v); pick("hsCycle", v); });
   bindSeg("hsSize", (v) => { sizeSel = v; ls.set("psize", v); pick("hsSize", v); draw(); });

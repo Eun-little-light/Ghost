@@ -222,10 +222,9 @@
     let w = x;
     if (V && V.tone && V.tone.length && Math.random() < 0.25) { const T = TONE_TAIL[V.tone[Math.floor(Math.random() * V.tone.length)]]; if (T) w = w.replace(/[.…]+$/, "") + (/[?!]$/.test(w) ? " " : "… ") + pick(T).replace(/^…/, ""); }
     if (V && V.tics && V.tics.length && Math.random() < 0.3 && !/^(아|하|흐|있잖|솔직|진짜|…)/.test(w)) w = pick(V.tics) + " " + w;
-    w = G && G.lv ? G.lv(w, si) : w;
     const call = third ? "자기" : V && V.call && V.call !== "자기" ? V.call : "";
-    if (call) w = w.replace(/당신(이에요|이요|이랑|이|은|을|과)?/g, (m, j) => callJo(call, j));
-    return w;
+    if (call) w = w.replace(/당신(이에요|이요|이랑|이|은|을|과)?/g, (m, j) => callJo(call, j));   // 반말로 바꾸기 전에 (반말은 당신 → 너)
+    return G && G.lv ? G.lv(w, si) : w;
   };
   // 아주 천박하게: 더 노골적인 주고받는 말
   const EXX = {
@@ -314,6 +313,7 @@
     const kk = k || (/^warm_/.test(sid) ? "pre" : "");
     if (opt && opt.ob && opt.ob !== "none") s += obsLine(kk, o, si, opt.ob, ar);   // 그녀의 집착 (흥분도가 높으면 더 노골적)
     s += arLine(kk, sid, o, si, ar, lw);   // 그녀의 흥분도
+    s += attLine(sid, o, si, opt && opt.at, lw);   // 그녀의 태도 (망설임 · 거칠게)
     if (/^(datetoy|dt_)/.test(sid)) s += toyLine(sid, o, si, lw, ms);   // 로터: 음란도대로
     if (k && EX[k] && Math.random() < 0.9) s += exchange(k, o, si, lw);   // 그녀 ↔ 상대 남자가 주고받는 말
     else {
@@ -392,6 +392,42 @@
     if (O && TPL.O[k] && Math.random() < 0.45) { const x = tfill(pick(TPL.O[k]), O, P); if (lw !== "soft" || !SOFT_BAN.test(x)) out += `\n"${herLine(x, o, si, third)}"`; }
     if (P && TPL.P[k] && Math.random() < 0.4) { const x = tfill(pick(TPL.P[k]), O, P); if (lw !== "soft" || !SOFT_BAN.test(x)) out += `\n"${herLine(x, o, si, third)}"`; }
     if (O && P && TPL.M[k] && lw !== "soft" && Math.random() < 0.3) out += `\n${pick(third ? LEAD_HIM : LEAD_YOU)}. "${tfill(pick(TPL.M[k]), O, P)}"`;
+    return out;
+  };
+  // 그녀의 태도 (네토라레 · 바람 · 불륜 · 홧김): 망설이다 스스로 넘어감 / 거칠게 다뤄지길 원함 — 모두 그녀가 원해서
+  //  {H} 상대 (불륜 = 당신, 그 밖 = 그 남자) · {H의} {H를} {H가} 조사 꼴 · 그녀의 말은 해요체로 쓰고 말투대로 바뀜
+  const ATT = {
+    hesitant: {
+      pre: { narr: S("그녀가 {H}의 손을 밀어내려다, 손목을 쥔 채 멈춘다/그녀가 일어나려다 다시 앉는다. 시선이 자꾸 {H}에게 간다/그녀가 반지 낀 손을 무릎 사이에 숨긴다"), her: S("안 돼요… 저 남편 있는 거 알잖아요/…일어나야 하는데. 다리가 안 움직여요/이러면 안 되는 거 아는데… 손을 못 놓겠어요/오늘만… 아니, 그런 말 하면 안 되는데"), him: S("싫으면 지금 일어나. 안 잡을게/네가 정해. 난 기다릴게/떨고 있네. 무서워?") },
+      kiss: { narr: S("키스만이라던 그녀가 먼저 {H}의 셔츠 단추를 푼다/그녀가 고개를 돌리려다, 결국 {H}의 입술을 찾는다"), her: S("한 번만이에요… 진짜 키스만요/이러면 안 되는데… 왜 제 손이 먼저 가죠/눈 감으면 괜찮을 것 같아서요… 아니에요, 다 보여요"), him: S("멈출까?/네 손이 먼저 왔어") },
+      fore: { narr: S("그녀가 부끄러운 듯 고개를 돌리면서도 다리를 벌린다"), her: S("남편한테도 이런 거 안 해 봤는데…/이상해요… 싫어야 하는데 몸이 먼저 반응해요/더 하면 진짜 못 멈춰요… 알면서도…"), him: S("싫은 얼굴이 아닌데/손 치워 줄까?") },
+      ready: { narr: S("그녀가 {H}의 허리를 붙잡는다. 밀어내는 건지 끌어당기는 건지 모를 손이다"), her: S("넣으면… 진짜 돌아갈 수 없어요/…아니요. 제가 원해요. 넣어 줘요/잠깐만요… 숨 한 번만 쉬고요. …이제 돼요"), him: S("멈출까?/정말 괜찮아?") },
+      sex: { narr: S("죄책감에 젖은 얼굴로, 그녀가 스스로 허리를 들어 더 깊이 받아들인다/그녀가 울 것 같은 얼굴로, 그래도 {H}를 놓지 않는다"), her: S("남편한테 미안한데… 이게 더 좋아요… 미안해요…!/제가 선택한 거예요… 그러니까 끝까지 해 줘요…!/나쁜 여자 같아요… 근데 멈추지 마요…!/싫다고 했던 거 거짓말이에요… 다 거짓말…!"), him: S("이제 망설임 없네/네가 원한 거야") },
+      climax: { narr: S("그녀의 눈에서 눈물이 흐르는데, 입가는 웃고 있다"), her: S("가 버렸어요… 남편 아닌 사람한테…/이제 진짜… 돌아갈 수 없게 됐어요…!"), him: S("후회해?") },
+      after: { narr: S("그녀가 천장을 보며 한참 말이 없다가, {H}의 품으로 파고든다"), her: S("후회할 줄 알았는데… 안 해요. 그게 더 무서워요/다음엔 망설이지 않을 거예요/제가 이렇게 쉬운 여자인 줄 몰랐어요… 당신한테만요"), him: S("괜찮아?/천천히 해. 아무 데도 안 가") },
+    },
+    rough: {
+      pre: { narr: S("그녀가 {H}의 손을 끌어다 제 목덜미에 얹는다/그녀가 {H}의 넥타이를 쥐고 끌어당긴다"), her: S("남편은 너무 조심스러워요… 자기는 그러지 마요/오늘은 망가질 때까지 해 줘요. 제가 부탁하는 거예요/멈추고 싶으면 '빨강'이라고 할게요. 그 전엔 봐주지 마요/살살 하면 화낼 거예요"), him: S("후회 안 해?/'빨강'이면 바로 멈춘다. 약속해") },
+      kiss: { narr: S("그녀가 {H}의 아랫입술을 깨물고 도발하듯 웃는다"), her: S("입술 깨물어 줘요… 아프게요/벽에 밀어붙여요. 거칠게요"), him: S("이렇게?/도발하네") },
+      fore: { narr: S("그녀가 {H}의 손을 끌어다 제 머리채를 쥐게 한다"), her: S("머리채 잡고 해 줘요… 목 끝까지요/컥… 네, 그렇게요… 더요/가슴 세게 쥐어 줘요… 자국 남게"), him: S("이렇게?/눈물 나도 안 멈춘다") },
+      ready: { narr: S("그녀가 엉덩이를 들이밀며 돌아본다"), her: S("한 번에 끝까지 넣어 줘요… 봐주지 마요/천천히 하면 화낼 거예요"), him: S("한 번에 간다") },
+      sex: { narr: S("그녀가 {H}의 손을 끌어다 제 목덜미에 얹고, 머리채를 쥐게 한다/엉덩이에 손자국이 붉게 남을 때마다 그녀가 더 크게 운다"), her: S("엉덩이 때려 줘요… 자국 남게, 남편이 보게요…!/더 세게 박아요… 남편은 이렇게 못 해 줘요…!/네… 제가 원한 거예요… 더 거칠게요…!/짐승처럼 해 줘요… 망가뜨려 줘요…!"), him: S("목소리 더 내. 네가 원한 거잖아/더 세게 간다. 괜찮지?") },
+      climax: { narr: S("그녀가 머리채를 잡힌 채 허리를 활처럼 휘며 간다"), her: S("이렇게 짐승처럼 당해 보고 싶었어요… 남편 앞에선 못 했던 거…!/아파요… 좋아요… 더 아프게 해 줘요…!"), him: S("이게 원한 거지?") },
+      after: { narr: S("{H}가 그녀의 붉어진 엉덩이를 쓰다듬으며 숨을 고른다"), her: S("온몸에 자국 다 남았어요… 집에 가서 보여 줄까요?/좋았어요. …다음엔 더 세게요/'빨강' 말할 뻔했는데… 안 하길 잘했어요"), him: S("괜찮아? 아팠던 데 없어?/얼음 가져올게. 누워 있어") },
+    },
+  };
+  const attOn = (o) => !!o && (o.situ === "ntr" || o.absent || /^(cheat|cheatwatch|rebound|affair)$/.test(o.rel || ""));
+  const attGroup = (sid) => (/^warm_/.test(sid) ? "pre" : /^(kiss|neck|caress|undress|act_)/.test(sid) ? "kiss" : /^(chest|nipple|hand|toy|cunni|analtoy|oral|handjob|paizuri|footjob|thighjob|sixtynine|grind)(?!_fin)/.test(sid) && !/_fin$/.test(sid) ? "fore" : sid === "ready" ? "ready" : /^(pose|deny)/.test(sid) ? "sex" : /^(climax|finish)|_fin$/.test(sid) ? "climax" : /^(after|clean)/.test(sid) ? "after" : "");
+  const attLine = (sid, o, si, at, lw) => {
+    if (!at || at === "none" || !attOn(o)) return "";
+    const A = ATT[at] && ATT[at][attGroup(sid)]; if (!A || Math.random() > 0.55) return "";
+    const aff = o.rel === "affair", H = aff ? "당신" : "그 남자", third = thirdOf(o);
+    const fillH = (x) => x.replace(/\{H\}의/g, H + "의").replace(/\{H\}를/g, aff ? "당신을" : "그 남자를").replace(/\{H\}가/g, aff ? "당신이" : "그 남자가").replace(/\{H\}에게/g, H + "에게").replace(/\{H\}/g, H);
+    let out = "";
+    if (Math.random() < 0.4) out += `\n${fillH(pick(A.narr))}.`;
+    const her = pick(A.her); if (lw === "soft" && SOFT_BAN.test(her)) return out;
+    out += `\n"${herLine(her, o, si, third)}"`;
+    if (A.him && Math.random() < 0.5) out += `\n${pick(third ? LEAD_HIM : LEAD_YOU)}. "${pick(A.him)}"`;
     return out;
   };
   // 침대 없는 장소에서 침대 · 시트 · 이불 · 베개 낱말을 그 장소에 있는 것으로 (조사도 맞춤)
