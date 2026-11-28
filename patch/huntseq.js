@@ -234,6 +234,12 @@
     bath: { n: "욕실 샤워부스", bg: "(bathroom:1.15), (shower:1.2), steam, wet tiles, glass shower door, water droplets, warm light, indoors", meet: [["욕실 · 물 받는 중", "standing in bathroom, holding towel, steam, smile, looking at viewer, warm light"], ["샤워부스 · 같이", "wet hair, steam, glass shower door, blush, looking at viewer, water droplets, shower"]], lie: false, care: "wrapped in towel, wet hair, steam, afterglow, flushed, sitting on bathtub edge", floor: "clothes on bathroom floor" },
     rooftop: { n: "밤의 옥상", bg: "(rooftop at night:1.2), city lights, railing, water tank, outdoors, night sky, wind", meet: [["옥상 · 바람 쐬기", "leaning on railing, city lights, wind, hair blowing, smile, looking at viewer, rooftop, night"], ["옥상 · 문이 잠김", "back against wall, rooftop door, night, city lights, blush, looking at viewer, outdoors"]], lie: false, care: "sitting against railing, city lights, fixing clothes, flushed, heavy breathing, wind", floor: "clothes on rooftop floor" },
     camper: { n: "캠핑카", bg: "(camper van interior:1.2), small bed, fairy lights, wooden interior, curtains, forest outside window, night", meet: [["캠핑장 · 모닥불", "sitting by campfire, blanket on shoulders, holding mug, smile, looking at viewer, night, forest"], ["캠핑카 · 문이 닫힘", "sitting on small bed, fairy lights, blush, looking at viewer, (camper van interior:1.2), night"]], lie: true, care: "lying under blanket, fairy lights, afterglow, flushed, sleepy smile, camper van", floor: "clothes on camper floor" },
+    motel: { n: "모텔 방", bg: "(motel room:1.2), round bed, red neon light, mirror on ceiling, cheap wallpaper, dim lighting, indoors, night", meet: [["모텔 앞 · 망설임", "standing in front of motel entrance, neon sign, night, holding bag strap, blush, looking away"], ["모텔 방 · 문이 잠김", "sitting on edge of round bed, red neon light, blush, biting lip, looking at viewer, indoors, night"]], lie: true, care: "lying on round bed, red neon light, afterglow, messy hair, flushed", floor: "clothes on motel floor" },
+    pool: { n: "밤의 실내 수영장", bg: "(indoor swimming pool at night:1.2), pool water, underwater lights, tiles, poolside, steam, empty, indoors, night", meet: [["수영장 · 몰래 들어옴", "standing at poolside, night, underwater lights, mischievous smile, looking at viewer"], ["풀사이드 · 둘만", "sitting at pool edge, legs in water, wet hair, wet skin, blush, looking at viewer"]], lie: false, care: "sitting at poolside, wet hair, towel on shoulders, flushed, heavy breathing", floor: "clothes on poolside tiles" },
+    sauna: { n: "사우나 개인실", bg: "(private sauna room:1.2), wooden benches, steam, sauna stones, warm light, indoors", meet: [["사우나 · 수건 한 장", "wrapped in towel, standing at sauna door, steam, blush, looking at viewer"], ["개인실 · 문이 닫힘", "sitting on wooden bench, towel, steam, sweat, flushed, looking at viewer"]], lie: true, care: "lying on wooden bench, towel, steam, sweat, afterglow, flushed", floor: "towel on wooden floor" },
+    train: { n: "침대칸 기차", bg: "(sleeper train compartment:1.2), narrow bunk bed, small window, passing night scenery, dim reading light, indoors, night", meet: [["기차역 · 출발 전", "standing on train platform, holding luggage, night, smile, looking at viewer"], ["침대칸 · 커튼을 침", "sitting on narrow bunk, small window, night scenery, blush, looking at viewer"]], lie: true, care: "lying on narrow bunk, blanket, window, afterglow, sleepy, flushed", floor: "clothes on compartment floor" },
+    terrace: { n: "오션뷰 숙소 테라스", bg: "(ocean view terrace:1.2), wooden deck, outdoor sofa, ocean, sea breeze, sunset sky, outdoors", meet: [["숙소 · 체크인", "standing at villa entrance, holding key, smile, looking at viewer"], ["테라스 · 노을", "leaning on terrace railing, ocean, sunset, wind in hair, looking back at viewer"]], lie: true, care: "lying on outdoor sofa, ocean, sunset, afterglow, flushed, messy hair", floor: "clothes on wooden deck" },
+    studio: { n: "사진 스튜디오", bg: "(photo studio:1.2), white backdrop, softbox lights, camera on tripod, reflector, indoors", meet: [["스튜디오 · 촬영 시작", "posing in front of white backdrop, softbox lights, smile, looking at viewer"], ["스튜디오 · 스태프가 나감", "sitting on stool, softbox lights, blush, looking at viewer, camera on tripod"]], lie: false, care: "sitting on studio floor, white backdrop, fixing hair, flushed, heavy breathing", floor: "clothes on studio floor" },
   };
   const POSES = {
     wall: { n: "벽 (선 채로)", stand: true, tags: "(standing sex:1.3), against wall, (leg lift:1.2), arms around neck, face-to-face, (vaginal sex:1.2), penis in pussy, from side" },
@@ -333,7 +339,8 @@
     dildo: { n: "딜도", caress: "(holding dildo:1.2), teasing with dildo, rubbing dildo against panties, sex toy", self: "(dildo:1.3), (dildo in pussy:1.2), holding dildo, sex toy" },
   };
   const OUTFITS = { work: "일터", casual: "평상복", date: "데이트", officeDate: "퇴근 데이트", lounge: "집에서 입는 옷", lingerieBlack: "란제리 (검정)", lingerieWhite: "란제리 (흰색)",
-    babydoll: "비치는 베이비돌", negligee: "비치는 네글리제", bodystocking: "바디스타킹", microBikini: "마이크로 비키니", bunny: "바니걸", maid: "메이드복", nurse: "간호사복", china: "차이나 드레스", latex: "라텍스 바디슈트" };
+    babydoll: "비치는 베이비돌", negligee: "비치는 네글리제", bodystocking: "바디스타킹", microBikini: "마이크로 비키니", bunny: "바니걸", maid: "메이드복", nurse: "간호사복", china: "차이나 드레스", latex: "라텍스 바디슈트",
+    police: "경찰 코스튬", stewardess: "승무원 유니폼", secretary: "비서 정장", yukata: "유카타", wedding: "웨딩드레스", succubus: "서큐버스 코스튬", catLingerie: "고양이 란제리", silkRobe: "실크 가운", ribbon: "리본 포장", sportswear: "운동복", swimsuit: "하이레그 수영복", bfShirt: "남자 셔츠 한 장", harness: "가죽 하네스", reverseBunny: "역바니", openSweater: "등 트인 니트", idol: "아이돌 무대 의상", witch: "마녀 코스튬", laceBodysuit: "레이스 바디슈트" };
   // 란제리 — 브라 · 팬티 · 가터벨트 · 밴드 스타킹 한 벌. 만남(데이트 · 장소 도착 · 영상통화)은 데이트 옷 차림, 키스부터 란제리
   const LINGERIE = {
     lingerieBlack: "(black lace lingerie:1.2), black lace bra, black lace panties, (black garter belt:1.2), garter straps, black thighhighs, lace-trimmed legwear",
@@ -347,6 +354,34 @@
     nurse: "(nurse:1.2), white short nurse dress, nurse cap, white thighhighs, unbuttoned collar, cleavage",
     china: "(china dress:1.2), red qipao, side slit, pelvic curtain, bare legs, sleeveless, high heels",
     latex: "(black latex bodysuit:1.25), shiny clothes, front zipper, elbow gloves, high-heeled boots, cleavage",
+    police: "(police costume:1.2), dark blue short tight dress, police hat, badge, black thighhighs, high heels, handcuffs on belt",
+    stewardess: "(flight attendant uniform:1.2), navy pencil skirt, white blouse, neck scarf, sheer pantyhose, high heels",
+    secretary: "(secretary:1.2), tight black pencil skirt, white blouse, unbuttoned blouse, cleavage, black pantyhose, high heels",
+    yukata: "(yukata:1.25), floral yukata dress, obi, hair ornament, loose collar, bare shoulders, geta",
+    wedding: "(wedding dress:1.25), white bridal dress, lace, bridal veil, white elbow gloves, white garter",
+    succubus: "(succubus costume:1.2), black leather bodysuit, small demon wings, demon tail, demon horns headband, black thighhighs",
+    catLingerie: "(cat lingerie:1.25), cat keyhole bra, black panties, cat ear headband, cat tail, choker with bell",
+    silkRobe: "(short silk robe:1.2), satin robe lingerie, loose sash, black lace lingerie underneath, bare legs",
+    ribbon: "(naked ribbon:1.25), red ribbon lingerie, ribbon wrapped around body, big ribbon bow, bare shoulders",
+    sportswear: "(sportswear:1.2), sports bra, tight black yoga leggings, sneakers, sweat",
+    swimsuit: "(high-leg one-piece swimsuit:1.25), leotard cut swimsuit, black competition swimsuit, wet skin, bare legs",
+    bfShirt: "(oversized white dress shirt:1.25), boyfriend shirt, no pants, panties, bare legs, sleeves rolled up",
+    harness: "(leather harness lingerie:1.25), black strappy harness, o-ring, choker, black panties, garter straps",
+    reverseBunny: "(reverse bunny suit:1.25), lingerie, black detached sleeves, black thighhighs, fake rabbit ears, pasties, crotchless",
+    openSweater: "(virgin killer sweater:1.2), open-chest sweater, backless sweater, sideboob, bare legs",
+    idol: "(idol costume:1.2), frilled short dress, ribbons, white thighhighs, stage outfit, sparkles",
+    witch: "(witch costume:1.2), black short dress, corset, witch hat, black thighhighs, high heels",
+    laceBodysuit: "(white lace bodysuit:1.25), see-through, high-leg, lace, bare legs, high heels",
+  };
+  const DWEAR = {
+    char: { n: "캐릭터 데이트 옷" },
+    mini: { n: "블랙 미니 원피스", t: "(black mini dress:1.15), bodycon dress, bare shoulders, high heels, small handbag" },
+    sundress: { n: "흰 원피스", t: "(white sundress:1.15), flowy skirt, straw hat, sandals" },
+    knit: { n: "니트 · 플리츠 스커트", t: "(beige knit sweater:1.1), short pleated skirt, black thighhighs, ankle boots" },
+    jeans: { n: "크롭 티 · 청바지", t: "(white crop top:1.1), high-waisted jeans, navel, sneakers" },
+    offShoulder: { n: "오프숄더 · 미니스커트", t: "(off-shoulder blouse:1.15), tight denim mini skirt, bare legs, heels" },
+    slip: { n: "새틴 슬립 원피스", t: "(satin slip dress:1.15), thin straps, cleavage, long cardigan, heels" },
+    suit: { n: "정장 · 펜슬 스커트", t: "(white blouse:1.1), black pencil skirt, blazer, black pantyhose, high heels" },
   };
   const LOUNGE = "loungewear, oversized white t-shirt, black dolphin shorts, barefoot";   // Hunt 그림 공방 '집에서 입는 옷'
   // 그림 공방(미리 뽑기)의 데이트 장면 — 배경은 Hunt 장소 풍경(때별), 자세는 Hunt 데이트 장면(없는 곳은 같은 형식으로 만듦), out: 바깥(날씨 적용)
@@ -362,6 +397,12 @@
     cinema: { n: "영화관", pose: "sitting in theater seat, holding popcorn, screen light on face, leaning toward viewer", bg: { day: "movie theater auditorium, rows of red velvet seats, cup holders, large screen glow, aisle floor lights, dark, indoors" } },
     street: { n: "쇼핑몰·거리", out: true, pose: "walking, holding shopping bag, looking back at viewer", bg: { day: "shopping street, storefronts, display windows, pedestrians in distance, outdoors, daytime, bright", evening: "city sidewalk, office buildings, street lights turning on, sunset sky, outdoors, evening, dusk", night: "shopping street at night, neon signs, glowing storefronts, outdoors, night" } },
     river: { n: "한강 공원", out: true, pose: "sitting on picnic mat, holding canned drink, wind in hair", bg: { day: "riverside park, wide river, grass lawn, picnic mats, bicycle path, bridge in distance, city skyline, trees, outdoors, daytime, bright", evening: "riverside park at sunset, wide river, grass lawn, bicycle path, bridge silhouette, orange sky, city skyline, outdoors, evening, dusk", night: "riverside park at night, river with city light reflections, lit bridge, street lamps, grass lawn, benches, outdoors, night" } },
+    aquarium: { n: "아쿠아리움", pose: "standing in front of aquarium tank, hand on glass, blue light on face, looking back at viewer", bg: { day: "aquarium tunnel, huge glass tank, fish swimming, blue water light, dim, indoors" } },
+    rooftopBar: { n: "루프톱 바", pose: "leaning on railing, holding wine glass, wind in hair, smile", bg: { day: "rooftop bar, city skyline, string lights, cocktail table, outdoors, daytime, bright", evening: "rooftop bar at sunset, city skyline, string lights, cocktail table, orange sky, outdoors, evening, dusk", night: "rooftop bar at night, city lights, string lights, cocktail table, night sky, outdoors, night" }, out: true },
+    festival: { n: "불꽃축제", out: true, pose: "looking up at sky, holding paper fan, fireworks reflected in eyes", bg: { day: "summer festival, food stalls, paper lanterns, crowd, outdoors, daytime", evening: "summer festival at dusk, food stalls, paper lanterns, crowd, outdoors, evening, dusk", night: "summer festival at night, fireworks in sky, paper lanterns, food stalls, crowd silhouettes, outdoors, night" } },
+    bowling: { n: "볼링장", pose: "holding bowling ball, playful pose, cheering", bg: { day: "bowling alley, bowling lanes, pins, neon lights, score screens, indoors" } },
+    gallery: { n: "미술관", pose: "standing in front of painting, hands behind back, looking at viewer over shoulder", bg: { day: "art gallery, white walls, framed paintings, spotlights, wooden floor, quiet, indoors, daytime" } },
+    seaside: { n: "바닷가 산책", out: true, pose: "walking barefoot on beach, holding sandals, skirt fluttering, looking back", bg: { day: "beach, waves, blue sky, sand, outdoors, daytime, bright", evening: "beach at sunset, waves, orange sky, sand, outdoors, evening, dusk", night: "beach at night, moonlight on waves, sand, outdoors, night" } },
   };
   const TIMES = { day: "낮", evening: "저녁", night: "밤" };
   const WEATHER = { clear: { n: "☀️ 맑음", tags: "" }, rain: { n: "🌧 비", tags: "rain, holding umbrella, wet ground, overcast" }, snow: { n: "❄️ 눈", tags: "snowing, snowflakes, winter coat, scarf, breath visible" }, heat: { n: "🔥 폭염", tags: "summer, intense sunlight, sweat, holding hand fan" } };
@@ -506,7 +547,7 @@
     }
     return out;
   }
-  const wearOf = (ch, key) => (key === "lounge" ? LOUNGE : LINGERIE[key] || (ch.outfits && ch.outfits[key]) || ch.wear);
+  const wearOf = (ch, key) => (key === "date" && DWEAR[dwearSel] && DWEAR[dwearSel].t ? DWEAR[dwearSel].t : key === "lounge" ? LOUNGE : LINGERIE[key] || (ch.outfits && ch.outfits[key]) || ch.wear);
 
   // ---------- 워크플로 (1인 = 화풍 참조 우선, 2인 = Duo) ----------
   function pickWf(duo) {
@@ -652,13 +693,15 @@
   let multi = ls.get("multi", false), undress = ls.get("undress", true);
   let video = ls.get("video", false);
   let on = ls.get("on", {});
-  let lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
+  let lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
   // 대사 형식: Hunt 방식([장소] · 서술 · "말") / Wayward 방식([단계]서술 "소리" … "말" 『속마음』 — huntway.js)
   const FMTS = { hunt: "Hunt 방식", wayward: "Wayward 방식" };
   let fmtSel = FMTS[ls.get("fmt", "hunt")] ? ls.get("fmt", "hunt") : "hunt";
   let secs = Number(ls.get("secs", 14)) || 14;   // 한 장 평균 시간(초) — 실제 생성 시간으로 계속 고쳐짐
   const SPEECH = { auto: "캐릭터 말투", polite: "존댓말", formal: "격식체", casual: "반말" };
   const MSPEECH = { casual: "남자: 반말", polite: "남자: 존댓말" };
+  const CALLREACT = { calm: "남편 반응: 모름", notice: "눈치챔", angry: "화냄" };
+  const DWEAR_N = Object.fromEntries(Object.entries(DWEAR).map(([k, v]) => [k, v.n]));
   const SIZES = { normal: "크기 보통", large: "큼", huge: "아주 큼" };   // 상대 자지 크기 — 그림 태그 · 체위 대사가 달라짐
   const CYCLES = { none: "그녀의 날 지정 안 함", safe: "안전일", risky: "위험일", riskyWant: "위험일 (오히려 원함)" };   // 안에 사정 · 시작 전 대사가 달라짐 (한 가지만 고름)
   // 대사 = 장면 대사(huntlines.js) + 고른 선택지 문장(huntctx.js — 장소·체위·도구·옷 상태·사정 위치·복장·날씨) 최대 2개
@@ -891,7 +934,7 @@
       if (R.leaveN && Math.random() < 0.45) body += `\n${fill(pk(R.leaveN[li]))}.`;
     }
     { const X = window.BC_SITU2 && BC_SITU2[o.situ];   // 조합 대사 — 고른 장소 · 복장 이름이 들어감
-      if (X) { const O = ({ work: "업무복", lounge: "실내복", date: "데이트 옷", officeDate: "출근 옷" }[o.outfit] || OUTFITS[o.outfit] || "옷").replace(/ \(.*\)$/, ""), P = (o.place && o.place.n) || "이곳", cx = { P, O }, cxS = { P: P.replace(/^그녀의 /, si === 2 ? "내 " : "제 "), O }; body += "\n" + fill(fresh(() => X.narr(g, cx))) + "."; if (Math.random() < 0.85) body += `\n"${fill(fresh(() => X.say(g, cxS, si)))}"`; } }
+      if (X && !/^(meet1|ntrcall_date|datetoy|dt_)/.test(sid)) { const O = ({ work: "업무복", lounge: "실내복", date: "데이트 옷", officeDate: "출근 옷" }[o.outfit] || OUTFITS[o.outfit] || "옷").replace(/ \(.*\)$/, ""), P = (o.place && o.place.n) || "이곳", cx = { P, O }, cxS = { P: P.replace(/^그녀의 /, si === 2 ? "내 " : "제 "), O }; body += "\n" + fill(fresh(() => X.narr(g, cx))) + "."; if (Math.random() < 0.85) body += `\n"${fill(fresh(() => X.say(g, cxS, si)))}"`; } }
     if (/^(swap|ntr|ntori)$/.test(o.situ)) { const nr = nearOf(o); body += gen2Add(sid, g, si, nr, nr ? "남편" : "남자친구", true); }
     if (o.situ === "swap" && g >= 2 && window.BC_YOUCMP && Math.random() < 0.4) body += `\n그녀가 당신 쪽을 보며 말한다. "${BC_YOUCMP("여보", si, g)}"`;
     if (o.nb === 1) body = body.replace(/남자들 사이/g, "남자 품").replace(/(그|낯선|모르는|처음 보는) 남자들/g, "$1 남자").replace(/남자들/g, "그 남자").replace(/그 손들/g, "그 손").replace(/다들 /g, "").replace(/, (다 같이|모두)…/g, "…").replace(/앞뒤로 그 남자에게/g, "그 남자에게").replace(/입과 아래가 동시에 채워진다/g, "가장 깊은 곳까지 채워진다");   // 상대가 한 명(1남 · 바람 상대)
@@ -984,7 +1027,7 @@
       const nb = m0[2].split("\n").map((ln) => (ln.match(/"[^"]*"|[^"]+/g) || []).map((tk) => (tk[0] === '"' ? tk : tk.split(/(?<=[.!?…])\s+/).filter((c) => { const k = c.trim(); if (k.length < 12 || /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다|목소리)\.?$/.test(k)) return true; /* 말한 사람을 알려 주는 문장은 남김 (빠지면 대사 색이 틀림) */ if (seenQ.has("n:" + k)) return false; seenQ.add("n:" + k); return true; }).join(" "))).join(" ").replace(/\s{2,}/g, " ").trim()).filter(Boolean).join("\n");
       if (nb.trim()) t = (m0[1] || "") + nb;
     }
-    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel }) || t; } catch {} }
+    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel, cr: crSel }) || t; } catch {} }
     return t;
   };
   const lineOf = (sid, ch, o) => postLine(lineOfA(sid, ch, o), sid, ch, o);
@@ -1135,6 +1178,8 @@
       <label class="check"><input type="checkbox" id="hsNarrOn"${narrOn ? " checked" : ""}> 서술 넣기 <small class="muted">(Hunt 방식일 때)</small></label>
       ${seg("hsSpeech", SPEECH, speechSel, false)}
       <div style="margin-top:6px"><small class="muted">남자 대사 말투 — 반말이면 더 거칠고 천박하게</small>${seg("hsMSpeech", MSPEECH, mspeechSel, false)}</div>
+      <div style="margin-top:6px"><small class="muted">데이트 복장 — 데이트 · 장소 도착 · 영상통화 장면에서 입는 옷 (키스부터는 고른 복장)</small>${seg("hsDWear", DWEAR_N, dwearSel, false)}</div>
+      <div style="margin-top:6px"><small class="muted">통화 중 남편(남자친구) 반응 — 네토라레 · 네토리 · 바람 · 불륜의 통화 · 사진 장면</small>${seg("hsCallReact", CALLREACT, crSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">그녀의 날 — 시작 전 · 안에 사정할 때 대사가 달라짐</small>${seg("hsCycle", CYCLES, cycleSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">상대 자지 크기 — 그림과 삽입 · 절정 대사가 달라짐</small>${seg("hsSize", SIZES, sizeSel, false)}</div></div>
     <div class="field"><label>만들 단계 <small class="muted">(1인 장면은 화풍 참조 워크플로, 2인은 Duo 워크플로)</small> <button type="button" class="mini" id="hsStagesAll">✚ 전부 켜기/끄기</button></label><div id="hsStages" class="hs-stages"></div></div>
@@ -1319,6 +1364,8 @@
   $q("#hsNarrOn").addEventListener("change", (e) => { narrOn = e.target.checked; ls.set("narrOn", narrOn); });
   bindSeg("hsSpeech", (v) => { speechSel = v; ls.set("speech", v); pick("hsSpeech", v); });
   bindSeg("hsMSpeech", (v) => { mspeechSel = v; ls.set("mspeech", v); pick("hsMSpeech", v); });
+  bindSeg("hsDWear", (v) => { dwearSel = v; ls.set("dwear", v); pick("hsDWear", v); });
+  bindSeg("hsCallReact", (v) => { crSel = v; ls.set("callreact", v); pick("hsCallReact", v); });
   bindSeg("hsCycle", (v) => { cycleSel = v; ls.set("cycle", v); pick("hsCycle", v); });
   bindSeg("hsSize", (v) => { sizeSel = v; ls.set("psize", v); pick("hsSize", v); });
   bindSeg("hsFmt", (v) => { fmtSel = v; ls.set("fmt", v); pick("hsFmt", v); });

@@ -113,6 +113,35 @@
     const fill = (x) => x.replace(/\{Y\}을/g, Y === "당신" ? "당신을" : "그를").replace(/\{Y\}에게/g, Y + "에게").replace(/\{Y\}/g, Y);
     const a = pick(V.say); let b = pick(V.say); if (b === a) b = "";
     return `${head}${fill(pick(V.narr))}.\n"${lv(a)}"${b ? `\n"${lv(b)}"` : ""}`; };
+  // 통화 중 남편 반응 (눈치챔 · 화냄): 남편의 말을 바꾸고 그녀 · 상대 남자의 말을 덧붙임 — 남편에게 하는 그녀의 말은 반말
+  const CRP = {
+    notice: {
+      husb: S("…방금 무슨 소리야?/목소리가 왜 그렇게 떨려? 누구랑 있어?/숨소리가 이상한데. 지금 어디야?/옆에 누구 있지? 솔직히 말해/거짓말하지 마. 다 들려/너 지금 뭐 하고 있는 거야?/왜 자꾸 말이 끊겨? …이상한데"),
+      reply: S("이 사진 어디야? 뒤에 저 손은 누구 거야?/너 지금 집 아니지?/…이거 뭐야. 설명해 봐/표정이 왜 그래? 누가 찍어 준 거야?"),
+      her: S("아, 아무것도 아니야… 티비 소리야/운동하고 와서 그래… 숨이 차서/혼자야, 진짜… 이상한 소리 하지 마/나중에 설명할게… 지금은 좀…!/의심하지 마… 하읏… 진짜 아무것도 아니야/그냥… 넘어질 뻔해서 그래, 응…"),
+      man: S("들켰네. 그래도 끊지 마/계속 둘러대 봐. 그동안 박을 테니까/숨 참아 봐. 못 참겠지?/목소리 떨리는 거 다 들리겠다/거짓말하면서 조이는 거 봐"),
+      narr: S("그녀의 얼굴이 하얗게 질렸다가, 다시 붉어진다/그녀가 송화구를 막고 고개를 젓지만, 그는 멈추지 않는다/전화기 너머의 침묵이 길어진다. 그녀의 숨만 커진다"),
+    },
+    angry: {
+      husb: S("너 지금 누구랑 있어?! 당장 말해!/다 들렸어. 이게 무슨 짓이야!/지금 어디야. 당장 거기로 갈 거야/끊지 마! …너 진짜 미쳤어?/설마 지금 그 새끼랑… 대답해!/집에 오기만 해 봐. 가만 안 둬/어떻게 나한테 이럴 수 있어!"),
+      reply: S("이거 뭐야?! 당장 전화 받아!/사진 뒤에 남자 손 보여. 장난해?/오늘 집에 오지 마. 아니, 당장 와/너 지금 바람피우는 거지? 대답해"),
+      her: S("…들렸으면 어쩔 건데? 지금 기분 좋아/화내지 마… 나 지금 너무 좋단 말이야/미안해… 근데 못 멈추겠어…!/그래, 다른 남자랑 있어. 너보다 훨씬 커/소리 지르지 마… 더 젖잖아/듣고 있어? 이게 진짜 섹스야…!/오늘 안 들어가. 아니, 이제 안 들어갈지도 몰라"),
+      man: S("화났네. 들려줘, 네가 어떻게 박히는지/바꿔 줘 봐. 내가 직접 말해 줄게/끊어. 이제 상관없잖아/남편 우는 소리 들으면서 가 봐/더 크게 해. 똑똑히 듣게"),
+      narr: S("전화기 너머 고함이 방 안까지 울린다. 그녀가 휴대폰을 귀에서 조금 뗀다/그녀가 떨리는 손으로 스피커를 켠다. 그 남자가 웃는다/고함 소리에 그녀의 몸이 움찔하지만, 허리는 멈추지 않는다"),
+    },
+  };
+  const callReact = (s, sid, o, cr) => {
+    const R = CRP[cr]; if (!R) return s;
+    const aff = o && o.rel === "affair", lead = aff ? "당신이" : "그가";
+    const ls = s.split("\n"), i = ls.findIndex((l) => /^(전화기 너머 (당신|남편|남자친구)의 목소리\. |(당신|남편|남자친구)의 답장: )/.test(l)); if (i < 0) return s;
+    const nr = pick(R.narr).replace(/그는 멈추지/g, aff ? "당신은 멈추지" : "그는 멈추지").replace(/그 남자가 웃는다/g, aff ? "당신이 웃는다" : "그 남자가 웃는다");
+    ls[i] = ls[i].replace(/"[^"]*"$/, `"${pick(R.husb)}"`).replace(/'[^']*'$/, `'${pick(R.reply)}'`);
+    // 바로 뒤 그녀의 태연한 대답 → 반응 서술 + 그녀의 말 · 그 뒤 속삭임 → 상대 남자의 도발
+    if (ls[i + 1] && /^"/.test(ls[i + 1])) ls[i + 1] = `${nr}.\n"${pick(R.her)}"`; else ls.splice(i + 1, 0, `${nr}.\n"${pick(R.her)}"`);
+    const w = ls.findIndex((l, k) => k > i + 1 && /귓가에 속삭인다\./.test(l));
+    if (w > 0) ls[w] = `${lead} 그녀의 귓가에 속삭인다. "${pick(R.man)}"`; else ls.splice(i + 2, 0, `${lead} 그녀의 귓가에 속삭인다. "${pick(R.man)}"`);
+    return ls.join("\n");
+  };
   // 그녀의 말(따옴표)만 골라 바꿈 — 말한 사람이 남자 · 당신이면 그대로
   const herQuotes = (s, fn) => s.split("\n").map((ln) => { let pre = ""; return ln.split(/("[^"]*")/).map((p) => { if (p[0] !== '"') { pre += p; return p; } const last = (pre.split(/[.!?…]\s+/).filter((x) => x.trim()).pop() || "").trim(); pre = ""; const sv = /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다)\s*\.?\s*$/.test(last), other = /당신의 목소리\.?$/.test(last) || (sv && (/^당신/.test(last) || /^(그[가는]\s|이분|이이)/.test(last) || /남자(가|는|들이|들은)\s/.test(last))); return other ? p : fn(p); }).join(""); }).join("\n");
   // 남자(당신 · 그 · 그 남자)의 말만 골라 바꿈
@@ -165,6 +194,7 @@
     if (!t) return t;
     let s = String(t);
     const si = opt && opt.si != null ? opt.si : speech(s);
+    if (/^ntr(call|photo)/.test(sid) && opt && opt.cr && opt.cr !== "calm") s = callReact(s, sid, o, opt.cr);
     if (/^video[12]$/.test(sid) && vcOf(o)) { const h = (s.match(/^\[[^\]]*\]/) || [""])[0]; s = vcLine(sid, o, si, h) || s; }
     if (si === 2 && window.BC_GEN2 && window.BC_GEN2.lv) s = herQuotes(s, (q) => '"' + window.BC_GEN2.lv(q.slice(1, -1), 2) + '"');   // 반말 캐릭터: 해요체로만 쓴 문장 · 저/제도 반말로
     { const w = whoOf(o); if (w === "남편") s = toHB(s); else if (w === "남자친구") s = toBF(s); }
