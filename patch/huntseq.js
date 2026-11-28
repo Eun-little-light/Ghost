@@ -30,7 +30,7 @@
   //  원피스 · 니트 · 캐미솔 · 바지 복장에도 단추가 생기거나 치마가 나타남. 여기서는 복장 글에서 위(단추 셔츠 / 머리로 입는 옷 / 원피스)
   //  · 겉옷 · 아래(치마 / 바지 / 반바지 / 원피스)를 읽어서 태그를 고름
   function garment(w) {
-    const t = String(w || "").toLowerCase();
+    const t = String(w || "").toLowerCase().replace(/dress shirt/g, "shirt");   // 드레스 셔츠는 원피스가 아니라 셔츠
     if (/lingerie|garter belt|bikini|bodystocking|babydoll|negligee/.test(t) && !/\b(dress|shirt|blouse|skirt|pants|shorts)\b/.test(t)) return { top: "linger", bot: "linger", outer: "" };   // 란제리만 입음
     const dress = /\bdress\b|sundress|leotard|bodysuit|qipao/.test(t);
     const button = /\b(shirt|blouse)\b/.test(t.replace(/t-shirt|sweatshirt/g, ""));
@@ -39,7 +39,7 @@
     const sepTop = /crop top|cropped knit top|knit top|tank top|camisole/.test(t) && /skirt/.test(t);   // 치마 + 따로 입은 윗옷
     let top = dress && !sepTop ? "dress" : button ? "button" : pull ? "pull" : "button";
     if (top === "button" && !button && outer === "cardigan") outer = "";   // 가디건만 입었으면 가디건 단추를 품
-    return { top, bot: /skirt/.test(t) ? "skirt" : /shorts/.test(t) ? "shorts" : /pants|slacks|jeans|leggings|jogger|cargo/.test(t) ? "pants" : dress ? "dress" : "skirt", outer };
+    return { top, bot: /no pants/.test(t) ? "panty" : /skirt/.test(t) ? "skirt" : /shorts/.test(t) ? "shorts" : /pants|slacks|jeans|leggings|jogger|cargo/.test(t) ? "pants" : dress ? "dress" : "skirt", outer };
     // eslint-disable-next-line no-unreachable
     const bot = /skirt/.test(t) ? "skirt" : /shorts/.test(t) ? "shorts" : /pants|slacks|jeans|leggings|jogger|cargo/.test(t) ? "pants" : dress ? "dress" : "skirt";
     return { top, bot, outer };
@@ -52,9 +52,9 @@
     offAct: { button: "(taking off shirt:1.2), shirt removed", pull: "(taking off top:1.2), top pulled over head", dress: "(pulling her dress down:1.2), dress around waist", linger: "(taking off her bra:1.2), holding bra" },
     offName: { button: "위 벗기기", pull: "위 벗기기", dress: "원피스 내리기", linger: "브라 벗기기" },
     lift: { button: "shirt lift, top pulled up, exposed breasts, bare nipples, breasts out, bra lift, partially undressed", pull: "(clothes lift:1.2), top pulled up, exposed breasts, bare nipples, breasts out, bra lift, partially undressed", dress: "(strap slip:1.2), dress pulled down, exposed breasts, bare nipples, breasts out, bra lift, partially undressed", linger: "(bra lift:1.2), lace bra pulled up, exposed breasts, bare nipples, breasts out, garter belt, garter straps" },
-    low: { skirt: "skirt hiked up to waist, skirt_lift, exposed thighs, (panties_aside:1.3), exposed pussy", pants: "(pants pulled down:1.25), pants around thighs, (panties_aside:1.3), exposed pussy", shorts: "(shorts pulled down:1.2), shorts around thighs, (panties_aside:1.3), exposed pussy", dress: "(dress lift:1.2), hem lifted to waist, exposed thighs, (panties_aside:1.3), exposed pussy", linger: "lace panties pulled aside, (panties_aside:1.3), exposed pussy, garter belt, garter straps, thighhighs" },
-    lowAct: { skirt: "(lifting her skirt:1.1)", pants: "(pulling down her pants:1.2), unbuttoned pants", shorts: "(pulling down her shorts:1.2)", dress: "(lifting her dress hem:1.2)", linger: "(his finger hooking her lace panties:1.2)" },
-    lowName: { skirt: "치마 올리기", pants: "바지 내리기", shorts: "반바지 내리기", dress: "원피스 걷어 올리기", linger: "팬티 젖히기" },
+    low: { skirt: "skirt hiked up to waist, skirt_lift, exposed thighs, (panties_aside:1.3), exposed pussy", pants: "(pants pulled down:1.25), pants around thighs, (panties_aside:1.3), exposed pussy", shorts: "(shorts pulled down:1.2), shorts around thighs, (panties_aside:1.3), exposed pussy", dress: "(dress lift:1.2), hem lifted to waist, exposed thighs, (panties_aside:1.3), exposed pussy", linger: "lace panties pulled aside, (panties_aside:1.3), exposed pussy, garter belt, garter straps, thighhighs", panty: "panties pulled aside, (panties_aside:1.3), exposed pussy, bare thighs" },
+    lowAct: { skirt: "(lifting her skirt:1.1)", pants: "(pulling down her pants:1.2), unbuttoned pants", shorts: "(pulling down her shorts:1.2)", dress: "(lifting her dress hem:1.2)", linger: "(his finger hooking her lace panties:1.2)", panty: "(his finger hooking her panties aside:1.2)" },
+    lowName: { skirt: "치마 올리기", pants: "바지 내리기", shorts: "반바지 내리기", dress: "원피스 걷어 올리기", linger: "팬티 젖히기", panty: "팬티 젖히기" },
   };
   const outerOff = (g) => (g.outer ? `open ${g.outer}, (${g.outer} slipping off shoulders:1.1), ` : "");
   const CLOTH_MAIN = {
@@ -366,7 +366,9 @@
   const OUTFITS = { work: "일터", casual: "평상복", date: "데이트", officeDate: "퇴근 데이트", lounge: "집에서 입는 옷", lingerieBlack: "란제리 (검정)", lingerieWhite: "란제리 (흰색)",
     babydoll: "비치는 베이비돌", negligee: "비치는 네글리제", bodystocking: "바디스타킹", microBikini: "마이크로 비키니", bunny: "바니걸", maid: "메이드복", nurse: "간호사복", china: "차이나 드레스", latex: "라텍스 바디슈트",
     police: "경찰 코스튬", stewardess: "승무원 유니폼", secretary: "비서 정장", yukata: "유카타", wedding: "웨딩드레스", succubus: "서큐버스 코스튬", catLingerie: "고양이 란제리", silkRobe: "실크 가운", ribbon: "리본 포장", sportswear: "운동복", swimsuit: "하이레그 수영복", bfShirt: "남자 셔츠 한 장", harness: "가죽 하네스", reverseBunny: "역바니", openSweater: "등 트인 니트", idol: "아이돌 무대 의상", witch: "마녀 코스튬", laceBodysuit: "레이스 바디슈트",
-    bartender: "바텐더", waitress: "웨이트리스", racequeen: "레이싱 모델", santa: "산타 코스튬", angel: "천사 코스튬", kimono: "기모노", hanbok: "개량 한복", tennis: "테니스복", golf: "골프웨어", gymLeotard: "체조 레오타드", ballet: "발레복", doctor: "의사 가운", nakedApron: "알몸 앞치마", sweaterDress: "니트 원피스", leatherMini: "가죽 재킷 · 미니", gothic: "고딕 드레스", vampire: "뱀파이어", elf: "엘프 코스튬", kunoichi: "쿠노이치", pirate: "해적 코스튬", military: "군복 코스튬", redGarter: "레드 가터 세트", openLingerie: "오픈 란제리", cupless: "컵리스 브라", meshDress: "시스루 메시 원피스", bodyChain: "바디 체인", slingshot: "슬링샷 수영복", sheerRobe: "시스루 기모노 가운", corset: "코르셋", pvc: "에나멜 미니 원피스", pajama: "실크 파자마", towel: "수건 한 장", officeTight: "타이트 오피스룩", dressShirtTie: "셔츠 · 넥타이만" };
+    bartender: "바텐더", waitress: "웨이트리스", racequeen: "레이싱 모델", santa: "산타 코스튬", angel: "천사 코스튬", kimono: "기모노", hanbok: "개량 한복", tennis: "테니스복", golf: "골프웨어", gymLeotard: "체조 레오타드", ballet: "발레복", doctor: "의사 가운", nakedApron: "알몸 앞치마", sweaterDress: "니트 원피스", leatherMini: "가죽 재킷 · 미니", gothic: "고딕 드레스", vampire: "뱀파이어", elf: "엘프 코스튬", kunoichi: "쿠노이치", pirate: "해적 코스튬", military: "군복 코스튬", redGarter: "레드 가터 세트", openLingerie: "오픈 란제리", cupless: "컵리스 브라", meshDress: "시스루 메시 원피스", bodyChain: "바디 체인", slingshot: "슬링샷 수영복", sheerRobe: "시스루 기모노 가운", corset: "코르셋", pvc: "에나멜 미니 원피스", pajama: "실크 파자마", towel: "수건 한 장", officeTight: "타이트 오피스룩", dressShirtTie: "셔츠 · 넥타이만",
+    sheerTeddy: "시스루 테디", redBodystocking: "레드 오픈 바디스타킹", pasties: "니플 패치 · 끈 팬티", neonBikini: "형광 탄가 비키니", sheerShirtDress: "시스루 셔츠 원피스", wetTshirt: "젖은 흰 티셔츠", sheerBodysuit: "블랙 시스루 바디슈트", latexLingerie: "라텍스 란제리", ropeHarness: "로프 하네스 란제리", sheerNurse: "시스루 간호사 란제리", lingerieMaid: "란제리 메이드", microMini: "초미니 · 크롭 튜브톱", fishnetDress: "망사 미니 원피스", redBabydoll: "레드 시스루 베이비돌", garterOnly: "가터벨트 · 스타킹", cutoutDress: "컷아웃 보디콘 원피스", backlessDress: "등 파인 이브닝드레스", thongKnit: "크롭 니트 · 끈 티팬티", monokini: "컷아웃 모노키니", tubeDress: "튜브 미니 드레스", pantyhoseOnly: "스타킹 한 장", navySatin: "네이비 새틴 란제리", purpleLace: "퍼플 레이스 란제리", pinkFrill: "핑크 프릴 란제리", leopard: "호피 란제리", strappyCage: "스트랩 케이지 란제리", openTeddy: "오픈 테디", sheerOffice: "시스루 블라우스 오피스룩", bunnyLingerie: "바니 란제리", cowBikini: "젖소 무늬 비키니", sheerChemise: "시스루 슈미즈", thongLeotard: "하이레그 티백 레오타드", sheerSlip: "시스루 슬립", bondageQueen: "가죽 뷔스티에 세트", wetBikini: "젖은 흰 비키니", sequinLingerie: "반짝이 란제리",
+    cheerleader: "치어리더", teacher: "교사 정장", chef: "셰프복", barista: "바리스타", grayskirtSuit: "그레이 스커트 정장", bellyDancer: "벨리댄서", cowgirlOutfit: "카우걸", hiking: "등산복", bikerSuit: "라이더 슈트", dealer: "카지노 딜러", miko: "무녀", knight: "여기사", catsuit: "블랙 캣슈트", hostess: "클럽 드레스", pantsuit: "여사장 바지 정장", yoga: "요가복", tracksuit: "트레이닝복", overallShorts: "멜빵 반바지", tankShorts: "탱크톱 · 핫팬츠", turtleSkirt: "터틀넥 · 롱스커트", linenDress: "린넨 셔츠 원피스", skiwear: "스키복", hanfu: "한푸", aodai: "아오자이", firefighter: "소방관 코스튬", mechanic: "정비공 작업복", volleyball: "배구 유니폼", flightSuit: "파일럿 점프슈트", detective: "탐정 코트", archer: "사냥꾼 코스튬", nunCostume: "수녀 코스튬", rockstar: "록 밴드 의상" };
   // 란제리 — 브라 · 팬티 · 가터벨트 · 밴드 스타킹 한 벌. 만남(데이트 · 장소 도착 · 영상통화)은 데이트 옷 차림, 키스부터 란제리
   const LINGERIE = {
     lingerieBlack: "(black lace lingerie:1.2), black lace bra, black lace panties, (black garter belt:1.2), garter straps, black thighhighs, lace-trimmed legwear",
@@ -432,6 +434,76 @@
     towel: "(naked towel:1.3), white bath towel wrapped around body, wet hair, bare shoulders",
     officeTight: "(tight white blouse:1.15), black high-waist pencil skirt, sheer black pantyhose, heels",
     dressShirtTie: "(white dress shirt:1.2), loose necktie, no pants, panties, thighhighs",
+    // 노출 많은 성인 복장
+    sheerTeddy: "(see-through teddy lingerie:1.25), sheer black teddy, plunging neckline, high-cut, lace trim, bare legs",
+    redBodystocking: "(red fishnet bodystocking:1.25), crotchless, see-through, full-body fishnet, high heels",
+    pasties: "(heart pasties:1.3), nipple covers, tiny g-string, nearly nude, lingerie",
+    neonBikini: "(neon micro bikini:1.25), tiny thong bikini, string bikini, side-tie, shiny oiled skin",
+    sheerShirtDress: "(see-through white shirt dress:1.2), sheer fabric, no bra, nipples visible through fabric, panties visible, bare legs",
+    wetTshirt: "(wet white t-shirt:1.25), see-through wet fabric, no bra, nipples visible through fabric, denim short shorts, bare legs",
+    sheerBodysuit: "(black sheer bodysuit:1.25), see-through, high-leg, thong cut, mesh, bare legs, high heels",
+    latexLingerie: "(red latex lingerie:1.25), shiny latex bra, latex panties, latex garter belt, latex thighhighs, latex gloves",
+    ropeHarness: "(shibari rope lingerie:1.2), decorative red rope harness over body, black lace panties, choker",
+    sheerNurse: "(see-through nurse lingerie:1.25), sheer white mini nurse dress, nurse cap, white garter belt, white thighhighs",
+    lingerieMaid: "(lingerie maid:1.25), black lace bra, frilled apron, maid headdress, garter belt, thighhighs, lace panties",
+    microMini: "(strapless crop top:1.2), (micro miniskirt:1.25), bare midriff, bare shoulders, heels",
+    fishnetDress: "(fishnet mini dress:1.25), see-through, black lingerie underneath, heels",
+    redBabydoll: "(red see-through babydoll:1.25), sheer red lingerie, frilled hem, red lace panties, bare shoulders",
+    garterOnly: "(garter belt only:1.3), no bra, no panties, garter straps, black thighhighs, nearly nude, lingerie",
+    cutoutDress: "(cutout bodycon dress:1.25), side cutout, underboob cutout, navel cutout, high heels",
+    backlessDress: "(backless evening dress:1.2), plunging neckline, side slit, no bra, high heels",
+    thongKnit: "(cropped knit top:1.15), underboob, (string thong:1.25), no pants, bare legs",
+    monokini: "(cutout monokini:1.25), revealing one-piece swimsuit, leotard cut, side cutouts, thong back, oiled skin",
+    tubeDress: "(strapless tube mini dress:1.25), bodycon, very short, bare shoulders, heels",
+    pantyhoseOnly: "(sheer pantyhose only lingerie:1.25), no panties, topless, crotch seam, nearly nude",
+    navySatin: "(navy satin lingerie:1.2), satin bra, satin panties, garter belt, thighhighs",
+    purpleLace: "(purple lace lingerie:1.2), purple lace bra, purple lace panties, garter belt, purple thighhighs",
+    pinkFrill: "(pink frilled lingerie:1.2), frilled bra, frilled panties, ribbon, white thighhighs",
+    leopard: "(leopard print lingerie:1.25), leopard bra, leopard panties, garter belt, black thighhighs",
+    strappyCage: "(strappy cage lingerie:1.25), black straps, cutout bra, o-ring, strappy panties, choker",
+    openTeddy: "(open-cup teddy lingerie:1.25), cupless, crotchless, black lace, garter straps",
+    sheerOffice: "(see-through white blouse:1.2), black lace bra visible, tight pencil skirt, pantyhose, heels",
+    bunnyLingerie: "(bunny lingerie:1.2), white lace bra, white panties, rabbit ear headband, fluffy tail, white thighhighs, lingerie",
+    cowBikini: "(cow print bikini:1.25), cow print thighhighs, cow ears headband, cow bell choker",
+    sheerChemise: "(sheer chemise:1.2), lingerie, thin straps, lace hem, see-through, bare legs",
+    thongLeotard: "(high-leg thong leotard:1.25), shiny leotard, extremely high-cut, bare legs, pantyhose",
+    sheerSlip: "(see-through slip lingerie:1.2), black sheer slip, lace trim, bare legs",
+    bondageQueen: "(black leather bustier:1.2), o-ring choker, leather garter belt, fishnet thighhighs, lingerie",
+    wetBikini: "(white bikini:1.2), wet, see-through wet bikini, nipples visible through fabric, oiled skin",
+    sequinLingerie: "(sequin lingerie:1.2), glitter bra, sequin panties, body glitter, garter belt",
+    // 일반 복장 · 코스튬
+    cheerleader: "(cheerleader:1.2), cheer crop top, short pleated skirt, pom poms, white sneakers",
+    teacher: "(female teacher:1.15), white blouse, tight pencil skirt, glasses, black pantyhose, heels",
+    chef: "(chef uniform:1.15), white double-breasted chef jacket, black tight skirt, chef hat",
+    barista: "(barista:1.15), black shirt, brown apron, tight jeans, sleeves rolled up",
+    grayskirtSuit: "(grey skirt suit:1.15), blazer, white blouse, pencil skirt, sheer pantyhose, heels",
+    bellyDancer: "(belly dancer:1.25), coin crop top, sheer harem skirt, bare midriff, jewelry, veil",
+    cowgirlOutfit: "(cowgirl outfit:1.2), cowboy hat, plaid shirt tied at waist, denim short shorts, cowboy boots",
+    hiking: "(hiking outfit:1.1), fitted fleece jacket, sports bra, leggings, hiking boots",
+    bikerSuit: "(biker suit:1.2), black leather racing bodysuit, front zipper, motorcycle gloves",
+    dealer: "(casino dealer:1.15), white shirt, black vest, bow tie, tight black mini skirt",
+    miko: "(miko:1.2), white kimono top, red hakama skirt, hair ribbon",
+    knight: "(female knight:1.15), light armor, short skirt, thighhighs, cape",
+    catsuit: "(black catsuit:1.25), shiny full-body bodysuit, front zipper, cat ear headband, high heels",
+    hostess: "(evening mini dress:1.2), satin, sequins, high heels, earrings",
+    pantsuit: "(black pantsuit:1.15), tailored blazer, silk camisole, slacks, heels",
+    yoga: "(yoga outfit:1.15), cropped tank top, high-waisted yoga leggings, barefoot",
+    tracksuit: "(tracksuit:1.1), zip-up track jacket, sports bra, track pants",
+    overallShorts: "(denim overall shorts:1.15), white crop top, one strap down, sneakers",
+    tankShorts: "(white tank top:1.15), denim short shorts, bare legs, sneakers",
+    turtleSkirt: "(turtleneck sweater:1.15), long pleated skirt, boots",
+    linenDress: "(linen shirt dress:1.15), buttoned front, belt, sandals",
+    skiwear: "(ski wear:1.15), fitted white ski jacket, ski pants, goggles on head",
+    hanfu: "(hanfu dress:1.2), flowing silk robes, wide sleeves, hair ornament",
+    aodai: "(ao dai:1.2), long slit silk dress, white silk pants",
+    firefighter: "(firefighter costume:1.15), open turnout jacket, sports bra, firefighter pants, suspenders",
+    mechanic: "(mechanic jumpsuit:1.15), unzipped jumpsuit sleeves tied around waist, tank top, work pants, grease stains, work gloves",
+    volleyball: "(volleyball uniform:1.15), sleeveless jersey tank top, spandex shorts, knee pads",
+    flightSuit: "(pilot jumpsuit:1.15), unzipped to chest, aviator sunglasses, tank top, work pants",
+    detective: "(detective:1.15), beige trench coat, white blouse, tight pencil skirt, black pantyhose, fedora",
+    archer: "(huntress costume:1.15), leather corset, short skirt, thigh boots, quiver",
+    nunCostume: "(nun costume:1.15), black habit, short black dress, white collar, black thighhighs",
+    rockstar: "(rock band outfit:1.15), ripped crop top, leather mini skirt, fishnet pantyhose, studded choker",
   };
   const DWEAR = {
     char: { n: "캐릭터 데이트 옷" },
@@ -449,6 +521,20 @@
     floral: { n: "꽃무늬 원피스", t: "(floral mini dress:1.15), puff sleeves, bare legs, sandals" },
     sporty: { n: "트레이닝 셋업", t: "(cropped track jacket:1.1), sports bra, track pants, sneakers, ponytail" },
     hoodie: { n: "후드티 · 반바지", t: "(oversized hoodie:1.15), short shorts, bare legs, sneakers" },
+    redBodycon: { n: "레드 보디콘 원피스", t: "(red bodycon dress:1.15), tight short dress, bare shoulders, high heels, clutch" },
+    wrapDress: { n: "랩 원피스", t: "(wrap dress:1.15), v-neck, tied waist, midi skirt, heels" },
+    blazerDress: { n: "블레이저 원피스", t: "(blazer dress:1.15), double-breasted, short, black pantyhose, heels" },
+    tweed: { n: "트위드 셋업", t: "(tweed jacket:1.1), matching tweed mini skirt, pearl necklace, heels" },
+    knitVest: { n: "니트 조끼 · 테니스 스커트", t: "(knit vest:1.1), white shirt, pleated tennis skirt, loafers, knee socks" },
+    denimDress: { n: "데님 원피스", t: "(denim dress:1.15), button front, belt, sneakers" },
+    maxi: { n: "롱 맥시 원피스", t: "(long maxi dress:1.15), floral, thin straps, sandals, straw bag" },
+    satinMini: { n: "새틴 블라우스 · 미니스커트", t: "(satin blouse:1.1), tight mini skirt, sheer pantyhose, heels" },
+    leatherPants: { n: "가죽 바지 · 크롭톱", t: "(black leather pants:1.15), cropped top, navel, ankle boots" },
+    modernQipao: { n: "모던 치파오 원피스", t: "(modern qipao mini dress:1.15), side slit, mandarin collar, heels" },
+    shirtDress: { n: "셔츠 원피스", t: "(striped shirt dress:1.1), rolled sleeves, belt, sneakers" },
+    mermaid: { n: "머메이드 스커트", t: "(fitted knit top:1.1), mermaid midi skirt, heels" },
+    puffer: { n: "패딩 · 니트 원피스", t: "(short puffer jacket:1.1), ribbed knit dress, knee boots" },
+    tubeWide: { n: "튜브톱 · 와이드 팬츠", t: "(tube top:1.1), high-waisted wide pants, bare shoulders, sandals" },
   };
   const LOUNGE = "loungewear, oversized white t-shirt, black dolphin shorts, barefoot";   // Hunt 그림 공방 '집에서 입는 옷'
   // 그림 공방(미리 뽑기)의 데이트 장면 — 배경은 Hunt 장소 풍경(때별), 자세는 Hunt 데이트 장면(없는 곳은 같은 형식으로 만듦), out: 바깥(날씨 적용)
