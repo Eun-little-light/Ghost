@@ -116,7 +116,7 @@
     }
     return _api(url, opt);
   };
-  window.BC_FAST = { variant, shrink, lightning, get on() { return on; }, get lightningOn() { return light; } };
+  window.BC_FAST = { variant, shrink, lightning, get on() { return on; }, get lightningOn() { return light; }, bindLight: (cb) => bindLight(cb) };   // bindLight: 다른 탭의 초고속 칸도 같은 설정으로
 
   // 빠른 사본은 워크플로 선택 목록·워크플로 탭에서 숨김
   const hidden = (s) => { const t = String(s || "").trim(); return t.endsWith(TAG) || t.endsWith(LTAG) || /~style(~|$)/.test(t); };   // ~style: 작가 그림체 사본

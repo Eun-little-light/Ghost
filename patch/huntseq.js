@@ -744,6 +744,11 @@
     { const attOn = o.situ === "ntr" || o.absent || /^(cheat|cheatwatch|rebound|affair)$/.test(o.rel || "");
       if (attOn && attSel === "hesitant" && /^(warm_|kiss|neck|caress|undress|ready)/.test(s.id)) pos.push("(hesitant:1.15), guilty expression, conflicted, biting lip, looking away");
       if (attOn && attSel === "rough" && /^(pose|deny|climax|oral)/.test(s.id)) pos.push("(rough sex:1.15), (hair pulling:1.1), (spanking:1.05), red handprint on ass, messy hair, eager expression"); }
+    { const LW_IMG = {
+        crude: { sex: "(lewd face:1.1), heavy breathing, saliva, sweat, open mouth", fore: "(lewd face:1.05), saliva, heavy breathing", after: "dazed, heavy breathing, sweat" },
+        extreme: { sex: "(ahegao:1.15), (tongue out:1.1), drooling, saliva trail, (heart-shaped pupils:1.1), rolling eyes, sweaty, (fucked silly:1.1)", fore: "(lewd face:1.15), drooling, tongue out, (heart-shaped pupils:1.05)", after: "(fucked silly:1.05), dazed, drooling, sweaty, messy hair" } }[lewdSel];
+      const g = /^(pose|deny|climax)/.test(s.id) ? "sex" : /^(chest|nipple|hand|toy|cunni|analtoy|oral|handjob|paizuri|footjob|thighjob|sixtynine|grind)/.test(s.id) ? "fore" : /^(after|finish)/.test(s.id) ? "after" : "";
+      if (LW_IMG && g && !s.solo && !s.date && s.meet == null) pos.push(LW_IMG[g]); }   // 음란도대로 그림의 표정도
     if (o.fin === FINISH.inside && /^(care|bye|finish_both)$/.test(s.id)) pos.push("(cum leaking from pussy:1.25), cum drip, creampie, cum on thighs");   // 안에 싼 뒤: 흘러나옴
     if ((obsSel === "strong" || obsSel === "extreme") && /^(after|finish_both|clean_swallow)/.test(s.id)) pos.push(obsSel === "extreme" ? "(clinging:1.2), (hugging his arm tightly:1.15), possessive gaze, intense eyes" : "(clinging:1.1), holding his arm, possessive smile");
     for (const k of o.traits || []) { const L = LATENT[k]; if (L && L.t && !s.solo) pos.push(L.t[latGroup(s)] || ""); }
@@ -1289,6 +1294,7 @@
     <div class="field" id="hsOutfitBox"><label>복장 <small class="muted">(Hunt 인물은 상황별 복장 · 모두 '집에서 입는 옷' · 란제리 가능 — 란제리는 만남 장면까진 데이트 옷, 키스부터 란제리)</small></label><div id="hsOutfit"></div></div>
     <div class="field"><label>대사 <small class="muted">(Hunt 형식 · 그림 아래 그녀의 한마디 · 보기 창 대사창에도 나옴)</small></label>
       <div id="hsStyleBox" style="margin:4px 0 6px"><small class="muted">그림체 — 생성 탭과 같은 칸 (작가를 고르면 그 작가 그림체 · 참조 그림은 끔)</small> </div>
+      <label class="check"><input type="checkbox" id="hsLight"> 빠르게 — 초고속 (Lightning · 약 5배 빠름, 그림체 유지 · 업스케일 생략)</label>
       <label class="check"><input type="checkbox" id="hsSameSeed"${sameSeed ? " checked" : ""}> 한 시퀀스는 같은 시드 <small class="muted">(장소 · 복장 · 그림체가 장면마다 덜 바뀜)</small></label>
       <label class="check"><input type="checkbox" id="hsLineOn"${lineOn ? " checked" : ""}> 장면마다 대사 붙이기</label>
       <div><small class="muted">대사 형식 — Hunt: [장소] · 그녀의 행동 서술 · "말" / Wayward: [단계]당신의 행동 · 반응 · "신음"과 서술이 번갈아 · "말"</small>${seg("hsFmt", FMTS, fmtSel, false)}</div>
@@ -1489,6 +1495,7 @@
   $q("#hsLineOn").addEventListener("change", (e) => { lineOn = e.target.checked; ls.set("lineOn", lineOn); });
   $q("#hsSameSeed").addEventListener("change", (e) => { sameSeed = e.target.checked; ls.set("sameSeed", sameSeed); });
   if (window.BC_STYLE && $q("#hsStyleBox")) $q("#hsStyleBox").append(BC_STYLE.make());
+  if (window.BC_FAST && BC_FAST.bindLight && $q("#hsLight")) BC_FAST.bindLight($q("#hsLight"));
   $q("#hsNarrOn").addEventListener("change", (e) => { narrOn = e.target.checked; ls.set("narrOn", narrOn); });
   bindSeg("hsSpeech", (v) => { speechSel = v; ls.set("speech", v); pick("hsSpeech", v); });
   bindSeg("hsMSpeech", (v) => { mspeechSel = v; ls.set("mspeech", v); pick("hsMSpeech", v); });
