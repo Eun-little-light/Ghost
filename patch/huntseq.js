@@ -629,7 +629,7 @@
     if (o.watchP && !s.date && !s.self && !s.solo && s.meet == null) pos.splice(1, 0, "(looking at viewer:1.25), eye contact, (pov:1.05), viewer out of frame");
     // 위험일 (오히려 원함) · 안에 사정: 그녀가 다리로 허리를 감아 껴안음
     if (cycleSel === "riskyWant" && /^(climax|finish)/.test(s.id) && o.fin === FINISH.inside && !s.solo) pos.splice(pos.length - 1, 0, "(leg lock:1.25), (legs wrapped around his waist:1.2), crossed ankles, holding him close");
-    if (sizeSel !== "normal" && !s.solo && !s.self && !s.date && s.meet == null && (s.duo || o.party > 2 || /^(ready|pose|climax|finish|deny)/.test(s.id))) pos.splice(pos.length - 1, 0, sizeSel === "huge" ? "(huge penis:1.3), veiny penis, (penis size difference:1.1), (stomach bulge:1.05)" : "(large penis:1.2), thick penis");
+    if (sizeSel !== "normal" && !s.solo && !s.self && !s.date && s.meet == null && (s.duo || o.party > 2 || /^(ready|pose|climax|finish|deny)/.test(s.id))) pos.splice(pos.length - 1, 0, sizeSel === "huge" ? "(huge penis:1.3), veiny penis, (penis size difference:1.1)" + (/^(pose|deny|climax)/.test(s.id) ? ", (stomach bulge:1.05)" : "") : "(large penis:1.2), thick penis");
     // 다인(3인 이상): 머리 · 얼굴이 하나 더 생기거나 몸이 붙는 것 막기
     if (o.party > 2 && !s.solo && !s.self) neg.push("(extra head:1.3), (two heads:1.3), multiple heads, conjoined, extra face, fused bodies, extra arms, extra legs");
     // 여성 여럿 + 남성 여럿 (2:2 스와핑 · 난교): 1인칭(pov)이 아니라 모두가 보이는 넓은 구도
@@ -653,6 +653,7 @@
     let P = pos.filter(Boolean).join(", ");
     for (const k of acts) if (ACTS[k].swap && si >= STAGES.findIndex((x) => x.act === k)) P = P.replace(ACTS[k].swap[0], ACTS[k].swap[1]);
     if (o.anal && s.part === "pose") P = P.replace(/\(vaginal sex:1\.2\)/g, "(anal sex:1.3), anal").replace(/penis in pussy/g, "penis in anus").replace(/pussy focus/g, "ass focus").replace(/\(cum in pussy:1\.4\)/g, "(cum in ass:1.3)").replace(/cum in pussy/g, "cum in ass").replace(/\(penis on pussy:1\.25\)/g, "(penis on anus:1.2)").replace(/imminent vaginal/g, "imminent anal");
+    if (!s.date && s.meet == null && o.place && !/\bbed\b/.test(o.place.bg)) P = P.replace(/lying on bed/g, "lying down").replace(/sitting on (the )?bed( edge)?/g, "sitting").replace(/gripping sheets/g, "clenched hands"); if (!s.date && s.meet == null && o.place && !/\bbed\b/.test(o.place.bg)) P = P.split(/,\s*/).filter((x) => !/\b(bed|bedroom|bedsheet|bed sheets)\b/.test(x)).join(", ");   // 침대 없는 장소에서 침대 태그 빼기
     if (linger && garment(LINGERIE[o.outfit]).top === "linger" && !s.date && !s.solo && s.meet == null) P = P.replace(/fully clothed/g, "wearing only lingerie").replace(/, crotch hole/g, "").replace(/pantyhose/g, "thighhighs");
     return { positive: P, negative: neg.filter(Boolean).join(", "), duo: !!s.duo, phone: !!s.solo };
   }
@@ -698,7 +699,7 @@
   let multi = ls.get("multi", false), undress = ls.get("undress", true);
   let video = ls.get("video", false);
   let on = ls.get("on", {});
-  let lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
+  let sameSeed = ls.get("sameSeed", true), lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
   // 대사 형식: Hunt 방식([장소] · 서술 · "말") / Wayward 방식([단계]서술 "소리" … "말" 『속마음』 — huntway.js)
   const FMTS = { hunt: "Hunt 방식", wayward: "Wayward 방식" };
   let fmtSel = FMTS[ls.get("fmt", "hunt")] ? ls.get("fmt", "hunt") : "hunt";
@@ -1178,6 +1179,7 @@
       <div id="hsNames" class="hidden" style="margin-top:6px"></div></div>
     <div class="field" id="hsOutfitBox"><label>복장 <small class="muted">(Hunt 인물은 상황별 복장 · 모두 '집에서 입는 옷' · 란제리 가능 — 란제리는 만남 장면까진 데이트 옷, 키스부터 란제리)</small></label><div id="hsOutfit"></div></div>
     <div class="field"><label>대사 <small class="muted">(Hunt 형식 · 그림 아래 그녀의 한마디 · 보기 창 대사창에도 나옴)</small></label>
+      <label class="check"><input type="checkbox" id="hsSameSeed"${sameSeed ? " checked" : ""}> 한 시퀀스는 같은 시드 <small class="muted">(장소 · 복장 · 그림체가 장면마다 덜 바뀜)</small></label>
       <label class="check"><input type="checkbox" id="hsLineOn"${lineOn ? " checked" : ""}> 장면마다 대사 붙이기</label>
       <div><small class="muted">대사 형식 — Hunt: [장소] · 그녀의 행동 서술 · "말" / Wayward: [단계]당신의 행동 · 반응 · "신음"과 서술이 번갈아 · "말"</small>${seg("hsFmt", FMTS, fmtSel, false)}</div>
       <label class="check"><input type="checkbox" id="hsNarrOn"${narrOn ? " checked" : ""}> 서술 넣기 <small class="muted">(Hunt 방식일 때)</small></label>
@@ -1366,6 +1368,7 @@
     draw();
   });
   $q("#hsLineOn").addEventListener("change", (e) => { lineOn = e.target.checked; ls.set("lineOn", lineOn); });
+  $q("#hsSameSeed").addEventListener("change", (e) => { sameSeed = e.target.checked; ls.set("sameSeed", sameSeed); });
   $q("#hsNarrOn").addEventListener("change", (e) => { narrOn = e.target.checked; ls.set("narrOn", narrOn); });
   bindSeg("hsSpeech", (v) => { speechSel = v; ls.set("speech", v); pick("hsSpeech", v); });
   bindSeg("hsMSpeech", (v) => { mspeechSel = v; ls.set("mspeech", v); pick("hsMSpeech", v); });
@@ -1438,11 +1441,12 @@
   // 목록 만들기: 장마다 프롬프트와 대사를 지금 정해 둠
   function makeRecs(jobs) {
     usedLines = new Map(); usedWhole = new Set(); seenQ = new Set();
+    const SEED = sameSeed ? Math.floor(Math.random() * 2 ** 47) : 0;   // 한 시퀀스 공통 시드
     const out = jobs.map((j, i) => {
       const b = build(j.s, j.o), jc = j.o.ch, cname = String(jc.n).split(" · ")[0];
       const ln = lineOn ? lineOf(j.s.id, jc, j.o) : "";
       const pos = ln && window.BC_LINE2TAG && !j.s.date && !j.s.solo && j.s.meet == null ? BC_LINE2TAG(b.positive, ln) : b.positive;   // 대사의 행위(손짓 · 표정)를 그림에도
-      return { i: i + 1, n: j.s.n(j.o), pos, neg: b.negative, duo: b.duo, bust: j.o.bust || "global", line: ln, sid: j.s.id, sp: speechOf(jc), cid: jc.id, cn: cname, of: OUTFITS[j.o.outfit] || j.o.outfit, g: j.g || "", rel: j.o.rel && j.o.rel !== "none" ? j.o.rel : "", situ: j.o.situ && j.o.situ !== "none" ? j.o.situ : "", ng: j.o.ng || 1, nb: j.o.nb || 1, watch: !!j.o.watch, absent: !!j.o.absent, posek: keyOf(POSES, j.o.pose), placek: keyOf(PLACES, j.o.place), fink: keyOf(FINISH, j.o.fin), outk: j.o.outfit, cx: j.o.cx || "", anal: !!j.o.anal, durk: j.o.dur || "", mem: [cname, ...((j.o.extras || []).map((e) => String(e.n).split(" · ")[0]))],
+      return { i: i + 1, seed: SEED, n: j.s.n(j.o), pos, neg: b.negative, duo: b.duo, bust: j.o.bust || "global", line: ln, sid: j.s.id, sp: speechOf(jc), cid: jc.id, cn: cname, of: OUTFITS[j.o.outfit] || j.o.outfit, g: j.g || "", rel: j.o.rel && j.o.rel !== "none" ? j.o.rel : "", situ: j.o.situ && j.o.situ !== "none" ? j.o.situ : "", ng: j.o.ng || 1, nb: j.o.nb || 1, watch: !!j.o.watch, absent: !!j.o.absent, posek: keyOf(POSES, j.o.pose), placek: keyOf(PLACES, j.o.place), fink: keyOf(FINISH, j.o.fin), outk: j.o.outfit, cx: j.o.cx || "", anal: !!j.o.anal, durk: j.o.dur || "", mem: [cname, ...((j.o.extras || []).map((e) => String(e.n).split(" · ")[0]))],
         pc: (() => { const nE = watchOn(j.o) ? j.o.nb - 1 : j.o.nb; return j.o.ng + nE > 2 && !j.s.self && !j.s.solo ? ((j.s.date || j.s.meet != null) ? (j.o.ng > 1 ? [j.o.ng, 0] : null) : [j.o.ng, nE]) : null; })(),
         ph: sel.poses.length > 1 ? (j.pk ? POSES[j.pk].n : j.s.part === "end" ? "마무리" : "") : "" };
     });
@@ -1490,7 +1494,7 @@
           if (inQueue.has(r.pid)) { byId.set(r.pid, s); setSlot(s, "", "대기열"); continue; }
         }
         const params = r.duo ? { width: 1216, height: 832, batch: 1 } : { width: 832, height: 1216, batch: 1 };
-        const res = await api("/api/generate", { json: { workflow: pickWf(r.duo), positive: r.pos, negative: r.neg, params, randomSeed: true, ...(r.bust && r.bust !== "global" ? { bust: r.bust } : {}) } });
+        const res = await api("/api/generate", { json: { workflow: pickWf(r.duo), positive: r.pos, negative: r.neg, params: r.seed ? { ...params, seed: r.seed } : params, randomSeed: !r.seed, ...(r.bust && r.bust !== "global" ? { bust: r.bust } : {}) } });
         r.pid = res.prompt_id; s.id = r.pid; r.err = 0; saveRun();
         // 보기 창 · 갤러리 폴더용 정보 (대사 · 캐릭터 · 복장)
         if (window.BC_LINE) BC_LINE.set(r.pid, { t: r.line, n: r.cn, cid: r.cid, cn: r.cn, of: r.of, sid: r.sid, rel: r.rel, situ: r.situ, ng: r.ng, nb: r.nb, watch: r.watch, absent: r.absent, posek: r.posek, placek: r.placek, fink: r.fink, outk: r.outk, cx: r.cx, anal: r.anal, durk: r.durk, mem: r.mem });
@@ -1575,7 +1579,7 @@
     byId.delete(s.id);
     try {
       const params = r.duo ? { width: 1216, height: 832, batch: 1 } : { width: 832, height: 1216, batch: 1 };
-      const res = await api("/api/generate", { json: { workflow: pickWf(r.duo), positive: r.pos, negative: r.neg, params, randomSeed: true, ...(r.bust && r.bust !== "global" ? { bust: r.bust } : {}) } });
+      const res = await api("/api/generate", { json: { workflow: pickWf(r.duo), positive: r.pos, negative: r.neg, params: r.seed ? { ...params, seed: r.seed } : params, randomSeed: !r.seed, ...(r.bust && r.bust !== "global" ? { bust: r.bust } : {}) } });
       r.pid = res.prompt_id; s.id = r.pid; s.checked = 0; saveRun();
       if (window.BC_LINE) BC_LINE.set(r.pid, { t: r.line, n: r.cn, cid: r.cid, cn: r.cn, of: r.of, sid: r.sid, rel: r.rel, situ: r.situ, ng: r.ng, nb: r.nb, watch: r.watch, absent: r.absent, posek: r.posek, placek: r.placek, fink: r.fink, outk: r.outk, cx: r.cx, anal: r.anal, durk: r.durk, mem: r.mem });
       byId.set(r.pid, s); state.myPrompts && state.myPrompts.add(r.pid);
