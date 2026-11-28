@@ -1390,7 +1390,7 @@
       const b = build(j.s, j.o), jc = j.o.ch, cname = String(jc.n).split(" · ")[0];
       const ln = lineOn ? lineOf(j.s.id, jc, j.o) : "";
       const pos = ln && window.BC_LINE2TAG && !j.s.date && !j.s.solo && j.s.meet == null ? BC_LINE2TAG(b.positive, ln) : b.positive;   // 대사의 행위(손짓 · 표정)를 그림에도
-      return { i: i + 1, n: j.s.n(j.o), pos, neg: b.negative, duo: b.duo, bust: j.o.bust || "global", line: ln, sid: j.s.id, sp: speechOf(jc), cid: jc.id, cn: cname, of: OUTFITS[j.o.outfit] || j.o.outfit, g: j.g || "", rel: j.o.rel && j.o.rel !== "none" ? j.o.rel : "", situ: j.o.situ && j.o.situ !== "none" ? j.o.situ : "", ng: j.o.ng || 1, nb: j.o.nb || 1, watch: !!j.o.watch, absent: !!j.o.absent, mem: [cname, ...((j.o.extras || []).map((e) => String(e.n).split(" · ")[0]))],
+      return { i: i + 1, n: j.s.n(j.o), pos, neg: b.negative, duo: b.duo, bust: j.o.bust || "global", line: ln, sid: j.s.id, sp: speechOf(jc), cid: jc.id, cn: cname, of: OUTFITS[j.o.outfit] || j.o.outfit, g: j.g || "", rel: j.o.rel && j.o.rel !== "none" ? j.o.rel : "", situ: j.o.situ && j.o.situ !== "none" ? j.o.situ : "", ng: j.o.ng || 1, nb: j.o.nb || 1, watch: !!j.o.watch, absent: !!j.o.absent, posek: keyOf(POSES, j.o.pose), placek: keyOf(PLACES, j.o.place), fink: keyOf(FINISH, j.o.fin), outk: j.o.outfit, cx: j.o.cx || "", anal: !!j.o.anal, durk: j.o.dur || "", mem: [cname, ...((j.o.extras || []).map((e) => String(e.n).split(" · ")[0]))],
         pc: (() => { const nE = watchOn(j.o) ? j.o.nb - 1 : j.o.nb; return j.o.ng + nE > 2 && !j.s.self && !j.s.solo ? ((j.s.date || j.s.meet != null) ? (j.o.ng > 1 ? [j.o.ng, 0] : null) : [j.o.ng, nE]) : null; })(),
         ph: sel.poses.length > 1 ? (j.pk ? POSES[j.pk].n : j.s.part === "end" ? "마무리" : "") : "" };
     });
@@ -1441,7 +1441,7 @@
         const res = await api("/api/generate", { json: { workflow: pickWf(r.duo), positive: r.pos, negative: r.neg, params, randomSeed: true, ...(r.bust && r.bust !== "global" ? { bust: r.bust } : {}) } });
         r.pid = res.prompt_id; s.id = r.pid; r.err = 0; saveRun();
         // 보기 창 · 갤러리 폴더용 정보 (대사 · 캐릭터 · 복장)
-        if (window.BC_LINE) BC_LINE.set(r.pid, { t: r.line, n: r.cn, cid: r.cid, cn: r.cn, of: r.of, rel: r.rel, situ: r.situ, ng: r.ng, nb: r.nb, watch: r.watch, absent: r.absent, mem: r.mem });
+        if (window.BC_LINE) BC_LINE.set(r.pid, { t: r.line, n: r.cn, cid: r.cid, cn: r.cn, of: r.of, sid: r.sid, rel: r.rel, situ: r.situ, ng: r.ng, nb: r.nb, watch: r.watch, absent: r.absent, posek: r.posek, placek: r.placek, fink: r.fink, outk: r.outk, cx: r.cx, anal: r.anal, durk: r.durk, mem: r.mem });
         byId.set(r.pid, s); state.myPrompts && state.myPrompts.add(r.pid);
         setSlot(s, "", "대기열"); sent++;
       }
@@ -1525,7 +1525,7 @@
       const params = r.duo ? { width: 1216, height: 832, batch: 1 } : { width: 832, height: 1216, batch: 1 };
       const res = await api("/api/generate", { json: { workflow: pickWf(r.duo), positive: r.pos, negative: r.neg, params, randomSeed: true, ...(r.bust && r.bust !== "global" ? { bust: r.bust } : {}) } });
       r.pid = res.prompt_id; s.id = r.pid; s.checked = 0; saveRun();
-      if (window.BC_LINE) BC_LINE.set(r.pid, { t: r.line, n: r.cn, cid: r.cid, cn: r.cn, of: r.of, rel: r.rel, situ: r.situ, ng: r.ng, nb: r.nb, watch: r.watch, absent: r.absent, mem: r.mem });
+      if (window.BC_LINE) BC_LINE.set(r.pid, { t: r.line, n: r.cn, cid: r.cid, cn: r.cn, of: r.of, sid: r.sid, rel: r.rel, situ: r.situ, ng: r.ng, nb: r.nb, watch: r.watch, absent: r.absent, posek: r.posek, placek: r.placek, fink: r.fink, outk: r.outk, cx: r.cx, anal: r.anal, durk: r.durk, mem: r.mem });
       byId.set(r.pid, s); state.myPrompts && state.myPrompts.add(r.pid);
       setSlot(s, "", `인원 다시 ${r.tries}/3 (${r.cnt} → ${wg}여${wb ? ` ${wb}남` : ""})`);
     } catch (e) { r.img = im; saveRun(); setSlot(s, "done", "완료 (다시 요청 실패)", 1); showImg(s, im); }
@@ -1599,16 +1599,17 @@
     if (!ch) ch = { id: g.cid || "x", n: g.cn || "그녀", speech: "polite", body: "", wear: "", neg: "" };
     const sid = meta.sid || (window.BC_GUESS_SID ? BC_GUESS_SID(p) : "meet1");
     const pick = (obj, test, def) => { const k = Object.keys(obj).find((x) => test(obj[x], x)); return obj[k || def]; };
-    const place = pick(PLACES, (v) => hitAll(p, v.bg, 3), "home");
-    const pose = pick(POSES, (v) => hitAll(p, v.tags, 2), "press");
-    const fin = /cum in pussy|internal cumshot/.test(p) ? FINISH.inside : /cum on thighs/.test(p) ? FINISH.thighs : /cum on breasts/.test(p) ? FINISH.breasts : FINISH.stomach;
-    const outfit = /white lace lingerie/.test(p) ? "lingerieWhite" : /black lace lingerie/.test(p) ? "lingerieBlack" : (Object.keys(OUTFITS).find((k) => OUTFITS[k] === (meta.of || g.of)) || (has(p, "loungewear") ? "lounge" : "work"));
+    const place = PLACES[meta.placek] || pick(PLACES, (v) => hitAll(p, v.bg, 3), "home");
+    const PSIG = [["reverse", /reverse cowgirl/], ["fold", /mating press/], ["prone", /prone bone/], ["wallBack", /leg lift.*(behind|cheek against wall)|pinned against wall from behind/], ["allfours", /all fours|doggystyle/], ["doggy", /bent over/], ["side", /spooning/], ["lifted", /carrying/], ["cowgirl", /cowgirl position|girl on top/], ["wall", /against wall|back against wall/], ["press", /missionary/]];
+    const pose = POSES[meta.posek] || POSES[(PSIG.find(([, r]) => r.test(p)) || ["press"])[0]];
+    const fin = FINISH[meta.fink] || (/cum in pussy|internal cumshot/.test(p) ? FINISH.inside : /cum on thighs/.test(p) ? FINISH.thighs : /cum on breasts/.test(p) ? FINISH.breasts : FINISH.stomach);
+    const outfit = (meta.outk && OUTFITS[meta.outk] && meta.outk) || /white lace lingerie/.test(p) ? "lingerieWhite" : /black lace lingerie/.test(p) ? "lingerieBlack" : (Object.keys(OUTFITS).find((k) => OUTFITS[k] === (meta.of || g.of)) || (has(p, "loungewear") ? "lounge" : "work"));
     const date = pick(DATES, (v) => hitAll(p, v.pose, 2), "restaurant");
-    const dur = Object.keys(DURING).find((k) => DURING[k].tags && hitAll(p, DURING[k].tags, 1)) || "";
+    const dur = meta.durk != null ? meta.durk : Object.keys(DURING).find((k) => DURING[k].tags && hitAll(p, DURING[k].tags, 1)) || "";
     const cm = /completely nude/.test(p) ? "nude" : /no shirt/.test(p) ? "topless" : "half";
     const tool = /magic wand/.test(p) ? "wand" : /egg vibrator/.test(p) ? "egg" : /dildo/.test(p) ? "dildo" : "none";
     const ng = meta.ng || 1, nb = meta.nb || 1, extras = (meta.mem || []).slice(1).map((n) => cs.find((c) => String(c.n).split(" · ")[0] === n)).filter(Boolean);
-    const o = { ch, place, pose, fin, outfit, date, dur, cm, tool, rel: meta.rel || "none", situ: meta.situ || "none", ng, nb, party: ng + nb, pmode: nb > 1 ? (ng > 1 ? "mix" : "male") : "fem", watch: !!meta.watch, absent: !!meta.absent, extras, nudeMain: cm === "nude", time: /evening|dusk/.test(p) ? "evening" : /daytime|morning/.test(p) ? "day" : "night", weather: /rain/.test(p) ? "rain" : /snow/.test(p) ? "snow" : "clear", cx: /simultaneous orgasm/.test(p) ? "both" : "yes", anal: /anal sex/.test(p), acts: [], undress: true };
+    const o = { ch, place, pose, fin, outfit, date, dur, cm, tool, rel: meta.rel || "none", situ: meta.situ || "none", ng, nb, party: ng + nb, pmode: nb > 1 ? (ng > 1 ? "mix" : "male") : "fem", watch: !!meta.watch, absent: !!meta.absent, extras, nudeMain: cm === "nude", time: /evening|dusk/.test(p) ? "evening" : /daytime|morning/.test(p) ? "day" : "night", weather: /rain/.test(p) ? "rain" : /snow/.test(p) ? "snow" : "clear", cx: meta.cx || (/simultaneous orgasm/.test(p) ? "both" : "yes"), anal: meta.anal != null ? !!meta.anal : /anal sex/.test(p), acts: [], undress: true };
     return { sid, ch, o, meta, g };
   }
   function rewrite(entry, fmt, noSave, keepPrev) {
