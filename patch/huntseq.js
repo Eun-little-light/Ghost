@@ -830,6 +830,15 @@
     { const attOn = o.situ === "ntr" || o.absent || /^(cheat|cheatwatch|rebound|affair)$/.test(o.rel || "");
       if (attOn && attSel === "hesitant" && /^(warm_|kiss|neck|caress|undress|ready)/.test(s.id)) pos.push("(hesitant:1.15), guilty expression, conflicted, biting lip, looking away");
       if (attOn && attSel === "rough" && /^(pose|deny|climax|oral)/.test(s.id)) pos.push("(rough sex:1.15), (hair pulling:1.1), (spanking:1.05), red handprint on ass, messy hair, eager expression"); }
+    { const EM_IMG = {   // 감정 상태대로 그림의 표정 (절정은 절정 표정이 우선이라 뺌)
+        shy: ["(shy:1.15), (embarrassed:1.1), blush, looking away, covering face with hands", "(embarrassed:1.1), blush, looking away, covering mouth"],
+        nervous: ["(nervous:1.1), trembling, sweatdrop, averting eyes, biting lip", "(nervous:1.05), trembling, clinging, biting lip"],
+        excited: ["(excited:1.1), sparkling eyes, happy, wide smile, blush", "happy, smile, sparkling eyes, blush"],
+        playful: ["(teasing smile:1.15), smug, wink, tongue out", "(teasing smile:1.05), smug"],
+        aloof: ["(pout:1.1), tsundere, looking away, annoyed, blush", "(pout:1.05), looking away, blush"],
+        clingy: ["(clingy:1.1), puppy eyes, pleading eyes, hugging, nuzzling", "(clingy:1.05), hugging, pleading eyes"],
+        bold: ["(confident:1.1), smirk, seductive smile, looking at viewer, half-closed eyes", "(confident:1.05), seductive smile, looking at viewer"] }[emSel];
+      if (EM_IMG && !s.solo && !/^(climax|video|datetoy|dt_)/.test(s.id)) pos.push(/^(pose|deny)/.test(s.id) ? EM_IMG[1] : EM_IMG[0]); }
     { const LW_IMG = {
         crude: { sex: "(lewd face:1.1), heavy breathing, saliva, sweat, open mouth", fore: "(lewd face:1.05), saliva, heavy breathing", after: "dazed, heavy breathing, sweat" },
         extreme: { sex: "(ahegao:1.15), (tongue out:1.1), drooling, saliva trail, (heart-shaped pupils:1.1), rolling eyes, sweaty, (fucked silly:1.1)", fore: "(lewd face:1.15), drooling, tongue out, (heart-shaped pupils:1.05)", after: "(fucked silly:1.05), dazed, drooling, sweaty, messy hair" } }[lewdSel];
@@ -889,7 +898,7 @@
   let multi = ls.get("multi", false), undress = ls.get("undress", true);
   let video = ls.get("video", false);
   let on = ls.get("on", {});
-  let sameSeed = ls.get("sameSeed", true), lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), leadSel = ls.get("leadin", "mutual"), obsSel = ls.get("obsess", "none"), lewdSel = ls.get("lewd", "crude"), attSel = ls.get("attitude", "none"), arSel = ls.get("arousal", "normal"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
+  let sameSeed = ls.get("sameSeed", true), lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), leadSel = ls.get("leadin", "mutual"), obsSel = ls.get("obsess", "none"), lewdSel = ls.get("lewd", "crude"), attSel = ls.get("attitude", "none"), emSel = ls.get("emotion", "none"), arSel = ls.get("arousal", "normal"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
   // 대사 형식: Hunt 방식([장소] · 서술 · "말") / Wayward 방식([단계]서술 "소리" … "말" 『속마음』 — huntway.js)
   const FMTS = { hunt: "Hunt 방식", wayward: "Wayward 방식" };
   let fmtSel = FMTS[ls.get("fmt", "hunt")] ? ls.get("fmt", "hunt") : "hunt";
@@ -897,6 +906,7 @@
   const SPEECH = { auto: "캐릭터 말투", polite: "존댓말", formal: "격식체", casual: "반말" };
   const MSPEECH = { casual: "남자: 반말", polite: "남자: 존댓말" };
   const ATTITUDE = { none: "그녀의 태도: 기본", hesitant: "망설이다 스스로 넘어감", rough: "거칠게 다뤄지길 원함" };
+  const EMOTION = { none: "감정: 기본", shy: "쑥스러움", nervous: "긴장 · 떨림", excited: "들뜸 · 신남", playful: "장난스러움", aloof: "새침 · 도도", clingy: "애교 · 어리광", bold: "당당함 · 리드" };
   const LEWD = { soft: "음란도: 순하게", normal: "보통", crude: "천박하게", extreme: "아주 천박하게" };
   const AROUSAL = { low: "흥분도: 낮게 시작", normal: "보통", high: "이미 달아오름" };
   const OBSESS = { none: "집착: 없음", mild: "약간", strong: "강함", extreme: "아주 강함" };
@@ -1221,7 +1231,7 @@
       if (others >= 2) t = String(t).replace(/이이가/g, "이분들이").replace(/이이는/g, "이분들은").replace(/이이를/g, "이분들을").replace(/이이(?!들)/g, "이분들");
       else if (callJagi) t = String(t).split('"').map((seg, i) => (i % 2 ? seg.replace(/이분(?!들)|이이/g, "자기") : seg)).join('"');
     }
-    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel, cr: crSel, ob: obsSel, lw: lewdSel, ar: arSel, at: attSel, on: ({ work: "업무복", lounge: "실내복", officeDate: "출근 옷" }[o && o.outfit] || OUTFITS[o && o.outfit] || ""), pn: (o && o.place && o.place.n) || "" }) || t; } catch {} }
+    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel, cr: crSel, ob: obsSel, lw: lewdSel, ar: arSel, at: attSel, em: emSel, on: ({ work: "업무복", lounge: "실내복", officeDate: "출근 옷" }[o && o.outfit] || OUTFITS[o && o.outfit] || ""), pn: (o && o.place && o.place.n) || "" }) || t; } catch {} }
    // 덧붙는 말도 아래 중복 확인을 거치게 먼저
     if (seenQ && t) {   // 이미 나온 말은 빼고, 말이 빠져 '…말한다.'만 남은 줄도 뺌 (다 빠지면 그대로)
       const SV = /(말한다|묻는다|속삭인다|중얼거린다|웃는다|건넨다|되묻는다)\.?\s*$/;
@@ -1393,6 +1403,7 @@
       <div style="margin-top:6px"><small class="muted">그녀의 집착 — 강할수록 질투 · 독점하는 말이 자주 (관계 직전부터 여운까지)</small>${seg("hsObsess", OBSESS, obsSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">음란도 — 대사의 천박함 (순하게면 센 낱말이 든 덧붙는 대사를 뺌)</small>${seg("hsLewd", LEWD, lewdSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">그녀의 태도 — 네토라레 · 아내의 바람 · 알고 허락해 지켜봄 · 불륜 · 홧김의 새 남자에서 (모두 그녀가 원해서)</small>${seg("hsAttitude", ATTITUDE, attSel, false)}</div>
+      <div style="margin-top:6px"><small class="muted">그녀의 감정 상태 — 모든 관계에서 · 장면마다 그 감정이 드러나는 말 · 서술 · 표정</small>${seg("hsEmotion", EMOTION, emSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">그녀의 흥분도 — 초반부터 달아올라 있는지</small>${seg("hsArousal", AROUSAL, arSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">그녀의 날 — 시작 전 · 안에 사정할 때 대사가 달라짐</small>${seg("hsCycle", CYCLES, cycleSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">상대 자지 크기 — 그림과 삽입 · 절정 대사가 달라짐</small>${seg("hsSize", SIZES, sizeSel, false)}</div></div>
@@ -1591,6 +1602,7 @@
   bindSeg("hsObsess", (v) => { obsSel = v; ls.set("obsess", v); pick("hsObsess", v); });
   bindSeg("hsLewd", (v) => { lewdSel = v; ls.set("lewd", v); pick("hsLewd", v); });
   bindSeg("hsAttitude", (v) => { attSel = v; ls.set("attitude", v); pick("hsAttitude", v); });
+  bindSeg("hsEmotion", (v) => { emSel = v; ls.set("emotion", v); pick("hsEmotion", v); });
   bindSeg("hsArousal", (v) => { arSel = v; ls.set("arousal", v); pick("hsArousal", v); });
   bindSeg("hsCycle", (v) => { cycleSel = v; ls.set("cycle", v); pick("hsCycle", v); });
   bindSeg("hsSize", (v) => { sizeSel = v; ls.set("psize", v); pick("hsSize", v); draw(); });
