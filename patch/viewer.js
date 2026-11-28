@@ -281,9 +281,19 @@
   let list = [], pos = 0, pure = false;
   const flat = (entries) => entries.flatMap((e) => (e && e.images ? e.images.map((_, i) => ({ e, i })) : []));
   const isNew = (h) => seenAt != null && h.time > seenAt && !seenIds.has(h.id);
+  // 그림체 탭: 생성한 워크플로 사본 이름(~style_키)으로, 없으면 프롬프트 앞의 그림체 태그로 알아냄 ("" = 기존 그림체)
+  let curSt = lsGet("bc_gal_style", "all");
+  const STY = () => (window.BC_STYLE && BC_STYLE.STYLES) || { "": { n: "기존 그림체" } };
+  const styleOf = (h) => {
+    const S = STY(), m = String(h.workflow || "").match(/~style_(.+?)(?:_L)?(?:~|$)/);
+    if (m && m[1] in S) return m[1];
+    if (/~style(?:~|$)/.test(String(h.workflow || "")) && "rata_bw" in S) return "rata_bw";   // 처음 버전(프리셋 하나 · 키 없는 사본 이름) = 지금의 흑백 원고
+    const p = String(h.positive || "");
+    return Object.keys(S).find((k) => S[k].tag && p.includes(S[k].tag) && p.includes(String(S[k].extra || "").split(",")[0])) || "";
+  };
   const baseList = () => {
     const q = (($v("#gallerySearch") || {}).value || "").trim().toLowerCase();
-    const a = (state.history || []).filter((h) => h.images && h.images.length && !isDead(h) && (!q || ((h.positive || "") + " " + (h.negative || "")).toLowerCase().includes(q)));
+    const a = (state.history || []).filter((h) => h.images && h.images.length && !isDead(h) && (curSt === "all" || styleOf(h) === curSt) && (!q || ((h.positive || "") + " " + (h.negative || "")).toLowerCase().includes(q)));
     return a.sort((x, y) => (sortBy === "old" ? 1 : -1) * ((x.time || 0) - (y.time || 0)));   // 최신순 / 오래된순
   };
   // 다인 플레이(3인 이상): Hunt 시퀀스 프롬프트의 인원 태그 "(3girls:" · "(2boys:"로 알아냄 · 함께한 그녀들은 BREAK 블록의 외모로 찾음
@@ -430,6 +440,17 @@
       so.onclick = (e) => { const b = e.target.closest("button[data-s]"); if (!b || b.dataset.s === sortBy) return; sortBy = b.dataset.s; lsSet(SORT, sortBy); renderGallery(); };
     }
     so.innerHTML = [["new", "↓ 최신순"], ["old", "↑ 오래된순"]].map(([k, n]) => `<button type="button" data-s="${k}" class="${k === sortBy ? "on" : ""}">${n}</button>`).join("");
+    // 그림체 탭 (기억됨) — 모든 보기(새로 생성 · 폴더 · 상황별 · 전체 · 숨김)에 함께 걸림
+    let st = $v(".bc-galstyle", tb);
+    if (!st) {
+      st = document.createElement("span"); st.className = "bc-galmode bc-galsort bc-galstyle"; so.after(st);
+      st.onclick = (e) => { const b = e.target.closest("button[data-st]"); if (!b || b.dataset.st === curSt) return; curSt = b.dataset.st; lsSet("bc_gal_style", curSt); curC = curO = null; renderGallery(); };
+    }
+    const S = STY(), cnt = { all: 0 };
+    for (const h of state.history || []) if (h.images && h.images.length && !isDead(h) && !hidden.has(h.id)) { cnt.all++; const k = styleOf(h); cnt[k] = (cnt[k] || 0) + 1; }
+    if (curSt !== "all" && !(curSt in S)) curSt = "all";
+    st.innerHTML = [["all", "🎨 전체"], ...Object.entries(S).map(([k, v]) => [k, k ? String(v.n).split(" · ").pop() : "기존"])]
+      .map(([k, n]) => `<button type="button" data-st="${esc(k)}" class="${k === curSt ? "on" : ""}">${esc(n)} <span class="muted">${cnt[k] || 0}</span></button>`).join("");
   }
   const thumb = (h, extra) => `<img loading="lazy" src="${imgURL(h.images[0])}" alt="">${extra || ""}`;
   const hideIds = (ids, on) => { for (const id of ids) on ? hidden.add(id) : hidden.delete(id); saveHidden(); renderGallery(); };
@@ -637,12 +658,12 @@
         const items = curP === "all" ? inCat : inCat.filter((h) => partyOf(h).n === +curP);
         const gm = new Map();
         for (const h of items) { const p = partyOf(h), k = `${p.n}|${p.key}`; if (!gm.has(k)) gm.set(k, { title: p.key, sub: p.n + "인", sortN: p.n, a: [] }); gm.get(k).a.push(h); }
-        groups = [...gm.values()].sort((x, y) => x.sortN - y.sortN || y.a.length - x.a.length);
+        groups = [...gm.values()];   // 생성순 (목록이 이미 생성 시각순 → 처음 나온 순서)
       } else {
         // 캐릭터별 묶음 · 소제목에 관계 · 상황 이름
         const gm = new Map();
         for (const h of inCat) { const cn = groupOf(h).cn; if (!gm.has(cn)) gm.set(cn, { title: cn, a: [] }); gm.get(cn).a.push(h); }
-        groups = [...gm.values()].sort((x, y) => (x.title === "기타") - (y.title === "기타") || y.a.length - x.a.length);
+        groups = [...gm.values()];   // 생성순
         for (const x of groups) x.sub = [...new Set(x.a.map(subOf).filter(Boolean))].join(" · ");
       }
       const shown = groups.reduce((s, x) => s + x.a.length, 0);
@@ -677,7 +698,7 @@
     if (!curC) {
       $v("#galleryCount").textContent = `캐릭터 ${folders.size}명 · ${all.length}개`;
       if (!folders.size) { g.innerHTML = '<div class="empty">기록이 없습니다</div>'; return; }
-      const sorted = [...folders.entries()].sort((a, b) => (a[1].cn === "기타") - (b[1].cn === "기타") || b[1].items.length - a[1].items.length);
+      const sorted = [...folders.entries()];   // 생성순 (가장 최근 / 가장 오래된 그림이 있는 폴더부터)
       for (const [cid, f] of sorted) {
         const outs = new Set(f.items.map((h) => groupOf(h).of));
         const el = document.createElement("div"); el.className = "g-item bc-folder"; el.dataset.cid = cid; el._items = f.items;
@@ -695,7 +716,7 @@
     }
     const f = folders.get(curC), byO = new Map();
     for (const h of f.items) { const o = groupOf(h).of; if (!byO.has(o)) byO.set(o, []); byO.get(o).push(h); }
-    const outs = [...byO.entries()].sort((a, b) => b[1].length - a[1].length);
+    const outs = [...byO.entries()];   // 생성순
     // 폴더 안: '전체'(그 캐릭터 그림 전부 · 복장별 소제목으로 나눠 보여 줌) + 복장별 묶음
     if (!curO || (curO !== ALL_O && !byO.has(curO))) curO = ALL_O;
     const isAll = curO === ALL_O, items = isAll ? f.items : byO.get(curO);
@@ -712,8 +733,10 @@
     };
     if (isAll) {
       let n = 0;
-      const order = outs.flatMap(([, a]) => a);   // 보기 창에서 넘기는 순서 = 화면에 보이는 순서
-      for (const [o, a] of outs) {
+      // 전체는 그림을 생성순 그대로 늘어놓고, 복장이 바뀌는 곳마다 소제목 (복장끼리 모으면 순서가 섞임)
+      const runs = []; for (const h of f.items) { const o = groupOf(h).of; if (!runs.length || runs[runs.length - 1][0] !== o) runs.push([o, []]); runs[runs.length - 1][1].push(h); }
+      const order = f.items;   // 보기 창에서 넘기는 순서 = 화면에 보이는 순서
+      for (const [o, a] of runs) {
         if (n >= 1200) break;
         const sh = document.createElement("div"); sh.className = "bc-osub";
         sh.innerHTML = `<b>${esc(o)}</b><span class="muted">${a.length}개</span><button type="button" class="mini" data-o="${esc(o)}">이 복장만 보기 →</button>`;
