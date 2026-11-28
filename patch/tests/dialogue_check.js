@@ -47,6 +47,18 @@ for (let i = 0; i < 30; i++) {   // 무작위가 섞여서 여러 번
   // 상황별 데이트 말: 네토라레 데이트엔 '빨리 보고 싶었다 · 거짓말하고 나왔다' 결의 말이 자주 나옴
   if (i < 10) ntoriHits += /남자친구 약속|반지|동창|생각만 나요|일주일|부르니까|휴대폰을 엎는다/.test(run('meet1', '[데이트 · 레스토랑]그녀가 앉는다.', { rel: 'lover', situ: 'ntori', nb: 1, ng: 1, place: { n: '호텔 스위트룸', bg: 'hotel room, bed' } })) ? 1 : 0;
   if (i < 10) dateHits +=/거짓말|하루 종일|휴대폰만|생각했어요|보고 싶었어요|못 보니까|기다렸어|일찍 나온|달려온|'야근'/.test(run('meet1', '[데이트 · 레스토랑]그녀가 앉는다.')) ? 1 : 0;
+  // 상황별 영상통화: 그의 받아침이 있고 · 네토라레(남자친구)에 부부 생활 말 없음 · 네토리엔 남자친구 맥락
+  const P = { n: '그녀의 원룸', bg: 'bedroom, bed' };
+  const vn = run('video1', '[영상통화]', { rel: 'lover', situ: 'ntr', absent: true, nb: 1, place: P });
+  check('영상통화 네토라레: 그의 말 없음', /화면 너머로/.test(vn));
+  check('영상통화 네토라레: 부부 생활 말', !/출근하면|자는 옆|샤워해요|안으려고/.test(vn));
+  check('영상통화 네토리: 남자친구 맥락 없음', /남자친구/.test(run('video1', '[영상통화]', { rel: 'lover', situ: 'ntori', nb: 1, place: P })));
+  check('영상통화 홧김: 존댓말 캐릭터에 반말', !/싸웠어…|들어 줘"|안 나"|해 줘"/.test(run('video1', '[영상통화]', { rel: 'rebound', absent: true, nb: 1, place: P })));
+  const vr = run('video1', '[영상통화]', { rel: 'rebound', absent: true, nb: 1, place: P }), vc = BC_POST('[영상통화]', 'video2', { rel: 'lover', situ: 'ntori', nb: 1, place: P }, { si: 2, lw: 'crude' });
+  const vw = run('video1', '[영상통화]', { rel: 'cheat', absent: true, nb: 1, place: P });
+  check('영상통화: 조사 (남편는)', !/남편는|남자친구은/.test(vr + vw));
+  check('영상통화: 반말 변환 깨짐 (너이)', !/너이\b|너이"/.test(vc));
+  check('영상통화: 짝 위치 말이 엇갈림', (vw.match(/샤워|옆에 누워|자는 옆|잠든|TV 보는/g) || []).length <= 1);
   // 그림 보고 맞추기 경로도 검사기를 거침
   check('BC_SCENE_FIX 없음', typeof window.BC_SCENE_FIX === 'function' && !/안 돼/.test(BC_SCENE_FIX('[목 안까지]"안 돼, 빼 줘요"', 'irrumatio', null)));
 }
