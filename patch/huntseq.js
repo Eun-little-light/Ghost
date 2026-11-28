@@ -819,6 +819,8 @@
   const CTX_KEY = { dur: (o) => o.dur || (o.anal ? "anal" : ""), date: (o) => keyOf(DATES, o.date), time: (o) => o.time, weather: (o) => (o.date && o.date.out ? o.weather : ""), outfit: (o) => o.outfit, place: (o) => keyOf(PLACES, o.place), tool: (o) => o.tool, cloth: (o) => o.cm, pose: (o) => keyOf(POSES, o.pose), fin: (o) => keyOf(FINISH, o.fin) };
   const speechOf = (ch) => (speechSel !== "auto" ? speechSel : (ch && ch.speech) || "polite");
   let usedLines = new Map();   // 문장 → 쓴 횟수
+  const QK = (q) => "q:" + q.slice(1, -1).replace(/^([\s…,.!~—-]|아+앗*|하+[아앗앙읏]*|흐+[읏응윽]*|으+[응읏]*|읏+|응+|있잖아요?,?|솔직히(?: 말하면)?,?|진짜,?|저기,?|잠깐만요?,?|음,?|야,?)+/, "").replace(/[\s…!?.~—-]+$/, "");
+  window.BC_SEENQ = (x) => !!(seenQ && seenQ.has(QK('"' + x + '"')));   // 이번 시퀀스에서 이미 나온 말인지 (huntpost.js의 주고받는 말 고르기)
   let seenQ = null;   // 한 시퀀스를 만드는 동안 이미 나온 말("…") — 같은 말이 또 나오면 그 말은 빼고 넘어감
   // 덧붙는 대사(관계 · 상황 · 확장 · 통화 · 로터 · 그녀의 날 · 갈아입기)도 같은 장부로 — 덜 쓴 문장부터 (무작위 시작점)
   const pickU = (a) => {
@@ -1133,7 +1135,6 @@
     if (seenQ && t) {   // 이미 나온 말은 빼고, 말이 빠져 '…말한다.'만 남은 줄도 뺌 (다 빠지면 그대로)
       const SV = /(말한다|묻는다|속삭인다|중얼거린다|웃는다|건넨다|되묻는다)\.?\s*$/;
       // 같은 말 판단은 앞의 신음 · 입버릇과 끝 문장부호를 떼고 (예: "아앗… 이제 못 돌아가요…!" = "이제 못 돌아가요")
-      const QK = (q) => "q:" + q.slice(1, -1).replace(/^([\s…,.!~—-]|아+앗*|하+[아앗앙읏]*|흐+[읏응윽]*|으+[응읏]*|읏+|응+|있잖아요?,?|솔직히(?: 말하면)?,?|진짜,?|저기,?|잠깐만요?,?|음,?|야,?)+/, "").replace(/[\s…!?.~—-]+$/, "");
       const lines = String(t).split("\n").map((ln) => { const had = /"/.test(ln); const s = ln.replace(/"[^"]{6,}"/g, (q) => (seenQ.has(QK(q)) ? "" : (seenQ.add(QK(q)), q))).replace(/\s{2,}/g, " ").trim(); return had && !/"/.test(s) && SV.test(s) ? "" : s; }).filter(Boolean);
       if (lines.join("").trim()) t = lines.join("\n");
       // 서술 문장: 이미 나온 문장은 빼되, 줄이 비지 않게

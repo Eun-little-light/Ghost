@@ -21,7 +21,7 @@
   const pick = (a) => { let m = Infinity, c = []; for (const x of a) { const n = used.get(x) || 0; if (n < m) { m = n; c = [x]; } else if (n === m) c.push(x); } const x = c[Math.floor(Math.random() * c.length)]; used.set(x, m + 1); return x; };
   const speech = (t) => { const q = (String(t).match(/"[^"]+"/g) || []).join(" "); return /(습니다|십시오|입니까|합니다)/.test(q) ? 1 : /요[.!?…"\s]/.test(q) ? 0 : q ? 2 : 0; };
   const groupOf = (sid, o) => {
-    if (/^(video|self|dt_|datetoy|ntrcall|ntrphoto|care|clean|size_|warm_|bye)/.test(sid) || /_(hold|swallow)$/.test(sid)) return null;
+    if (/^(video|self|dt_|datetoy|ntrcall|ntrphoto|care$|clean|size_|warm_|bye)/.test(sid) || /_(hold|swallow)$/.test(sid)) return null;
     if (/_fin$/.test(sid)) return "fin";
     if (/^(meet|change)/.test(sid)) return null;   // 데이트 · 장소 도착 · 옷 갈아입기: 아직 밖이거나 막 도착
     if (/^(kiss|undress|act_)/.test(sid)) return "pre";
@@ -232,10 +232,18 @@
     sex: X("M:누구 보지야?|W:당신 자지 전용 보지예요…!|M:더 크게|W:당신 자지 전용 걸레 보지예요오…!/W:자궁 찧어 줘요… 망가뜨려 줘요…!|M:울면서 조르네|W:더요, 개처럼 박아 줘요…!/M:암캐처럼 엉덩이 흔들어|W:멍멍… 이렇게요? 박아 줘요, 주인님…!|M:착한 암캐네/W:보지에서 거품 나요… 계속 쑤셔요…!|M:싸 줄까|W:아직요… 더 쑤시고 싸요…!"),
     cream: X("M:자궁에 다 싼다|W:임신시켜 줘요… 당신 정액받이 할래요…!|M:받아|W:꿀렁꿀렁… 배 터질 것 같아요…♡/W:안에 싸 줘서 고마워요… 한 방울도 안 흘릴게요|M:그대로 막고 있어|W:네… 보지로 꽉 물고 있을게요"),
   };
+  Object.assign(EXX, {
+    pre: X("M:팬티 젖었지? 확인해 볼까|W:만지지 마요… 만지면 진짜 못 참아요|M:그럼 못 참게 해 줄게|W:하앗… 손가락 넣지 마요, 아니… 넣어요/W:오늘 저 박으려고 불렀죠?|M:알면서 따라왔잖아|W:…네. 박히고 싶어서 왔어요/M:자지 만져 봐. 너 때문에 이렇게 됐어|W:벌써 이렇게 딱딱해요…? 바지 터지겠어요|M:꺼내 봐|W:…커요. 입에 넣어도 돼요?/W:키스하면서 가슴 주물러 줘요|M:젖꼭지 벌써 섰네|W:당신이 비트니까요… 더 세게 비틀어요/M:다리 벌려. 보지 보여 줘|W:불 켜진 데서요…? 부끄러운데…|M:벌려|W:…이렇게요. 벌써 벌렁거리죠?"),
+    deny: X("M:박아 달라고 크게 말해|W:박아 줘요… 보지에 박아 줘요, 제발요…!|M:더 크게|W:박아 줘요오…! 보지 쑤셔 줘요…!/W:자지 넣어 놓고 가만있지 마요…|M:움직여 줬으면 좋겠어?|W:네… 쑤셔 줘요, 이러다 미쳐요…/M:끝만 넣었는데 보지가 빨아들이네|W:들어오라고 그러는 거예요… 끝까지 넣어 줘요…|M:아직|W:흐윽… 심술쟁이… 제발요…"),
+    fin: X("M:입 벌려. 싼다|W:아… 줘요, 혀 위에 다 줘요…|M:삼키지 말고 보여 줘|W:으응… 입안 가득이에요… 봐요/W:얼굴에 싸 줘요… 화장 다 망가지게요|M:눈 감지 마|W:하앗… 뜨거워… 눈썹까지 묻었어요"),
+    out: X("M:어디에 싸 줄까|W:가슴이요… 가슴에 뿌려 줘요|M:문질러 봐|W:미끈미끈해요… 냄새 좋아요/W:배 위에 싸 줘요… 보고 싶어요|M:이렇게 많이|W:하아… 배꼽에 고였어요… 핥아 먹을래요"),
+    after: X("M:보지에서 내 거 흘러나온다|W:아까워요… 손가락으로 다시 넣어 줘요|M:욕심쟁이|W:당신 정액 하나도 안 흘리고 싶어요/W:아직 자지 서 있어요…|M:한 번 더 할래?|W:네… 이번엔 제가 위에서 박을게요/M:어땠어, 오늘|W:보지가 아직 얼얼해요… 당신 자지 모양으로 벌어져 있어요|M:다음엔 더 세게 해 줄까|W:…약속해요"),
+  });
   const exchange = (k, o, si, lw) => {
-    const pool = lw === "soft" ? EX[k].filter((e) => !SOFT_BAN.test(e.map((x) => x[1]).join(" "))) : lw === "extreme" && EXX[k] ? EX[k].concat(EXX[k], EXX[k]) : EX[k];
+    const pool = lw === "soft" ? EX[k].filter((e) => !SOFT_BAN.test(e.map((x) => x[1]).join(" "))) : !EXX[k] || lw === "normal" ? EX[k] : lw === "extreme" ? EX[k].concat(EXX[k], EXX[k], EXX[k]) : EX[k].concat(EXX[k], EXX[k]);
     if (!pool.length) return "";
-    const third = thirdOf(o), e = pick(pool);
+    const fresh = window.BC_SEENQ ? pool.filter((e) => !e.some(([, x]) => window.BC_SEENQ(x))) : pool;   // 이미 나온 말이 든 묶음은 건너뜀 (중복 확인에 빠져 대화가 끊기지 않게)
+    const third = thirdOf(o), e = pick(fresh.length ? fresh : pool);
     let first = true;
     return e.map(([who, x]) => {
       if (who === "W") return `\n"${herLine(x, o, si, third)}"`;
@@ -315,7 +323,7 @@
     s += arLine(kk, sid, o, si, ar, lw);   // 그녀의 흥분도
     s += attLine(sid, o, si, opt && opt.at, lw);   // 그녀의 태도 (망설임 · 거칠게)
     if (/^(datetoy|dt_)/.test(sid)) s += toyLine(sid, o, si, lw, ms);   // 로터: 음란도대로
-    if (k && EX[k] && Math.random() < 0.9) s += exchange(k, o, si, lw);   // 그녀 ↔ 상대 남자가 주고받는 말
+    if (k && EX[k]) s += exchange(k, o, si, lw);   // 그녀 ↔ 상대 남자가 주고받는 말
     else {
       if (k && W2[k] && Math.random() < 0.6) { const G = window.BC_GEN2, x = pick(W2[k]); s += `\n"${G && G.lv ? G.lv(x, si) : x}"`; }   // 그녀의 말 하나 더
       if (k && M2[k] && Math.random() < 0.6) s += `\n${pick(third ? LEAD_HIM : LEAD_YOU)}. "${pick(ms === "casual" && MX2[k] && Math.random() < LP.MX ? MX2[k] : M2[k])}"`;   // 상대 남자의 말 (반말 · 음란도가 높으면 더 거친 말)
@@ -345,7 +353,7 @@
     return `\n"${herLine(pick(pool), o, si, thirdOf(o))}"`;
   };
   // 음란도: 덧붙는 센 대사 · 거친 남자 말이 붙는 확률
-  const LW_P = { soft: { L: 0, MX: 0 }, normal: { L: 0.2, MX: 0.3 }, crude: { L: 0.4, MX: 0.6 }, extreme: { L: 0.75, MX: 0.9 } };
+  const LW_P = { soft: { L: 0, MX: 0 }, normal: { L: 0.15, MX: 0.3 }, crude: { L: 0.25, MX: 0.6 }, extreme: { L: 0.45, MX: 0.9 } };
   const SOFT_BAN = /자지|보지|좆|박아|박혀|박히|박는|처박|쑤셔|정액|질싸|싸 줘|싸요|싼다|걸레|암캐|년|구멍|오나홀|정액받이|임신/;
   const softFilter = (s) => s.split("\n").filter((l) => !SOFT_BAN.test(l)).join("\n") || s;   // 순하게: 센 낱말이 든 줄을 뺌
   // 그녀의 흥분도: 낮게 시작(초반 수줍음) · 이미 달아오름(초반부터 젖어 있고 여운에도 안 식음)
@@ -380,17 +388,17 @@
   };
   // 고른 복장 · 장소 이름이 든 말 (모든 복장 · 장소에 맞게) — {O} 복장 · {P} 장소, 조사는 받침대로
   const TPL = {
-    O: { pre: S("{O} 입고 온 거 일부러예요. 벗기라고요/{O} 위로 만지니까 더 야해요/{O을} 다 벗기지는 말아 줘요. 입은 채로 하고 싶어요/{O} 차림 어때요? 오늘 이거 입고 당신만 생각했어요"), fore: S("{O} 사이로 손 넣어 줘요/{O이} 젖어 버렸어요… 당신 때문에/{O} 걷어 올리고 핥아 줘요"), sex: S("{O} 입은 채로 박히니까 더 미칠 것 같아요/{O이} 다 구겨져요… 상관없어요, 더 세게요/{O} 입고 이러니까 진짜 천박한 여자 같아요… 좋아요"), deny: S("{O}까지 다 젖었는데 멈추면 어떡해요… 제발요"), cream: S("{O}에 다 흘러요… 이 옷 이제 못 입겠다/{O} 입은 채로 안에 받았어요"), after: S("{O} 다 망가졌어요… 책임져요/다음에도 {O} 입고 올까요?") },
+    O: { pre: S("{O} 입고 온 거 일부러예요. 벗기라고요/{O} 위로 만지니까 더 야해요/{O을} 다 벗기지는 말아 줘요. 입은 채로 하고 싶어요/{O} 차림 어때요? 오늘 이거 입고 당신만 생각했어요"), fore: S("{O} 사이로 손 넣어 줘요/{O이} 땀으로 흠뻑 젖어서 몸에 다 달라붙었어요/{O} 걷어 올리고 핥아 줘요"), sex: S("{O} 입은 채로 박히니까 더 미칠 것 같아요/{O이} 다 구겨져요… 상관없어요, 더 세게요/{O} 입고 이러니까 진짜 천박한 여자 같아요… 좋아요"), deny: S("{O이} 땀에 젖어서 속까지 다 비치는데… 여기서 멈추면 어떡해요, 제발요"), cream: S("{O}에 다 흘러요… 이 옷 이제 못 입겠다/{O} 입은 채로 안에 받았어요"), after: S("{O} 다 망가졌어요… 책임져요/다음에도 {O} 입고 올까요?") },
     P: { pre: S("{P}에서 이러는 거 처음이에요/여기 {P}인데… 진짜 해요?/{P}라서 더 떨려요"), fore: S("{P}에서 소리 내면 다 들릴 텐데…/{P} 한가운데서 다리 벌리고 있어요… 미쳤나 봐요"), sex: S("{P}에서 박히는 거… 평생 못 잊을 거예요/{P}이 우리 소리로 가득 차요/{P}만 오면 이제 이 생각만 날 거예요"), deny: S("{P}까지 와서 애태우기예요? 제발 움직여 줘요"), cream: S("{P}에서 안에 받았어요… 흘리면 안 되는데"), after: S("{P} 올 때마다 오늘 생각날 거예요/{P} 정리하고 가야 하는데… 다리가 안 움직여요") },
-    M: { sex: S("{O} 입은 채로 박아 줄게/{P}에서 이러니까 더 조이네/{O} 다 젖었네. 벗지 마, 그대로 해") },
+    M: { sex: S("{O} 입은 채로 박아 줄게/{P}에서 이러니까 더 조이네/{O이} 땀에 젖어서 다 비친다. 벗지 마, 그대로 해") },
   };
   const jong = (w) => (w.charCodeAt(w.length - 1) - 0xac00) % 28 !== 0;
   const tfill = (x, O, P) => x.replace(/\{O을\}/g, O + (jong(O) ? "을" : "를")).replace(/\{O이\}/g, O + (jong(O) ? "이" : "가")).replace(/\{O\}/g, O).replace(/\{P이\}/g, P + (jong(P) ? "이" : "가")).replace(/\{P\}/g, P);
   const tplLine = (k, o, si, opt, lw, third) => {
     const O = String(opt.on || "").replace(/ \(.*\)$/, ""), P = String(opt.pn || "").replace(/^그녀의 /, si === 2 ? "내 " : "제 ");
     let out = "";
-    if (O && TPL.O[k] && Math.random() < 0.45) { const x = tfill(pick(TPL.O[k]), O, P); if (lw !== "soft" || !SOFT_BAN.test(x)) out += `\n"${herLine(x, o, si, third)}"`; }
-    if (P && TPL.P[k] && Math.random() < 0.4) { const x = tfill(pick(TPL.P[k]), O, P); if (lw !== "soft" || !SOFT_BAN.test(x)) out += `\n"${herLine(x, o, si, third)}"`; }
+    if (O && TPL.O[k] && Math.random() < 0.3) { const x = tfill(pick(TPL.O[k]), O, P); if (lw !== "soft" || !SOFT_BAN.test(x)) out += `\n"${herLine(x, o, si, third)}"`; }
+    if (P && TPL.P[k] && Math.random() < 0.25) { const x = tfill(pick(TPL.P[k]), O, P); if (lw !== "soft" || !SOFT_BAN.test(x)) out += `\n"${herLine(x, o, si, third)}"`; }
     if (O && P && TPL.M[k] && lw !== "soft" && Math.random() < 0.3) out += `\n${pick(third ? LEAD_HIM : LEAD_YOU)}. "${tfill(pick(TPL.M[k]), O, P)}"`;
     return out;
   };

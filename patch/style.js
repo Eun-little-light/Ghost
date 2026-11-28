@@ -7,8 +7,8 @@
   const KEY = "bc_style";
   const STYLES = {
     "": { n: "기존 그림체" },
-    rata_bw: { n: "ratatatat74 · 흑백 원고", tag: "ratatatat74", extra: "(monochrome:1.2), greyscale, manga, sketch, thick lineart, screentone, hatching", ref: "rata_bw1.png", w: 0.7 },
-    rata_color: { n: "ratatatat74 · 컬러", tag: "ratatatat74", extra: "flat color, cel shading, sketch lines, simple shading, muted colors", ref: "rata_color.png", w: 0.7 },
+    rata_bw: { n: "ratatatat74 · 흑백 원고", tag: "ratatatat74", extra: "(monochrome:1.2), greyscale, manga, sketch, thick lineart, screentone, hatching", ref: "rata_bw1.png", w: 0.7, lora: "Ratat_Ill.safetensors", lw: 0.8 },
+    rata_color: { n: "ratatatat74 · 컬러", tag: "ratatatat74", extra: "flat color, cel shading, sketch lines, simple shading, muted colors", ref: "rata_color.png", w: 0.7, lora: "Ratat_Ill.safetensors", lw: 0.8 },
   };
   let cur = ""; try { cur = localStorage.getItem(KEY) || ""; } catch {}
   if (cur === "ratatatat74") cur = "rata_bw";   // 예전 값
@@ -33,10 +33,30 @@
     } catch (e) { console.warn("그림체 참고 그림 올리기 실패", name, e); }
     return false;
   }
+  // 작가 LoRA가 ComfyUI에 있는지 (1분마다 다시 확인)
+  let loraList = { at: 0, names: null };
+  async function hasLora(name) {
+    if (!name) return false;
+    if (!loraList.names || Date.now() - loraList.at > 60000) {
+      try { const r = await fetch("/comfy/object_info/LoraLoader"); const j = await r.json(); const l = j && j.LoraLoader && j.LoraLoader.input && j.LoraLoader.input.required && j.LoraLoader.input.required.lora_name; loraList = { at: Date.now(), names: Array.isArray(l) && Array.isArray(l[0]) ? l[0] : [] }; } catch { loraList = { at: Date.now(), names: [] }; }
+    }
+    return loraList.names.includes(name);
+  }
+  // 모델 · CLIP 줄의 맨 끝(마지막 LoRA, 없으면 체크포인트) 뒤에 LoRA 하나를 끼움
+  function addLora(graph, name, w) {
+    const ids = Object.keys(graph), isLora = (id) => /^LoraLoader$/.test(String(graph[id].class_type));
+    const feeds = (id) => ids.some((x) => isLora(x) && Array.isArray(graph[x].inputs.model) && graph[x].inputs.model[0] === id);
+    const last = ids.find((id) => isLora(id) && !feeds(id)) || ids.find((id) => /CheckpointLoader/.test(String(graph[id].class_type)));
+    if (!last) return false;
+    const nid = "9990";
+    for (const id of ids) for (const [k, v] of Object.entries(graph[id].inputs || {})) if (Array.isArray(v) && v[0] === last && (v[1] === 0 || v[1] === 1)) graph[id].inputs[k] = [nid, v[1]];
+    graph[nid] = { class_type: "LoraLoader", inputs: { lora_name: name, strength_model: w, strength_clip: w, model: [last, 0], clip: [last, 1] } };
+    return true;
+  }
   const _api = api, made = new Map();
   async function wf(baseName, k) {
     try {
-      const S = STYLES[k], ref = refOf(k), refOk = ref ? await upload(ref) : false;
+      const S = STYLES[k], ref = refOf(k), refOk = ref ? await upload(ref) : false, loraOk = await hasLora(S.lora);
       const list = await _api("/api/workflows"), base = list.find((w) => w.name === baseName);
       if (!base || !base.prompt) return baseName;
       let graph = base.prompt;
@@ -45,11 +65,12 @@
       let n = 0;
       for (const id of Object.keys(graph)) {
         const nd = graph[id]; if (!nd || !/IPAdapter/.test(String(nd.class_type || "")) || !nd.inputs || typeof nd.inputs.weight !== "number") continue;
-        nd.inputs.weight = refOk ? S.w : 0; n++;
+        nd.inputs.weight = refOk ? (loraOk ? 0.45 : S.w) : 0; n++;   // LoRA가 그림체를 잡으면 참고 그림은 약하게 (구도 · 옷이 따라오지 않게)
         const li = Array.isArray(nd.inputs.image) && graph[nd.inputs.image[0]];   // 이 IPAdapter가 보는 그림
         if (refOk && li && li.class_type === "LoadImage") li.inputs.image = ref;
       }
-      if (!n) return baseName;   // 참조 그림이 없는 워크플로는 그대로
+      if (loraOk && addLora(graph, S.lora, S.lw)) n++;
+      if (!n) return baseName;   // 참조 그림 · LoRA 둘 다 없으면 그대로
       const name = baseName + "~style_" + k, js = JSON.stringify(graph), old = list.find((w) => w.name === name);
       if (made.get(name) !== js && !(old && JSON.stringify(old.prompt) === js))
         await _api("/api/workflows", { json: { name, prompt: graph, positive: base.positive, negative: base.negative, seeds: base.seeds || [], checkpoint: base.checkpoint || null, latent: base.latent || "", sampler: base.sampler || "", source: "" } });
