@@ -4,8 +4,8 @@
 //   - 업스케일(UltimateSDUpscale): steps → 최대 8 (원래 16, denoise 0.25라 거의 차이 없음)
 //  [초고속 (Lightning)] Hunt의 4초 생성 방식(SDXL Lightning 8step LoRA)을 접목 (같은 시드 비교 77초 → 14초, 그림체 거의 같음)
 //   - 체크포인트 바로 뒤에 속도 LoRA(sdxl_lightning_8step_lora)를 넣음 — 슬라이더 LoRA·화풍 참조는 그 뒤에 그대로 이어짐
-//   - 기본 생성(KSampler): 9 steps · CFG 1.5 · euler_ancestral · simple
-//   - 얼굴 보정(*Detailer*): steps 최대 5 · CFG 1.5
+//   - 기본 생성(KSampler): 9 steps · CFG 2.0 (1.5면 네거티브가 거의 안 먹어 모자이크가 끼어듦) · euler_ancestral · simple
+//   - 얼굴 보정(*Detailer*): steps 최대 5 · CFG 2.0
 //   - 업스케일(UltimateSDUpscale): 빼고, 그 결과를 쓰던 노드가 업스케일 전 그림을 바로 받음
 //   - ComfyUI에 그 LoRA가 없으면 초고속을 건너뛰고 [빠른 모드]로, 워크플로에 이미 속도 LoRA(Lightning·DMD2 등)가 있으면 LoRA는 더 넣지 않음
 //  방법: 고른 워크플로의 숨김 사본(이름~fast / 이름~lightning, 목록엔 숨김)을 생성 직전에 최신 상태로 만들어 그 사본으로 생성
@@ -16,7 +16,7 @@
   const KEY = "bc_fast_on", LKEY = "bc_lightning_on", TAG = "~fast", LTAG = "~lightning";
   const LIMIT = [[/Detailer/, 12], [/^UltimateSDUpscale/, 8]];
   const SPEED_LORA = "sdxl_lightning_8step_lora.safetensors";
-  const LIGHT = { steps: 9, cfg: 1.5, sampler_name: "euler_ancestral", scheduler: "simple", faceSteps: 5 };
+  const LIGHT = { steps: 9, cfg: 2.0, sampler_name: "euler_ancestral", scheduler: "simple", faceSteps: 5 };
   const ls = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
   let on = ls.get(KEY, true), light = ls.get(LKEY, true);
   const made = new Map();
@@ -139,7 +139,7 @@
     if (st.querySelector(".bc-fast")) return true;
     const d = document.createElement("div"); d.className = "field bc-fast";
     d.innerHTML = `<label>빠른 모드 <small class="muted">— 기본 생성은 그대로, 얼굴 보정 steps 최대 12 · 업스케일 steps 최대 8로 줄여 생성 시간 단축 (그림체·구도는 같음)</small></label><label class="check"><input type="checkbox" class="bc-fast-in"> 켜기</label>` +
-      `<label>초고속 (Lightning) <small class="muted">— SDXL Lightning LoRA로 기본 생성 9 steps · CFG 1.5, 얼굴 보정 5 steps, 업스케일 생략. 약 5배 빠름 (같은 시드 77초 → 14초), 그림체는 거의 같고 큰 그림(업스케일)은 나오지 않음. 켜면 빠른 모드보다 먼저 씀</small></label><label class="check"><input type="checkbox" class="bc-light-in"> 켜기</label>`;
+      `<label>초고속 (Lightning) <small class="muted">— SDXL Lightning LoRA로 기본 생성 9 steps · CFG 2.0, 얼굴 보정 5 steps, 업스케일 생략. 약 5배 빠름 (같은 시드 77초 → 14초), 그림체는 거의 같고 큰 그림(업스케일)은 나오지 않음. 켜면 빠른 모드보다 먼저 씀</small></label><label class="check"><input type="checkbox" class="bc-light-in"> 켜기</label>`;
     const hr = st.querySelector("hr"); hr ? hr.before(d) : st.append(d);
     bind(d.querySelector(".bc-fast-in")); bindLight(d.querySelector(".bc-light-in")); return true;
   }

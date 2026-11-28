@@ -15,7 +15,7 @@
   const NEG_BASE = "realistic, photorealistic, 3d, real life, photo, semi-realistic, bad quality, worst quality, worst detail, lowres, sketch, censor, censored, mosaic censoring, bar censor, bad anatomy, bad hands, extra fingers, missing fingers, text, watermark, signature, logo, blurry, jpeg artifacts, child, loli, shota";
   const NEG_PRE = "sex, penis, nude, nipples, pussy, cum, orgasm";   // 만남·키스 단계: 아직 아님
   const DUO = "1girl, 1boy, hetero, (faceless male:1.3), (male face out of frame:1.15)";
-  const DUO_FX = "(uncensored:1.2), clothes wrinkles";
+  const DUO_FX = "(uncensored:1.35), clothes wrinkles";   // 초고속(낮은 CFG)은 네거티브가 약해 모자이크가 끼어듦 → 긍정 쪽을 세게
   // 옷 상태 (Hunt)
   const CLOTH = {
     top: "shirt lift, top pulled up, exposed breasts, bare nipples, breasts out, bra lift, partially undressed",          // t2 위
@@ -854,7 +854,24 @@
     if (o.anal && s.part === "pose") P = P.replace(/\(vaginal sex:1\.2\)/g, "(anal sex:1.3), anal").replace(/penis in pussy/g, "penis in anus").replace(/pussy focus/g, "ass focus").replace(/\(cum in pussy:1\.4\)/g, "(cum in ass:1.3)").replace(/cum in pussy/g, "cum in ass").replace(/\(penis on pussy:1\.25\)/g, "(penis on anus:1.2)").replace(/imminent vaginal/g, "imminent anal");
     if (!s.date && s.meet == null && o.place && !/\bbed\b/.test(o.place.bg)) P = P.replace(/lying on bed/g, "lying down").replace(/sitting on (the )?bed( edge)?/g, "sitting").replace(/gripping sheets/g, "clenched hands"); if (!s.date && s.meet == null && o.place && !/\bbed\b/.test(o.place.bg)) P = P.split(/,\s*/).filter((x) => !/\b(bed|bedroom|bedsheet|bed sheets)\b/.test(x)).join(", ");   // 침대 없는 장소에서 침대 태그 빼기
     if (linger && garment(LINGERIE[o.outfit]).top === "linger" && !s.date && !s.solo && s.meet == null) P = P.replace(/fully clothed/g, "wearing only lingerie").replace(/, crotch hole/g, "").replace(/pantyhose/g, "thighhighs");
+    P = handBudget(P);
+    if (s.duo) neg.push("dark-skinned male, dark skin male");   // 프롬프트에 없는데 자주 나옴
     return { positive: P, negative: neg.filter(Boolean).join(", "), duo: !!s.duo, phone: !!s.solo };
+  }
+  // 손 동작 태그가 여러 곳(장면 · 표정 · 대사 → 태그 · 감정 · 행위)에서 겹쳐 붙으면 손이 모자라 겹치거나 더 생김
+  //  → 그녀의 손: 자세가 손을 쓰고 있으면 0개, 아니면 처음 나온 1개만 / 그의 손: 처음 나온 2개만
+  const HER_BUSY = /on hands and knees|all fours|hands on wall|hands on (the )?(headboard|window|glass|table|desk|counter|railing)|arms behind back|holding phone|talking on phone|leaning on hands|gripping (the )?(sheets|railing)|holding (his )?penis|handjob|paizuri|spreading (her )?(own )?(pussy|legs)|hands on (his )?(chest|shoulders)/;
+  const HER_HAND = /^\(?(covering (own )?(face|mouth|eyes|breasts|crotch|chest)( with hands?)?|hands? over (own )?mouth|hand to own mouth|hands? on own (face|cheeks?|chest|mouth)|hiding face( in pillow)?|finger to (own )?lips|shush|fidgeting|hands clasped( in front)?|biting (own )?finger|covering breasts with arm)(:\d(\.\d+)?)?\)?$/;
+  const HIS_HAND = /^\(?(his (one )?hands? |grabbing another's|hair pulling|spanking|(his )?hand on her|holding her (waist|hips|legs?|wrists?))/;
+  function handBudget(P) {
+    const busy = HER_BUSY.test(P);
+    let her = 0, his = 0;
+    return P.split(/,\s*/).filter((t) => {
+      const x = t.trim().toLowerCase();
+      if (HER_HAND.test(x)) return !busy && her++ < 1;
+      if (HIS_HAND.test(x)) return his++ < 2;
+      return true;
+    }).join(", ");
   }
 
   // ---------- 화면 ----------
@@ -1675,7 +1692,7 @@
     const out = jobs.map((j, i) => {
       const b = build(j.s, j.o), jc = j.o.ch, cname = String(jc.n).split(" · ")[0];
       const ln = lineOn ? lineOf(j.s.id, jc, j.o) : "";
-      const pos = ln && window.BC_LINE2TAG && !j.s.date && !j.s.solo && j.s.meet == null ? BC_LINE2TAG(b.positive, ln) : b.positive;   // 대사의 행위(손짓 · 표정)를 그림에도
+      const pos = ln && window.BC_LINE2TAG && !j.s.date && !j.s.solo && j.s.meet == null ? handBudget(BC_LINE2TAG(b.positive, ln)) : b.positive;   // 대사의 행위(손짓 · 표정)를 그림에도 (손 동작이 겹치지 않게 다시 정리)
       return { i: i + 1, seed: SEED, n: j.s.n(j.o), pos, neg: b.negative, duo: b.duo, bust: j.o.bust || "global", line: ln, sid: j.s.id, sp: speechOf(jc), cid: jc.id, cn: cname, of: OUTFITS[j.o.outfit] || j.o.outfit, g: j.g || "", rel: j.o.rel && j.o.rel !== "none" ? j.o.rel : "", situ: j.o.situ && j.o.situ !== "none" ? j.o.situ : "", ng: j.o.ng || 1, nb: j.o.nb || 1, watch: !!j.o.watch, absent: !!j.o.absent, posek: keyOf(POSES, j.o.pose), placek: keyOf(PLACES, j.o.place), fink: keyOf(FINISH, j.o.fin), outk: j.o.outfit, cx: j.o.cx || "", anal: !!j.o.anal, durk: j.o.dur || "", mem: [cname, ...((j.o.extras || []).map((e) => String(e.n).split(" · ")[0]))],
         pc: (() => { const nE = watchOn(j.o) ? j.o.nb - 1 : j.o.nb; return j.o.ng + nE > 2 && !j.s.self && !j.s.solo ? ((j.s.date || j.s.meet != null) ? (j.o.ng > 1 ? [j.o.ng, 0] : null) : [j.o.ng, nE]) : null; })(),
         ph: sel.poses.length > 1 ? (j.pk ? POSES[j.pk].n : j.s.part === "end" ? "마무리" : "") : "" };
