@@ -1305,6 +1305,7 @@
       <div style="margin-top:6px"><small class="muted">상대 자지 크기 — 그림과 삽입 · 절정 대사가 달라짐</small>${seg("hsSize", SIZES, sizeSel, false)}</div></div>
     <div class="field"><label>만들 단계 <small class="muted">(1인 장면은 화풍 참조 워크플로, 2인은 Duo 워크플로)</small> <button type="button" class="mini" id="hsStagesAll">✚ 전부 켜기/끄기</button></label><div id="hsStages" class="hs-stages"></div></div>
     <div class="field"><button type="button" id="hsRun">Hunt 시퀀스 생성</button> <button type="button" class="mini" id="hsStop">중단</button> <button type="button" class="mini" id="hsResume" disabled>이어서 생성</button> <button type="button" class="mini" id="hsDiscard" disabled>시퀀스 삭제</button></div>
+    <div class="field"><small class="muted">한 장만 — 지금 설정 그대로 고른 장면 하나만 (대사 포함)</small> <select id="hsOneSel" style="max-width:60%"></select> <button type="button" class="mini" id="hsOne">이 장면만 1장</button></div>
   </div>
   <div class="card">
     <div class="card-head"><h3>2. 결과</h3><span class="muted" id="hsProg"></span></div>
@@ -1440,6 +1441,9 @@
     $q("#hsWeatherHint").textContent = anyOut ? "" : "(날씨는 바깥 장소 — 놀이공원 · 쇼핑몰·거리 · 한강 공원 — 에서만 달라져요)";
     const o = base(), jobs = plan(o, sel, on);
     $q("#hsCount").textContent = jobs.over ? overText(jobs) : `${jobs.length}장 · 예상 약 ${fmt(jobs.length * secs)}`;
+    { const os = $q("#hsOneSel"); if (os) { const keep = os.value, seen = new Set(), opts = [];
+        if (!jobs.over) for (const j of jobs) { const k = j.s.id + "|" + (j.pk || ""); if (seen.has(k)) continue; seen.add(k); let n = j.s.id; try { n = j.s.n(j.o); } catch {} opts.push(`<option value="${esc(k)}">${esc(n)}</option>`); }
+        os.innerHTML = opts.join(""); if ([...os.options].some((x) => x.value === keep)) os.value = keep; } }
     $q("#hsCount").style.color = jobs.over ? "#ff8a7a" : "";
     planText = jobs.over ? "조합이 너무 많음" : `${jobs.length}장 · 예상 약 ${fmt(jobs.length * secs)}`; floatUpd();
     const row = (s, oo) => `<label class="check"><input type="checkbox" data-id="${s.id}"${(s.optIn ? on[s.id] === true : on[s.id] !== false) ? " checked" : ""}> ${esc(s.n(oo))}</label>`;
@@ -1641,6 +1645,18 @@
     if (jobs.length > 60 && !(await askOk(`${jobs.length}장을 만듭니다. 예상 약 ${fmt(jobs.length * secs)} 걸려요. 시작할까요?`))) return;
     if (left() && recs.some((r) => r.img) && !(await askOk(`이전 시퀀스에 아직 ${left()}장이 남아 있어요. 버리고 새로 시작할까요? (이어서 하려면 '이어서 생성')`))) return;
     recs = makeRecs(jobs); saveRun();
+    drawGrid();
+    await queueLeft();
+  };
+  $q("#hsOne").onclick = async () => {
+    if (!curChar()) return toast("캐릭터를 고르세요", "err");
+    const jobs = plan(base(), sel, on);
+    if (jobs.over) return toast(overText(jobs), "err");
+    const k = ($q("#hsOneSel") || {}).value || "", [sid, pk] = k.split("|");
+    const pickJ = jobs.filter((j) => j.s.id === sid && (j.pk || "") === (pk || ""));
+    if (!pickJ.length) return toast("지금 설정에선 그 장면이 없어요", "err");
+    if (left() && recs.some((r) => r.img) && !(await askOk(`이전 시퀀스에 아직 ${left()}장이 남아 있어요. 버리고 이 장면만 만들까요? (이어서 하려면 '이어서 생성')`))) return;
+    recs = makeRecs([pickJ[Math.floor(Math.random() * pickJ.length)]]); saveRun();
     drawGrid();
     await queueLeft();
   };
