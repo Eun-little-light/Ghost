@@ -524,6 +524,11 @@
     if (i >= 0) STAGES.splice(i + 1, 0,
       { id: "oral_hold", part: "pre", after: "oral_fin", mouth: "hold", duo: 1, cloth: "main", neg: M_NEG, n: () => "입으로 · 입안에 머금기", tags: () => M_HOLD },
       { id: "oral_swallow", part: "pre", after: "oral_hold", mouth: "swallow", duo: 1, cloth: "main", neg: M_NEG, n: () => "입으로 · 삼키기", tags: () => M_SWAL }); }
+  // 자지 크기 '아주 큼': 펠라치오 앞에서 보고 놀라기 → 사랑스럽게 보기
+  { const i = STAGES.findIndex((s) => s.id === "oral");
+    if (i >= 0) STAGES.splice(i, 0,
+      { id: "size_shock", part: "pre", mouth: "shock", skip: () => sizeSel !== "huge", duo: 1, cloth: "main", neg: "fellatio, penis in mouth, (sex:1.2), penetration", n: () => "아주 큰 걸 보고 놀람", tags: () => "(huge penis:1.35), (surprised:1.25), wide-eyed, (covering mouth:1.15), blush, kneeling, looking at penis, penis, veiny penis, pov, from above, upper body" },
+      { id: "size_love", part: "pre", mouth: "love", after: "size_shock", skip: () => sizeSel !== "huge", duo: 1, cloth: "main", neg: "fellatio, penis in mouth, (sex:1.2), penetration", n: () => "사랑스럽게 바라봄", tags: () => "(huge penis:1.3), (loving gaze:1.2), (holding penis with both hands:1.2), cheek against penis, blush, gentle smile, heart-shaped pupils, kneeling, pov, from above, upper body" }); }
   { const i = STAGES.findIndex((s) => s.id === "care");
     STAGES.splice(i, 0,
       { id: "clean", part: "end", mouth: "clean", duo: 1, cloth: "main", n: () => "청소 · 입으로", tags: () => "(cleaning fellatio:1.3), (licking penis:1.2), cum on penis, penis, holding penis, kneeling, looking up at viewer, after sex, messy hair, sweat, pov, from above" },
