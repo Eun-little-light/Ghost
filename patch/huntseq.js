@@ -674,6 +674,7 @@
   const noProps = (w) => String(w).split(/,\s*/).filter((x) => !/\b(bag|tote|handbag|purse|backpack|umbrella|phone|holding)\b/.test(x)).join(", ");
   const shortBg = (bg) => String(bg).split(/,\s*/).slice(0, 6).join(", ");
   function build(s, o) {
+    if (s.video) o = { ...o, outfit: "lounge" };   // 영상통화: 집에서 입는 옷
     if (watchOn(o)) o = { ...o, nb: o.nb - 1, party: o.ng + o.nb - 1, watchP: true };
     if (o.ch && o.ch.body && !/\(\w+ eyes:/.test(o.ch.body)) o = { ...o, ch: { ...o.ch, body: o.ch.body.replace(/\b([a-z]+ eyes)\b/, "($1:1.15)") } };   // 눈 색이 바뀌지 않게
     const acts = (o.acts || []).filter((k) => ACTS[k] && !(ACTS[k].skip && ACTS[k].skip(o)));
@@ -740,6 +741,7 @@
       if (ACTS[k].neg) neg.push(ACTS[k].neg);
     }
     if (o.dur && DURING[o.dur] && DURING[o.dur].tags) pos.push(DURING[o.dur].tags);
+    if ((obsSel === "strong" || obsSel === "extreme") && /^(after|finish_both|clean_swallow)/.test(s.id)) pos.push(obsSel === "extreme" ? "(clinging:1.2), (hugging his arm tightly:1.15), possessive gaze, intense eyes" : "(clinging:1.1), holding his arm, possessive smile");
     for (const k of o.traits || []) { const L = LATENT[k]; if (L && L.t && !s.solo) pos.push(L.t[latGroup(s)] || ""); }
     const ex = exprFor(s.id, o.face || "mix", [...(((window.BC_VOICE || {})[o.ch && o.ch.id] || {}).tone || []), ...(o.traits || []).flatMap((k) => (LATENT[k] || {}).tone || [])]); pos.push(emphExpr(ex), ex && !EXPR_LOUD_SET.has(ex) ? FACE : "");
     let P = pos.filter(Boolean).join(", ");
@@ -791,13 +793,14 @@
   let multi = ls.get("multi", false), undress = ls.get("undress", true);
   let video = ls.get("video", false);
   let on = ls.get("on", {});
-  let sameSeed = ls.get("sameSeed", true), lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), leadSel = ls.get("leadin", "mutual"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
+  let sameSeed = ls.get("sameSeed", true), lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), leadSel = ls.get("leadin", "mutual"), obsSel = ls.get("obsess", "none"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
   // 대사 형식: Hunt 방식([장소] · 서술 · "말") / Wayward 방식([단계]서술 "소리" … "말" 『속마음』 — huntway.js)
   const FMTS = { hunt: "Hunt 방식", wayward: "Wayward 방식" };
   let fmtSel = FMTS[ls.get("fmt", "hunt")] ? ls.get("fmt", "hunt") : "hunt";
   let secs = Number(ls.get("secs", 14)) || 14;   // 한 장 평균 시간(초) — 실제 생성 시간으로 계속 고쳐짐
   const SPEECH = { auto: "캐릭터 말투", polite: "존댓말", formal: "격식체", casual: "반말" };
   const MSPEECH = { casual: "남자: 반말", polite: "남자: 존댓말" };
+  const OBSESS = { none: "집착: 없음", mild: "약간", strong: "강함", extreme: "아주 강함" };
   const LEADIN = { mutual: "시작: 자연스럽게", her: "그녀가 먼저", him: "그가 먼저", drunk: "술김에" };
   const CALLREACT = { calm: "남편 반응: 모름", notice: "눈치챔", angry: "화냄" };
   const DWEAR_N = Object.fromEntries(Object.entries(DWEAR).map(([k, v]) => [k, v.n]));
@@ -1045,7 +1048,7 @@
     const si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0;
     const pk = pickU;
     const SRx = o && o.situ && (o.party > 2 || o.absent) && window.BC_SITU && BC_SITU[o.situ];
-    const other = (o && o.absent) || /^(cheat|rebound)$/.test(o && o.rel) || (SRx && SRx.third) || ((watchOn(o) || (o && o.rel === "cheatwatch")) && Math.random() < 0.5);
+    const other = (o && o.absent) || /^(cheat|rebound)$/.test(o && o.rel) || (SRx && SRx.third) || watchOn(o) || (o && o.rel === "cheatwatch");
     const W = other ? D.other : D.you, place = (o && o.date && o.date.n) || "데이트";
     const fill = (x) => String(x).replace(/\{P\}/g, place);
     if (ST) {   // 단계별: {M} 리모컨을 쥔 사람 (당신 / 그 남자)
@@ -1126,10 +1129,10 @@
       const nb = m0[2].split("\n").map((ln) => (ln.match(/"[^"]*"|[^"]+/g) || []).map((tk) => (tk[0] === '"' ? tk : tk.split(/(?<=[.!?…])\s+/).filter((c) => { const k = c.trim(); if (k.length < 12 || /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다|목소리)\.?$/.test(k)) return true; /* 말한 사람을 알려 주는 문장은 남김 (빠지면 대사 색이 틀림) */ if (seenQ.has("n:" + k)) return false; seenQ.add("n:" + k); return true; }).join(" "))).join(" ").replace(/\s{2,}/g, " ").trim()).filter(Boolean).join("\n");
       if (nb.trim()) t = (m0[1] || "") + nb;
     }
-    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel, cr: crSel }) || t; } catch {} }
+    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel, cr: crSel, ob: obsSel }) || t; } catch {} }
     return t;
   };
-  const lineOf = (sid, ch, o) => postLine(lineOfA(sid, ch, o), sid, ch, o);
+  const lineOf = (sid, ch, o) => { if (o && /^video/.test(sid)) o = { ...o, outfit: "lounge" }; return postLine(lineOfA(sid, ch, o), sid, ch, o); };
   const lineOfA = (sid, ch, o) => {
     fitCtx = o ? { o, sid } : null;
     if (sid === "datetoy" || /^dt_/.test(sid)) { try { return dateToyLine(ch, o, sid); } finally { fitCtx = null; } }
@@ -1282,6 +1285,7 @@
       <div style="margin-top:6px"><small class="muted">데이트 복장 — 데이트 · 장소 도착 · 영상통화 장면에서 입는 옷 (키스부터는 고른 복장)</small>${seg("hsDWear", DWEAR_N, dwearSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">통화 중 남편(남자친구) 반응 — 네토라레 · 네토리 · 바람 · 불륜의 통화 · 사진 장면</small>${seg("hsCallReact", CALLREACT, crSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">관계 직전까지 — 술 한잔 · 대화 → 스킨십이 시작되는 순간 (누가 먼저 다가가는지)</small>${seg("hsLeadIn", LEADIN, leadSel, false)}</div>
+      <div style="margin-top:6px"><small class="muted">그녀의 집착 — 강할수록 질투 · 독점하는 말이 자주 (관계 직전부터 여운까지)</small>${seg("hsObsess", OBSESS, obsSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">그녀의 날 — 시작 전 · 안에 사정할 때 대사가 달라짐</small>${seg("hsCycle", CYCLES, cycleSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">상대 자지 크기 — 그림과 삽입 · 절정 대사가 달라짐</small>${seg("hsSize", SIZES, sizeSel, false)}</div></div>
     <div class="field"><label>만들 단계 <small class="muted">(1인 장면은 화풍 참조 워크플로, 2인은 Duo 워크플로)</small> <button type="button" class="mini" id="hsStagesAll">✚ 전부 켜기/끄기</button></label><div id="hsStages" class="hs-stages"></div></div>
@@ -1470,6 +1474,7 @@
   bindSeg("hsDWear", (v) => { dwearSel = v; ls.set("dwear", v); pick("hsDWear", v); });
   bindSeg("hsCallReact", (v) => { crSel = v; ls.set("callreact", v); pick("hsCallReact", v); });
   bindSeg("hsLeadIn", (v) => { leadSel = v; ls.set("leadin", v); pick("hsLeadIn", v); });
+  bindSeg("hsObsess", (v) => { obsSel = v; ls.set("obsess", v); pick("hsObsess", v); });
   bindSeg("hsCycle", (v) => { cycleSel = v; ls.set("cycle", v); pick("hsCycle", v); });
   bindSeg("hsSize", (v) => { sizeSel = v; ls.set("psize", v); pick("hsSize", v); draw(); });
   bindSeg("hsFmt", (v) => { fmtSel = v; ls.set("fmt", v); pick("hsFmt", v); });

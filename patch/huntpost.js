@@ -23,7 +23,8 @@
   const groupOf = (sid, o) => {
     if (/^(video|self|dt_|datetoy|ntrcall|ntrphoto|care|clean|size_|warm_|bye)/.test(sid) || /_(hold|swallow)$/.test(sid)) return null;
     if (/_fin$/.test(sid)) return "fin";
-    if (/^(meet|kiss|change|undress|act_)/.test(sid)) return "pre";
+    if (/^(meet|change)/.test(sid)) return null;   // 데이트 · 장소 도착 · 옷 갈아입기: 아직 밖이거나 막 도착
+    if (/^(kiss|undress|act_)/.test(sid)) return "pre";
     if (/^(neck|caress|chest|nipple|hand|toy|cunni|analtoy|oral|handjob|paizuri|footjob|thighjob|sixtynine|grind)/.test(sid)) return "fore";
     if (/^deny/.test(sid)) return "deny";
     if (/^(ready|pose)/.test(sid)) return "sex";
@@ -154,6 +155,17 @@
       say: S("이거 남편한테는 한 번도 안 보여 준 속옷이에요/보여요? 벌써 이렇게 됐어요… 빨리 와서 범해 줘요/남편은 이거 입어도 몰라봐요. 자기는 바로 알죠?/화면 말고 직접 만져 줘요… 언제 와요? 지금 와요/남편 손으로는 이렇게 안 젖어요. 자기 얼굴만 봐도 이래요/오늘 밤 몰래 나갈게요. 도착하자마자 그냥 박아 줘요/남편 자는 옆에서 이러는 거… 들키면 어쩌죠. 근데 멈추기 싫어요"),
     },
   };
+  // 바람이 아닌 관계의 영상통화: 화면 너머 대화 (몸이 닿는 서술 없이) — 1: 옷 입은 채 수다 · 그리움 / 2: 화면 앞에서 풀어 보임
+  const VCN = {
+    video1: { narr: S("그녀가 이불을 끌어안은 채 화면 속 당신을 빤히 본다/그녀가 화면을 얼굴 가까이 대고 소곤소곤 말한다/그녀가 머리를 말리다 말고 화면에 대고 웃는다/그녀가 베개에 턱을 괴고 화면 속 당신을 올려다본다/그녀가 휴대폰을 무릎에 세워 두고 화면 쪽으로 몸을 기울인다"),
+      say: S("목소리 들으니까 더 보고 싶어요/오늘 하루 어땠어요? …아니, 그냥 얼굴 보고 싶었어요/내일 만나면 뭐 할 거예요? 저는 정해 놨는데/화면으로 보니까 더 잘생겼어요… 반칙이에요/끊기 싫어요. 잠들 때까지 켜 놓을래요/지금 당장 보러 가면 안 돼요?/방금 씻고 나왔어요… 냄새 맡게 해 주고 싶다"),
+      men: S("나도 보고 싶어/내일 일찍 갈게/그 얼굴 하고 자면 반칙이지/화면 좀 더 가까이 대 봐") },
+    video2: { narr: S("그녀가 화면을 조금 아래로 기울이며 단추를 하나 푼다/그녀가 티셔츠 자락을 천천히 끌어 올리며 화면을 본다/그녀가 휴대폰을 베개에 기대 세우고 두 손으로 옷자락을 들어 올린다/그녀가 화면에 대고 입술을 깨물며 어깨를 드러낸다/그녀가 불을 하나 끄고, 화면 불빛만 남은 채 옷을 내린다"),
+      say: S("보여요? …내일까지 못 기다리겠어요/화면 말고 직접 만져 줬으면 좋겠어요/당신 생각하면서 이러는 거 처음이에요/더 보고 싶어요? 그럼 내일 일찍 와요/지금 제 손이 어디 있는지 맞혀 봐요/소리 내면 안 되는데… 당신 목소리 들으니까 못 참겠어요/화면 꺼지면 혼자 해야 하잖아요… 끊지 마요"),
+      men: S("더 보여 줘/손 내리지 마/내일 각오해/그대로 있어. 다 보고 있어") },
+  };
+  const vcNormal = (sid, o, si, head) => { const V = VCN[sid]; if (!V) return ""; const a = herLine(pick(V.say), o, si, false); let b = herLine(pick(V.say), o, si, false); if (b === a) b = "";
+    return `${head}${pick(V.narr)}.\n"${a}"\n당신이 화면 너머로 말한다. "${pick(V.men)}"${b ? `\n"${b}"` : ""}`; };
   const vcOf = (o) => !!o && (/^(affair|cheat|cheatwatch|rebound)$/.test(o.rel || "") || o.situ === "ntr" || !!o.absent);
   const vcLine = (sid, o, si, head) => { const V = VC[sid]; if (!V) return ""; const Y = o.rel === "affair" ? "당신" : "그", G = window.BC_GEN2, lv = (x) => (G && G.lv ? G.lv(x, si) : x);
     const fill = (x) => x.replace(/\{Y\}을/g, Y === "당신" ? "당신을" : "그를").replace(/\{Y\}에게/g, Y + "에게").replace(/\{Y\}/g, Y);
@@ -277,7 +289,7 @@
     let s = String(t);
     const si = opt && opt.si != null ? opt.si : speech(s);
     if (/^ntr(call|photo)/.test(sid) && opt && opt.cr && opt.cr !== "calm") s = callReact(s, sid, o, opt.cr);
-    if (/^video[12]$/.test(sid) && vcOf(o)) { const h = (s.match(/^\[[^\]]*\]/) || [""])[0]; s = vcLine(sid, o, si, h) || s; }
+    if (/^video[12]$/.test(sid)) { const h = (s.match(/^\[[^\]]*\]/) || [""])[0]; s = (vcOf(o) ? vcLine(sid, o, si, h) : vcNormal(sid, o, si, h)) || s; }
     if (si === 2 && window.BC_GEN2 && window.BC_GEN2.lv) s = herQuotes(s, (q) => '"' + window.BC_GEN2.lv(q.slice(1, -1), 2) + '"');   // 반말 캐릭터: 해요체로만 쓴 문장 · 저/제도 반말로
     { const w = whoOf(o); if (w === "남편") s = toHB(s); else if (w === "남자친구") s = toBF(s); }
     if (o && o.absent && o.nb === 1) {
@@ -290,14 +302,43 @@
       s += `\n"${herLine(pick(L[k]), o, si, thirdOf(o))}"`;
     }
     const ms = opt && opt.ms === "polite" ? "polite" : "casual";
+    if (opt && opt.ob && opt.ob !== "none") s += obsLine(k || (/^warm_/.test(sid) ? "pre" : ""), o, si, opt.ob);   // 그녀의 집착
     if (k && EX[k] && Math.random() < 0.9) s += exchange(k, o, si);   // 그녀 ↔ 상대 남자가 주고받는 말
     else {
       if (k && W2[k] && Math.random() < 0.6) { const G = window.BC_GEN2, x = pick(W2[k]); s += `\n"${G && G.lv ? G.lv(x, si) : x}"`; }   // 그녀의 말 하나 더
       if (k && M2[k] && Math.random() < 0.6) s += `\n${pick(thirdOf(o) ? LEAD_HIM : LEAD_YOU)}. "${pick(ms === "casual" && MX2[k] && Math.random() < 0.6 ? MX2[k] : M2[k])}"`;   // 상대 남자의 말 (반말이면 더 거친 말을 자주)
     }
     if (ms === "polite") s = menQuotes(s, (q) => '"' + politeOf(q.slice(1, -1)) + '"');   // 남자: 존댓말
+    if (o && o.place && o.place.bg && !/^(video|meet1|datetoy|dt_|ntrcall_date)/.test(sid)) s = bedless(s, o.place.bg);
     if (o && /^(ntr|ntori)$/.test(o.situ || "") && /^(climax|after|finish)/.test(sid)) s = ringOff(s, sid, o, si);
     if (/^(pose|deny|climax|after|finish)/.test(sid)) s = poseFit(s, o && o.pose);
+    return s;
+  };
+  // 그녀의 집착 (약간 · 강함 · 아주 강함): 단계별 말 — 강할수록 자주
+  const OBS = {
+    mild: { pre: S("오늘 저만 생각했어요?/연락 늦게 보면 서운해요/다른 데 보지 마요, 저만 봐요/오늘은 휴대폰 보지 마요. 저만 봐요"), sex: S("저만 이렇게 안아 줘야 해요/다른 사람한텐 이런 얼굴 보여 주지 마요/계속 저만 봐요… 눈 돌리지 마요"), cream: S("이건 저만 받는 거예요/저한테만 이렇게 해 줘요"), after: S("오늘 자고 가요… 안 가면 안 돼요?/내일도 만나요. 모레도요/연락 바로바로 해 줘요. 약속해요") },
+    strong: { pre: S("아까 그 여자 누구예요? 웃던데/휴대폰 비밀번호 알려 줘요. 숨길 거 없잖아요/저 말고 다른 사람 만나면… 저 진짜 못 참아요/오늘 누구 만났어요? 하나도 빼지 말고 말해요"), sex: S("이거 저만 받는 거죠? 대답해요/다른 여자 생각하면 안 돼요… 지금 저만 생각해요/몸에 제 자국 남길래요… 아무도 못 건드리게/제 이름 불러요. 다른 이름 부르면 안 돼요"), cream: S("제 안에만 싸요. 다른 데 쓰지 마요/이거 다 제 거예요. 하나도 남기지 마요"), after: S("어디 가요? 화장실도 같이 가요/오늘 일 다른 사람한테 말하면 안 돼요… 우리 둘만의 거예요/목에 자국 남겼어요. 다른 여자들 보라고요/다음 약속 지금 잡아요. 지금요") },
+    extreme: { pre: S("어제 열한 시 사십 분에 왜 답장 안 했어요? 다 봤어요/집 앞에서 기다렸어요. 몇 시간이든 상관없어요/저 없으면 당신도 안 돼요. 그렇죠?/오늘 만난 사람들 이름 다 말해요. 기억해 둘게요"), sex: S("도망가면 끝까지 쫓아갈 거예요… 그러니까 도망가지 마요/평생 이렇게 붙어 있을래요. 떨어지면 저 망가져요/당신 냄새, 숨소리, 전부 제 거예요/저만 보고 저만 만지고 저만 가져요. 영원히요"), cream: S("아기 생기면 당신 평생 제 거죠?/다 줘요… 다른 여자 몫은 하나도 남기지 마요"), after: S("놓아줄 생각 없어요. 영원히요/휴대폰은 제가 가지고 있을게요/다른 여자 연락처 다 지웠어요. 고맙죠?/내일부터 같이 살아요. 짐은 제가 가져올게요") },
+  };
+  const OB_P = { mild: 0.35, strong: 0.55, extreme: 0.75 };
+  const obsLine = (k, o, si, ob) => {
+    const B = OBS[ob]; if (!B || !k) return "";
+    const g = /^(pre)$/.test(k) ? "pre" : /^(fore|sex|deny)$/.test(k) ? "sex" : /^(cream|fin|out)$/.test(k) ? "cream" : k === "after" ? "after" : "";
+    if (!g || !B[g] || Math.random() > OB_P[ob]) return "";
+    return `\n"${herLine(pick(B[g]), o, si, thirdOf(o))}"`;
+  };
+  // 침대 없는 장소에서 침대 · 시트 · 이불 · 베개 낱말을 그 장소에 있는 것으로 (조사도 맞춤)
+  const hasJong = (w) => (w.charCodeAt(w.length - 1) - 0xac00) % 28 !== 0;
+  const JOS = { 이: ["이", "가"], 가: ["이", "가"], 을: ["을", "를"], 를: ["을", "를"], 은: ["은", "는"], 는: ["은", "는"], 과: ["과", "와"], 와: ["과", "와"] };
+  const swapNoun = (s, re, w) => s.replace(re, (m, j) => w + (j ? (JOS[j] ? JOS[j][hasJong(w) ? 0 : 1] : j) : ""));
+  const bedless = (s, bg) => {
+    if (/\bbed\b|futon|bunk|daybed/.test(bg)) return s;
+    const car = /car interior|back seat/.test(bg);
+    const surf = car ? "좌석" : /sofa|couch/.test(bg) ? "소파" : /bench/.test(bg) ? "벤치" : /\bdesk\b/.test(bg) ? "책상" : /counter/.test(bg) ? "카운터" : /table/.test(bg) ? "테이블" : /massage table/.test(bg) ? "마사지 침대" : "바닥";
+    s = swapNoun(s, /침대(이|가|을|를|은|는|과|와)?/g, surf);
+    if (!car) s = swapNoun(s, /시트(이|가|을|를|은|는|과|와)?/g, surf);
+    s = swapNoun(s, /이불(이|가|을|를|은|는|과|와)?/g, "옷자락");
+    s = swapNoun(s, /베개(이|가|을|를|은|는|과|와)?/g, /sofa|couch/.test(bg) ? "쿠션" : "제 팔");
     return s;
   };
   // 네토라레 · 네토리 후반: '반지 빼지 마'는 빼고, 그녀가 스스로 반지를 빼는 결심 장면으로 (절정 · 여운 · 마무리)
