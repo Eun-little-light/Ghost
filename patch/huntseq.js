@@ -301,7 +301,7 @@
   const watchOn = (o) => !!(o && o.watch && o.nb > 1);
   // 지켜보는 남편: 서술에서 행위하는 '당신'을 '그'(다른 남자)로 — 따옴표 안의 말은 그대로
   const unYou = (t) => String(t).split('"').map((seg, i) => (i % 2 ? seg : seg.replace(/당신은/g, "그는").replace(/당신이/g, "그가").replace(/당신의/g, "그의").replace(/당신을/g, "그를").replace(/당신에게/g, "그에게").replace(/당신과/g, "그와").replace(/당신도/g, "그도").replace(/당신만/g, "그만").replace(/당신/g, "그"))).join('"');
-  const sidG = (sid) => (/^(meet|kiss|date|video)/.test(sid) ? 0 : /^(pose|climax|deny|ready)/.test(sid) ? 2 : /^(after|finish|care)/.test(sid) ? 3 : 1);
+  const sidG = (sid) => (/^(meet|kiss|date|video|warm_)/.test(sid) ? 0 : /^(pose|climax|deny|ready)/.test(sid) ? 2 : /^(after|finish|care)/.test(sid) ? 3 : 1);
   const givenName = (ch) => { const n = String(ch.n || "").split(" · ")[0].replace(/\s*\(.*\)$/, ""); return /^[가-힣]{3}$/.test(n) ? n.slice(1) : n; };
   const gTag = (n) => (n === 1 ? "1girl" : `${n}girls`), bTag = (n) => (n === 1 ? "1boy" : `${n}boys`);
   // 서술 · 말 묶음: 여성 여럿이면 fem, 남성 여럿이면 male, 둘 다면 그때그때 섞음
@@ -607,11 +607,20 @@
     if (i >= 0) STAGES.splice(i + 1, 0,
       { id: "oral_hold", part: "pre", after: "oral_fin", mouth: "hold", duo: 1, cloth: "main", neg: M_NEG, n: () => "입으로 · 입안에 머금기", tags: () => M_HOLD },
       { id: "oral_swallow", part: "pre", after: "oral_hold", mouth: "swallow", duo: 1, cloth: "main", neg: M_NEG, n: () => "입으로 · 삼키기", tags: () => M_SWAL }); }
+  // 관계 직전까지: 술 한잔 · 대화 → 스킨십이 시작되는 순간 (키스 앞) — 시작 계기(leadSel)에 따라 누가 먼저 다가가는지
+  const LEAD_TAG = { mutual: "", her: ", (girl leaning in:1.15), her hand on his chest", him: ", (his hand on her cheek:1.15), man leaning in", drunk: ", (drunk:1.15), flushed cheeks, holding wine glass, unfocused eyes" };
+  { const i = STAGES.findIndex((s) => s.id === "kiss");
+    if (i >= 0) STAGES.splice(i, 0,
+      { id: "warm_talk", part: "pre", mouth: "warm_talk", duo: 1, cloth: "main", neg: "sex, penis, nude, nipples, pussy, cum", n: () => "술 한잔 · 대화", tags: () => "sitting close together, (holding glasses:1.1), drinks on table, talking, soft smile, blush, eye contact, intimate atmosphere, from side, upper body" + (LEAD_TAG[leadSel] || "") },
+      { id: "warm_touch", part: "pre", mouth: "warm_touch", after: "warm_talk", duo: 1, cloth: "main", neg: "sex, penis, nude, nipples, pussy, cum", n: () => "스킨십이 시작되는 순간", tags: () => "(hand on another's thigh:1.15), (faces close together:1.2), about to kiss, half-closed eyes, blush, nervous, holding breath, from side, upper body" + (LEAD_TAG[leadSel] || "") }); }
   // 자지 크기 '아주 큼': 펠라치오 앞에서 보고 놀라기 → 사랑스럽게 보기
   { const i = STAGES.findIndex((s) => s.id === "oral");
     if (i >= 0) STAGES.splice(i, 0,
       { id: "size_shock", part: "pre", mouth: "shock", skip: () => sizeSel !== "huge", duo: 1, cloth: "main", neg: "fellatio, penis in mouth, (sex:1.2), penetration", n: () => "아주 큰 걸 보고 놀람", tags: () => "(huge penis:1.35), (surprised:1.25), wide-eyed, (covering mouth:1.15), blush, kneeling, looking at penis, penis, veiny penis, pov, from above, upper body" },
       { id: "size_love", part: "pre", mouth: "love", after: "size_shock", skip: () => sizeSel !== "huge", duo: 1, cloth: "main", neg: "fellatio, penis in mouth, (sex:1.2), penetration", n: () => "사랑스럽게 바라봄", tags: () => "(huge penis:1.3), (loving gaze:1.2), (holding penis with both hands:1.2), cheek against penis, blush, gentle smile, heart-shaped pupils, kneeling, pov, from above, upper body" }); }
+  // 네토라레 · 네토리 마지막: 반지를 빼며 이별 통보
+  { const i = STAGES.findIndex((s) => s.id === "care");
+    STAGES.splice(i, 0, { id: "bye", part: "end", skip: (o) => !/^(ntr|ntori)$/.test(o.situ || ""), duo: 1, cloth: "main", n: () => "반지를 빼며 이별 통보", tags: () => "(taking off ring:1.25), holding ring, (holding phone:1.2), texting, phone screen, determined, calm expression, lying in bed, man's arm around her, after sex, messy hair, from side, upper body" }); }
   { const i = STAGES.findIndex((s) => s.id === "care");
     STAGES.splice(i, 0,
       { id: "clean", part: "end", mouth: "clean", duo: 1, cloth: "main", n: () => "청소 · 입으로", tags: () => "(cleaning fellatio:1.3), (licking penis:1.2), cum on penis, penis, holding penis, kneeling, looking up at viewer, after sex, messy hair, sweat, pov, from above" },
@@ -782,13 +791,14 @@
   let multi = ls.get("multi", false), undress = ls.get("undress", true);
   let video = ls.get("video", false);
   let on = ls.get("on", {});
-  let sameSeed = ls.get("sameSeed", true), lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
+  let sameSeed = ls.get("sameSeed", true), lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), leadSel = ls.get("leadin", "mutual"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
   // 대사 형식: Hunt 방식([장소] · 서술 · "말") / Wayward 방식([단계]서술 "소리" … "말" 『속마음』 — huntway.js)
   const FMTS = { hunt: "Hunt 방식", wayward: "Wayward 방식" };
   let fmtSel = FMTS[ls.get("fmt", "hunt")] ? ls.get("fmt", "hunt") : "hunt";
   let secs = Number(ls.get("secs", 14)) || 14;   // 한 장 평균 시간(초) — 실제 생성 시간으로 계속 고쳐짐
   const SPEECH = { auto: "캐릭터 말투", polite: "존댓말", formal: "격식체", casual: "반말" };
   const MSPEECH = { casual: "남자: 반말", polite: "남자: 존댓말" };
+  const LEADIN = { mutual: "시작: 자연스럽게", her: "그녀가 먼저", him: "그가 먼저", drunk: "술김에" };
   const CALLREACT = { calm: "남편 반응: 모름", notice: "눈치챔", angry: "화냄" };
   const DWEAR_N = Object.fromEntries(Object.entries(DWEAR).map(([k, v]) => [k, v.n]));
   const SIZES = { normal: "크기 보통", large: "큼", huge: "아주 큼" };   // 상대 자지 크기 — 그림 태그 · 체위 대사가 달라짐
@@ -1181,7 +1191,8 @@
   };
   const lineOf0 = (sid, ch, o) => {
     if (/_fin$/.test(sid)) return foreFinLine(sid, ch, o);
-    { const st = STAGES.find((x) => x.id === sid); if (st && st.mouth && window.BC_MOUTH) return `[${st.n(o)}]` + BC_MOUTH(st.mouth, { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0); }
+    if (sid === "bye" && window.BC_BYE) return "[반지를 빼며 이별 통보]" + BC_BYE(o, { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0);
+    { const st = STAGES.find((x) => x.id === sid); if (st && st.mouth && window.BC_MOUTH) return `[${st.n(o)}]` + BC_MOUTH(st.mouth, { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, o, leadSel); }
     if (/^ntr(call|photo)/.test(sid)) return callLine(sid, ch, o);
     if (sid === "change" && window.BC_CHANGE) {
       const w = wearOf(ch, o.outfit), kind = garment(w).top === "linger" ? "linger" : LINGERIE[o.outfit] ? "costume" : "normal";
@@ -1270,6 +1281,7 @@
       <div style="margin-top:6px"><small class="muted">남자 대사 말투 — 반말이면 더 거칠고 천박하게</small>${seg("hsMSpeech", MSPEECH, mspeechSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">데이트 복장 — 데이트 · 장소 도착 · 영상통화 장면에서 입는 옷 (키스부터는 고른 복장)</small>${seg("hsDWear", DWEAR_N, dwearSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">통화 중 남편(남자친구) 반응 — 네토라레 · 네토리 · 바람 · 불륜의 통화 · 사진 장면</small>${seg("hsCallReact", CALLREACT, crSel, false)}</div>
+      <div style="margin-top:6px"><small class="muted">관계 직전까지 — 술 한잔 · 대화 → 스킨십이 시작되는 순간 (누가 먼저 다가가는지)</small>${seg("hsLeadIn", LEADIN, leadSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">그녀의 날 — 시작 전 · 안에 사정할 때 대사가 달라짐</small>${seg("hsCycle", CYCLES, cycleSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">상대 자지 크기 — 그림과 삽입 · 절정 대사가 달라짐</small>${seg("hsSize", SIZES, sizeSel, false)}</div></div>
     <div class="field"><label>만들 단계 <small class="muted">(1인 장면은 화풍 참조 워크플로, 2인은 Duo 워크플로)</small> <button type="button" class="mini" id="hsStagesAll">✚ 전부 켜기/끄기</button></label><div id="hsStages" class="hs-stages"></div></div>
@@ -1378,7 +1390,7 @@
         else { const rest = cxs.slice(Math.min(j, M - 1)); rest.forEach((cx, i) => climaxAt(pk, cx, i === rest.length - 1)); }
       }
       while (fi < fins.length) { const pk = poses[K - 1], oo = PO(pk, { cx: "yes", fin: FINISH[fins[fi++]], again: 1 }); push("pose2", { ...oo, dur: durNext(pk) }); push("finish", oo); }
-      for (const s of STAGES.filter((s) => s.part === "end" && use(s))) jobs.push({ s, o: { ...b, pose: POSES[S.poses[S.poses.length - 1]] }, g });
+      for (const s of STAGES.filter((s) => s.part === "end" && use(s) && ok(s, b))) jobs.push({ s, o: { ...b, pose: POSES[S.poses[S.poses.length - 1]] }, g });
     }
     }
     return jobs;
@@ -1457,6 +1469,7 @@
   bindSeg("hsMSpeech", (v) => { mspeechSel = v; ls.set("mspeech", v); pick("hsMSpeech", v); });
   bindSeg("hsDWear", (v) => { dwearSel = v; ls.set("dwear", v); pick("hsDWear", v); });
   bindSeg("hsCallReact", (v) => { crSel = v; ls.set("callreact", v); pick("hsCallReact", v); });
+  bindSeg("hsLeadIn", (v) => { leadSel = v; ls.set("leadin", v); pick("hsLeadIn", v); });
   bindSeg("hsCycle", (v) => { cycleSel = v; ls.set("cycle", v); pick("hsCycle", v); });
   bindSeg("hsSize", (v) => { sizeSel = v; ls.set("psize", v); pick("hsSize", v); draw(); });
   bindSeg("hsFmt", (v) => { fmtSel = v; ls.set("fmt", v); pick("hsFmt", v); });

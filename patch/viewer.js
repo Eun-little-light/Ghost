@@ -256,7 +256,7 @@
   const SAY_V = /(말한다|묻는다|되묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다)\s*[.。]?\s*$/;
   const whoOf = (pre) => {
     const s = (String(pre).split(/[.!?…]\s+/).filter((x) => x.trim()).pop() || "").trim();
-    if (/당신의 목소리\.?$/.test(s)) return "y";   // 전화기 너머 당신의 목소리. "…"
+    if (/당신의 (목소리|답장)\.?$/.test(s)) return "y";   // 전화기 너머 당신의 목소리. "…"
     if (/(남편|남자친구)의 (목소리|답장)\.?$/.test(s)) return "m";
     if (!SAY_V.test(s)) return "w";
     if (/^당신/.test(s)) return "y";

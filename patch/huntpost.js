@@ -21,7 +21,7 @@
   const pick = (a) => { let m = Infinity, c = []; for (const x of a) { const n = used.get(x) || 0; if (n < m) { m = n; c = [x]; } else if (n === m) c.push(x); } const x = c[Math.floor(Math.random() * c.length)]; used.set(x, m + 1); return x; };
   const speech = (t) => { const q = (String(t).match(/"[^"]+"/g) || []).join(" "); return /(습니다|십시오|입니까|합니다)/.test(q) ? 1 : /요[.!?…"\s]/.test(q) ? 0 : q ? 2 : 0; };
   const groupOf = (sid, o) => {
-    if (/^(video|self|dt_|datetoy|ntrcall|ntrphoto|care|clean|size_)/.test(sid) || /_(hold|swallow)$/.test(sid)) return null;
+    if (/^(video|self|dt_|datetoy|ntrcall|ntrphoto|care|clean|size_|warm_|bye)/.test(sid) || /_(hold|swallow)$/.test(sid)) return null;
     if (/_fin$/.test(sid)) return "fin";
     if (/^(meet|kiss|change|undress|act_)/.test(sid)) return "pre";
     if (/^(neck|caress|chest|nipple|hand|toy|cunni|analtoy|oral|handjob|paizuri|footjob|thighjob|sixtynine|grind)/.test(sid)) return "fore";
@@ -77,7 +77,39 @@
       lead: S("당신이 그녀의 머리를 쓰다듬으며 말한다/당신이 낮게 웃으며 말한다"),
     },
   };
-  window.BC_MOUTH = (k, si) => {
+  // 관계 직전까지 (술 한잔 · 대화 → 스킨십이 시작되는 순간): 서술은 시작 계기별 · 그녀의 말은 관계별(순애 · 바람 · 홧김)
+  const WARM = {
+    warm_talk: {
+      narr: { mutual: S("둘이 나란히 앉자 잔이 부딪힌다. 대화가 끊길 때마다 어깨가 조금씩 가까워진다/그녀가 잔을 비우고 당신 쪽으로 몸을 돌린다. 무릎이 닿는다/별것 아닌 얘기에 그녀가 웃다가, 당신과 눈이 마주치자 웃음을 멈춘다"),
+        her: S("그녀가 잔을 내려놓고 당신 어깨에 머리를 기댄다. 일부러인 게 티가 난다/그녀가 당신 쪽으로 바짝 당겨 앉는다. 허벅지가 맞닿는다/그녀가 당신 잔을 뺏어 한 모금 마시고는, 입술 자국 난 쪽을 돌려준다"),
+        him: S("당신이 그녀의 잔을 채워 주며 손끝을 일부러 스친다/당신이 그녀 귀 뒤로 머리카락을 넘겨 준다. 그녀가 숨을 멈춘다/당신이 그녀 쪽으로 몸을 기울인다. 그녀가 피하지 않는다"),
+        drunk: S("세 번째 잔에 그녀의 볼이 발그레해진다. 말끝이 자꾸 늘어진다/그녀가 취한 척 당신 어깨에 기댄다. 아니, 진짜 취했다/그녀가 잔을 든 채 꾸벅 졸다가 당신 팔을 붙잡는다") },
+      say: { pure: S("이렇게 둘이 있으니까… 좀 떨려요/오늘 이 시간 오기만 기다렸어요/조금 더 가까이 앉아도 돼요?/당신 웃는 거 보면 아무 생각도 안 나요"),
+        cheat: S("이러면 안 되는 거 알아요… 근데 집에 가기 싫어요/한 잔만 더 하고 갈게요. 진짜 한 잔만요/남편한텐 친구 만난다고 했어요… 나쁜 여자죠?/당신이랑 있으면 다른 생각이 하나도 안 나요"),
+        rebound: S("오늘은 아무 생각 안 하고 싶어요. 당신만 볼래요/그 사람이랑은 이런 얘기 한 번도 못 해 봤어요/저 오늘 좀 막 나가도 돼요?/당신이랑 있으니까 숨이 쉬어져요") },
+      men: S("오늘 예쁘다/취했어? 얼굴 빨개/더 가까이 와/그렇게 보면 나 못 참아"),
+      lead: S("당신이 잔을 내려놓으며 말한다/당신이 낮게 웃는다/당신이 그녀 귓가에 속삭인다"),
+    },
+    warm_touch: {
+      narr: { mutual: S("대화가 멎는다. 둘 다 시선을 피하지 않는다. 얼굴이 천천히 가까워진다/당신의 손이 그녀의 허벅지 위에 놓인다. 그녀가 그 손 위에 자기 손을 겹친다/숨소리가 들릴 만큼 가까워진다. 그녀가 눈을 반쯤 감는다"),
+        her: S("그녀가 당신 손을 잡아 제 허벅지 위로 끌어온다/그녀가 먼저 당신 무릎 위로 올라앉는다. 목에 팔을 감는다/그녀가 당신 셔츠 단추를 하나 풀며 올려다본다"),
+        him: S("당신이 그녀의 턱을 살짝 들어 올린다. 그녀가 숨을 삼킨다/당신의 손이 그녀의 허리를 끌어당긴다. 그녀가 저항하지 않는다/당신이 그녀의 허벅지 안쪽을 천천히 쓸어 올린다. 그녀의 무릎이 벌어진다"),
+        drunk: S("그녀가 비틀거리며 당신 품에 쓰러진다. 일어날 생각이 없다/술기운에 그녀가 당신 목덜미에 코를 묻고 숨을 들이쉰다/그녀가 꼬인 혀로 당신 이름을 부르며 입술을 내민다") },
+      say: { pure: S("…키스해도 돼요?/심장 소리 들려요? 다 당신 때문이에요/눈 감을게요… 해 줘요/오늘은 멈추지 않아도 돼요"),
+        cheat: S("한 번만이에요… 한 번만…/여기서 멈추면 평생 후회할 것 같아요/반지 빼야 해요…? 아니, 그냥 해 줘요/들키면 어떡하죠… 근데 손 치우지 마요"),
+        rebound: S("빨리요… 생각할 시간 주지 마요/이렇게 원한 적 처음이에요/다 잊게 해 줘요. 지금 당장요/저 오늘 당신 거 할래요") },
+      men: S("싫으면 지금 말해/눈 감아/떨고 있네/이제 못 멈춰"),
+      lead: S("당신이 그녀 귓가에 속삭인다/당신이 숨을 고르며 말한다"),
+    },
+  };
+  const relGroup = (o) => (!o ? "pure" : o.rel === "rebound" ? "rebound" : /^(cheat|cheatwatch|affair)$/.test(o.rel || "") || /^(ntr|ntori)$/.test(o.situ || "") || o.absent ? "cheat" : "pure");
+  window.BC_MOUTH = (k, si, o, lead) => {
+    const W = WARM[k];
+    if (W) {
+      const nr = pick(W.narr[lead] || W.narr.mutual), g = relGroup(o);
+      const a = herLine(pick(W.say[g]), o, si, thirdOf(o)); let b = herLine(pick(W.say[g]), o, si, thirdOf(o)); if (b === a) b = "";
+      return `${nr}.\n"${a}"\n${pick(W.lead)}. "${pick(W.men)}"${b ? `\n"${b}"` : ""}`;
+    }
     const M = MO[k]; if (!M) return "";
     const G = window.BC_GEN2, lv = (x) => (G && G.lv ? G.lv(x, si) : x);
     const n1 = pick(M.narr); let n2 = pick(M.narr); if (n2 === n1) n2 = "";
@@ -176,8 +208,8 @@
   const herLine = (x, o, si, third) => {
     const V = o && o.ch && window.BC_VOICE && window.BC_VOICE[o.ch.id], G = window.BC_GEN2;
     let w = x;
-    if (V && V.tone && V.tone.length && Math.random() < 0.25) { const T = TONE_TAIL[V.tone[Math.floor(Math.random() * V.tone.length)]]; if (T) w = w.replace(/[.…!?]*$/, "") + pick(T); }
-    if (V && V.tics && V.tics.length && Math.random() < 0.3 && !/^(아|하|흐|있잖|솔직|진짜)/.test(w)) w = pick(V.tics) + " " + w;
+    if (V && V.tone && V.tone.length && Math.random() < 0.25) { const T = TONE_TAIL[V.tone[Math.floor(Math.random() * V.tone.length)]]; if (T) w = w.replace(/[.…]+$/, "") + (/[?!]$/.test(w) ? " " : "… ") + pick(T).replace(/^…/, ""); }
+    if (V && V.tics && V.tics.length && Math.random() < 0.3 && !/^(아|하|흐|있잖|솔직|진짜|…)/.test(w)) w = pick(V.tics) + " " + w;
     w = G && G.lv ? G.lv(w, si) : w;
     const call = third ? "자기" : V && V.call && V.call !== "자기" ? V.call : "";
     if (call) w = w.replace(/당신(이에요|이요|이랑|이|은|을|과)?/g, (m, j) => callJo(call, j));
@@ -264,8 +296,34 @@
       if (k && M2[k] && Math.random() < 0.6) s += `\n${pick(thirdOf(o) ? LEAD_HIM : LEAD_YOU)}. "${pick(ms === "casual" && MX2[k] && Math.random() < 0.6 ? MX2[k] : M2[k])}"`;   // 상대 남자의 말 (반말이면 더 거친 말을 자주)
     }
     if (ms === "polite") s = menQuotes(s, (q) => '"' + politeOf(q.slice(1, -1)) + '"');   // 남자: 존댓말
+    if (o && /^(ntr|ntori)$/.test(o.situ || "") && /^(climax|after|finish)/.test(sid)) s = ringOff(s, sid, o, si);
     if (/^(pose|deny|climax|after|finish)/.test(sid)) s = poseFit(s, o && o.pose);
     return s;
+  };
+  // 네토라레 · 네토리 후반: '반지 빼지 마'는 빼고, 그녀가 스스로 반지를 빼는 결심 장면으로 (절정 · 여운 · 마무리)
+  const RING = {
+    narr: S("그녀가 {R}를 천천히 빼서 협탁 위에 올려 둔다. 작은 소리가 유난히 크게 울린다/그녀가 {R}를 빼 그 남자의 손바닥에 쥐여 준다/그녀가 {R} 낀 손을 한참 내려다보다가, 반지를 빼 가방 깊숙이 넣는다/그녀가 {R}를 빼고, 하얗게 남은 반지 자국을 손가락으로 문지른다/그녀가 숨을 고르며 {R}를 빼서 침대 밖으로 내려놓는다. 다시 보지 않는다"),
+    say: S("이거… 이제 필요 없을 것 같아요/반지 뺐어요. 이제 돌아갈 데 없어요/돌려줘야겠죠… 그 사람한테/반지 자국만 남았네요… 금방 없어지겠죠/이거 끼고 있으면 자꾸 생각나서요… 이제 안 낄래요"),
+  };
+  const ringName = (o) => (whoOf(o) === "남편" ? "결혼반지" : "커플링");
+  const eul = (w) => w + ((w.charCodeAt(w.length - 1) - 0xac00) % 28 ? "을" : "를");
+  const ringOff = (s, sid, o, si) => {
+    const kept = s.split("\n").filter((l) => !/반지[^\n]*(빼지 마|빼지 말|낀 채)/.test(l));
+    if (kept.join("").trim()) s = kept.join("\n");
+    if (Math.random() < (sid === "climax" ? 0.2 : 0.4)) { const R = ringName(o); s += `\n${pick(RING.narr).replace(/\{R\}를/g, eul(R)).replace(/\{R\}/g, R)}.\n"${herLine(pick(RING.say), o, si, true)}"`; }
+    return s;
+  };
+  // 마지막: 반지를 빼며 이별 통보 (네토라레 = 당신에게 · 네토리 = 그녀의 남편 · 남자친구에게)
+  const BYE = {
+    narr: S("그녀가 {R}를 빼서 휴대폰 옆에 내려놓고, 한 글자씩 메시지를 쓴다/그녀가 그 남자의 품에 안긴 채 {R}를 빼고, 전송 버튼을 누른다/그녀가 {R}를 손바닥에 올려놓고 사진을 찍어 함께 보낸다/그녀가 {R}를 침대 밖으로 굴려 보내고, 휴대폰을 집어 든다"),
+    msg: S("우리 그만하자. 미안하다는 말은 안 할게/반지는 돌려줄게. 나 이제 이 사람이랑 있을래/더는 거짓말 못 하겠어. 나 다른 사람이 생겼어/오늘 안 들어가. 앞으로도 안 들어갈 거야/찾지 마. 행복했던 것도 있었어. 그걸로 됐어"),
+    reply: S("…무슨 소리야? 전화 받아/장난이지? 지금 어디야/지금 그 남자랑 있어?/…알았어. 정말 그게 끝이야?/제발 한 번만 얘기하자"),
+    her: S("…보냈어요. 이제 진짜 끝이에요/답장 안 볼래요. 휴대폰 꺼 줄래요?/손이 떨려요… 근데 후회 안 해요/이제 저 당신 거예요. 아무 데도 안 가요/반지 뺀 손, 잡아 줘요"),
+    men: S("잘했어. 이제 내 거야/떨지 마. 내가 있잖아/후회 안 하게 해 줄게/휴대폰 줘. 이제 안 봐도 돼"),
+  };
+  window.BC_BYE = (o, si) => {
+    const R = ringName(o), to = o && o.situ === "ntr" ? "당신" : whoOf(o) === "남편" ? "남편" : "남자친구", third = thirdOf(o);
+    return `${pick(BYE.narr).replace(/\{R\}를/g, eul(R))}.\n그녀가 보낸 메시지: '${pick(BYE.msg)}'\n${to}의 답장: '${pick(BYE.reply)}'\n"${herLine(pick(BYE.her), o, si, third)}"\n${pick(third ? LEAD_HIM : LEAD_YOU)}. "${pick(BYE.men)}"`;
   };
   // 지금 체위로는 안 되는 문장(서술 · 말)을 뺌 — 말이 빠지면 그 앞 '…말한다.'도 · 다 빠지면 원래대로
   const P_TOP = /올라타|올라탄|위에서 (내려다|허리)|내가 위/, P_BACK = /개처럼|엎드|뒤에서 박|뒤로 박|등 뒤에서|머리채 잡고/, P_FACE = /이마를 맞댄|눈을 맞춘|눈을 맞추|얼굴이 바로 앞|얼굴을 두 손으로 감싸/, P_STAND = /벽에 기대|선 채로|벽에 밀어/;

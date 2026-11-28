@@ -109,6 +109,29 @@ class ShellForm : Form
 
     void Say(string t) { if (!IsDisposed) BeginInvoke((Action)(() => { status.Text = t; })); }
 
+    // 제목 표시줄(최소화 · 최대화 · 닫기)을 앱 배경색과 같게 — 윈도 11의 DWM 캡션 색 (10은 어두운 테마만)
+    [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int val, int size);
+    void Caption(Color c)
+    {
+        try
+        {
+            int on = 1; DwmSetWindowAttribute(Handle, 20, ref on, 4);                         // 어두운 테마
+            int cap = c.R | (c.G << 8) | (c.B << 16); DwmSetWindowAttribute(Handle, 35, ref cap, 4);   // 캡션 색
+            int txt = 0xDCDCDC; DwmSetWindowAttribute(Handle, 36, ref txt, 4);                  // 제목 글자 색
+            int bd = cap; DwmSetWindowAttribute(Handle, 34, ref bd, 4);                         // 테두리 색
+        }
+        catch { }
+    }
+    protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); Caption(BackColor); }
+
+    // F11: 제목 표시줄 없는 진짜 전체 화면 (한 번 더 누르면 원래대로)
+    bool full; FormWindowState prevState;
+    void ToggleFull()
+    {
+        if (!full) { prevState = WindowState; FormBorderStyle = FormBorderStyle.None; WindowState = FormWindowState.Normal; WindowState = FormWindowState.Maximized; full = true; }
+        else { FormBorderStyle = FormBorderStyle.Sizable; WindowState = prevState; full = false; Caption(BackColor); }
+    }
+
     static void Log(string t) { try { File.AppendAllText(Path.Combine(Program.Local, "shell.log"), DateTime.Now.ToString("MM-dd HH:mm:ss ") + t + Environment.NewLine); } catch { } }
 
     async Task Startup()
@@ -160,7 +183,18 @@ class ShellForm : Form
             cw.DocumentTitleChanged += (s, e) => { Text = string.IsNullOrEmpty(cw.DocumentTitle) ? Config.Name : cw.DocumentTitle; };
             // 새 창 링크(다운로드 · 바뀐 점 · 견본 크게 보기 등)는 기본 브라우저로
             cw.NewWindowRequested += (s, e) => { e.Handled = true; Open(e.Uri); };
-            web.KeyDown += (s, e) => { if (e.KeyCode == Keys.F5) cw.Reload(); };
+            web.KeyDown += (s, e) => { if (e.KeyCode == Keys.F5) cw.Reload(); if (e.KeyCode == Keys.F11) ToggleFull(); };
+            // 화면이 뜨면 그 배경색을 읽어 제목 표시줄도 같은 색으로
+            cw.NavigationCompleted += async (s, e) =>
+            {
+                try
+                {
+                    var js = await cw.ExecuteScriptAsync("(function(){var c=getComputedStyle(document.body).backgroundColor;if(!c||c==='rgba(0, 0, 0, 0)')c=getComputedStyle(document.documentElement).backgroundColor;return c;})()");
+                    var m = Regex.Match(js ?? "", @"(\d+),\s*(\d+),\s*(\d+)");
+                    if (m.Success) { var c = Color.FromArgb(int.Parse(m.Groups[1].Value), int.Parse(m.Groups[2].Value), int.Parse(m.Groups[3].Value)); BackColor = c; Caption(c); Log("캡션 색 " + js); }
+                }
+                catch (Exception ex) { Log("caption: " + ex.Message); }
+            };
             cw.Navigate(Url);
             status.Visible = false; Log("화면 " + Url);
         }
