@@ -220,7 +220,7 @@
   const herLine = (x, o, si, third) => {
     const V = o && o.ch && window.BC_VOICE && window.BC_VOICE[o.ch.id], G = window.BC_GEN2;
     let w = x;
-    if (V && V.tone && V.tone.length && Math.random() < 0.1) { const T = TONE_TAIL[V.tone[Math.floor(Math.random() * V.tone.length)]]; if (T) w = w.replace(/[.…]+$/, "") + (/[?!]$/.test(w) ? " " : "… ") + pick(T).replace(/^…/, ""); }
+    if (V && V.tone && V.tone.length && Math.random() < 0.1 && !/[!]|흐윽|하앗|하윽|으읍|커헉|컥|아앗|흐앗|가요|들어갔/.test(w)) { const T = TONE_TAIL[V.tone[Math.floor(Math.random() * V.tone.length)]]; if (T) w = w.replace(/[.…]+$/, "") + (/[?!]$/.test(w) ? " " : "… ") + pick(T).replace(/^…/, ""); }
     if (V && V.tics && V.tics.length && Math.random() < 0.3 && !/^(아|하|흐|있잖|솔직|진짜|…)/.test(w)) w = pick(V.tics) + " " + w;
     const call = third ? "자기" : V && V.call && V.call !== "자기" ? V.call : "";
     if (call) w = w.replace(/당신(이에요|이요|이랑|이|은|을|과)?/g, (m, j) => callJo(call, j));   // 반말로 바꾸기 전에 (반말은 당신 → 너)
@@ -340,7 +340,24 @@
     s = sceneFit(s, sid);
     if (!/^(ready|pose|deny|climax|finish)/.test(sid)) s = s.replace(/(그 남자가|그가|당신이) 허리를 (멈추고|붙잡은 채)/g, "$1 그녀를 내려다보며");   // 아직 삽입 전 · 끝난 뒤엔 허리 머리말이 안 맞음
     { const b = bodyLine(sid, o); if (b) { const i = s.indexOf("\n"); s = i < 0 ? s + b : s.slice(0, i) + b + s.slice(i); } }   // 몸의 반응: 첫 서술 문단 끝에
+    if (opt && opt.on) s = speakOutfit(s, opt.on);   // 대사 속 옷 이름은 짧게 (서술은 그대로)
     return tidy(s);
+  };
+  // 말할 때는 옷 전체 이름을 안 부름 → 왜 입었는지가 드러나게: "타이트 오피스룩 걷어 올리고" → "따먹히려고 입은 옷 걷어 올리고"
+  //  (그녀의 말 · 그의 말 모두, 서술은 그대로) · 입고 / 차림 앞은 "이 옷 입고" · "이 차림"
+  const WHY_HER = S("따먹히려고 입은/꼬시려고 입은/벗겨지려고 입은/보여 주려고 입은/일부러 골라 입은"), WHY_HIM = S("따먹히려고 입은/꼬시려고 입은/벗겨 달라고 입은/일부러 입고 온");
+  const speakOutfit = (s, on) => {
+    const n = String(on).replace(/ \(.*\)$/, ""); if (!n || n.length < 2) return s;
+    const sp = /란제리|베이비돌|슈미즈|테디|가터|슬립|바디스타킹|비키니|니플|팬티|브라|뷔스티에|코르셋|하네스/.test(n) ? "속옷" : /원피스|드레스/.test(n) ? "원피스" : /셔츠/.test(n) ? "셔츠" : /수영복|모노키니/.test(n) ? "수영복" : "옷";
+    const J = { 을: ["을", "를"], 를: ["을", "를"], 이: ["이", "가"], 가: ["이", "가"], 은: ["은", "는"], 는: ["은", "는"], 으로: ["으로", "로"], 로: ["으로", "로"] };
+    const re = new RegExp(n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(을|를|이|가|은|는|으로|로)?(\\s*(입고|입은|차림))?", "g");
+    const lines = s.split("\n");
+    return lines.map((ln) => { const him = /(말한다|속삭인다|묻는다|웃는다|명령한다)\.\s*"/.test(ln) && !/^"/.test(ln); return ln.replace(/"[^"]*"/g, (q) => q.replace(re, (m, j, w, v) => {
+      if (v === "차림") return "이 차림";
+      if (v) return "이 " + sp + (j ? J[j][jong(sp) ? 0 : 1] : "") + w;
+      const why = pick(him ? WHY_HIM : WHY_HER);   // "따먹히려고 입은 옷" · 그의 말이면 그녀를 두고 하는 말
+      return why + " " + sp + (j ? J[j][jong(sp) ? 0 : 1] : "");
+    })); }).join("\n");
   };
   // 그녀의 집착 (약간 · 강함 · 아주 강함): 단계별 말 — 강할수록 자주
   const OBS = {
