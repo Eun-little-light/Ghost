@@ -1265,7 +1265,7 @@
     if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel, cr: crSel, ob: obsSel, lw: lewdSel, ar: arSel, at: attSel, em: emSel, sd: sdSel, on: ({ work: "업무복", lounge: "실내복", officeDate: "출근 옷" }[o && o.outfit] || OUTFITS[o && o.outfit] || ""), pn: (o && o.place && o.place.n) || "" }) || t; } catch {} }
    // 덧붙는 말도 아래 중복 확인을 거치게 먼저
     if (seenQ && t) {   // 이미 나온 말은 빼고, 말이 빠져 '…말한다.'만 남은 줄도 뺌 (다 빠지면 그대로)
-      const SV = /(말한다|묻는다|속삭인다|중얼거린다|웃는다|건넨다|되묻는다)\.?\s*$/;
+      const SV = window.BC_SAYV ? new RegExp(BC_SAYV.source + "\\.?\\s*$") : /(말한다|묻는다|속삭인다|중얼거린다|웃는다|건넨다|되묻는다)\.?\s*$/;   // 말하는 동사 목록은 huntpost의 하나를 씀
       // 같은 말 판단은 앞의 신음 · 입버릇과 끝 문장부호를 떼고 (예: "아앗… 이제 못 돌아가요…!" = "이제 못 돌아가요")
       const lines = String(t).split("\n").map((ln) => { const had = /"/.test(ln); const s = ln.replace(/"[^"]{6,}"/g, (q) => (seenQ.has(QK(q)) ? "" : (seenQ.add(QK(q)), q))).replace(/\s{2,}/g, " ").trim(); return had && !/"/.test(s) && SV.test(s) ? "" : s; }).filter(Boolean);
       if (lines.join("").trim()) t = lines.join("\n");

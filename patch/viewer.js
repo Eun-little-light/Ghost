@@ -259,7 +259,7 @@
     const s = (String(pre).split(/[.!?…]\s+/).filter((x) => x.trim()).pop() || "").trim();
     if (/당신의 (목소리|답장)\.?$/.test(s)) return "y";   // 전화기 너머 당신의 목소리. "…"
     if (/(남편|남자친구)의 (목소리|답장)\.?$/.test(s)) return "h";
-    if (!SAY_V.test(s)) return "w";
+    if (!(window.BC_SAYV ? new RegExp(BC_SAYV.source + "\\s*[.。]?\\s*$") : SAY_V).test(s) && !SAY_V.test(s)) return "w";   // 말하는 동사 목록은 huntpost의 하나 + 여기 추가분
     if (/^(남편|남자친구)(이|가|은|는)\s/.test(s)) return "h";
     if (/^당신/.test(s)) return "y";
     if (/^(그[가는]\s|이분|이이)/.test(s) || /남자(가|는|들이|들은)\s/.test(s)) return "m";   // 주어가 남자 (\"그녀의 입에서 빠져나온 남자가\" 포함)

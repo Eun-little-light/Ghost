@@ -239,8 +239,18 @@
     out: X("M:어디에 싸 줄까|W:가슴이요… 가슴에 뿌려 줘요|M:문질러 봐|W:미끈미끈해요… 냄새 좋아요/W:배 위에 싸 줘요… 보고 싶어요|M:이렇게 많이|W:하아… 배꼽에 고였어요… 핥아 먹을래요"),
     after: X("M:보지에서 내 거 흘러나온다|W:아까워요… 손가락으로 다시 넣어 줘요|M:욕심쟁이|W:당신 정액 하나도 안 흘리고 싶어요/W:아직 자지 서 있어요…|M:한 번 더 할래?|W:네… 이번엔 제가 위에서 박을게요/M:어땠어, 오늘|W:보지가 아직 얼얼해요… 당신 자지 모양으로 벌어져 있어요|M:다음엔 더 세게 해 줄까|W:…약속해요"),
   });
-  const exchange = (k, o, si, lw) => {
-    const pool = lw === "soft" ? EX[k].filter((e) => !SOFT_BAN.test(e.map((x) => x[1]).join(" "))) : !EXX[k] || lw === "normal" ? EX[k] : lw === "extreme" ? EX[k].concat(EXX[k], EXX[k], EXX[k]) : EX[k].concat(EXX[k], EXX[k]);
+  // 전희 묶음을 장면 종류로 가름: 입으로 하는 말 / 그녀가 받는 말 — 애무에 '입 벌려', 손으로 해 주는데 '먼저 가면 안 돼요?'가 섞이지 않게
+  const ORAL_X = /입 벌려|목구멍|핥|빨아|빨게|불알|침 많이|턱까지|눈 보면서 빨|목 끝|입보지|입에 넣/, RECV_X = /보지 물 소리|거기 계속|먼저 가|손가락|다리 더 벌려|클리|젖꼭지 섰|보지 벌려|가슴으로 조여/;
+  const GIVE_EX = {
+    handjob: X("M:더 세게 쥐어|W:이렇게요? 손 안에서 껄떡거려요…|M:잘하네/W:손이 끈적해졌어요… 벌써 나와요?|M:아직이야. 계속해|W:네… 더 빨리 할게요/M:얼굴 보면서 해|W:이렇게요…? 표정 다 보여요. 좋아요?|M:최고야"),
+    paizuri: X("M:가슴으로 조여 봐|W:이렇게요…? 뜨거워요|M:잘하네. 혀도 써/W:가슴 사이에서 커져요…|M:더 꽉 모아|W:네… 끝은 입으로 받을게요"),
+    footjob: X("M:발바닥으로 감싸 봐|W:이렇게요…? 간지러운데 뜨거워요|M:잘하네/W:발가락으로 이렇게 하면 좋아요?|M:거기. 계속|W:얼굴 다 풀렸어요… 귀여워"),
+  };
+  const exFit = (sid) => (/^(oral|irrumatio|sixtynine)$/.test(sid) ? (e) => ORAL_X.test(e.map((x) => x[1]).join(" ")) && !/젖꼭지|가슴/.test(e.map((x) => x[1]).join(" ")) && (sid === "sixtynine" || !RECV_X.test(e.map((x) => x[1]).join(" "))) : /^(neck|caress|chest|nipple|hand|toy|cunni|analtoy|grind|thighjob)$/.test(sid) ? (e) => !ORAL_X.test(e.map((x) => x[1]).join(" ")) : null);
+  const exchange = (k, o, si, lw, sid) => {
+    if (GIVE_EX[sid]) { const e = pick(GIVE_EX[sid]), third = thirdOf(o); let first = true; return e.map(([who, x]) => { if (who === "W") return `\n"${herLine(x, o, si, third)}"`; const lead = first ? pick(third ? LEAD_HIM : LEAD_YOU) : pick(third ? LEAD2_HIM : LEAD2_YOU); first = false; return `\n${lead}. "${x}"`; }).join(""); }
+    let pool = lw === "soft" ? EX[k].filter((e) => !SOFT_BAN.test(e.map((x) => x[1]).join(" "))) : !EXX[k] || lw === "normal" ? EX[k] : lw === "extreme" ? EX[k].concat(EXX[k], EXX[k], EXX[k]) : EX[k].concat(EXX[k], EXX[k]);
+    { const f = k === "fore" && exFit(sid || ""); if (f) { const p2 = pool.filter(f); if (p2.length) pool = p2; } }
     if (!pool.length) return "";
     const fresh = window.BC_SEENQ ? pool.filter((e) => !e.some(([, x]) => window.BC_SEENQ(x))) : pool;   // 이미 나온 말이 든 묶음은 건너뜀 (중복 확인에 빠져 대화가 끊기지 않게)
     const third = thirdOf(o), e = pick(fresh.length ? fresh : pool);
@@ -252,9 +262,9 @@
     }).join("");
   };
   // 그녀의 말(따옴표)만 골라 바꿈 — 말한 사람이 남자 · 당신이면 그대로
-  const herQuotes = (s, fn) => s.split("\n").map((ln) => { let pre = ""; return ln.split(/("[^"]*")/).map((p) => { if (p[0] !== '"') { pre += p; return p; } const last = (pre.split(/[.!?…]\s+/).filter((x) => x.trim()).pop() || "").trim(); pre = ""; const sv = /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다)\s*\.?\s*$/.test(last), other = /당신의 목소리\.?$/.test(last) || (sv && (/^당신/.test(last) || /^(그[가는]\s|이분|이이)/.test(last) || /남자(가|는|들이|들은)\s/.test(last))); return other ? p : fn(p); }).join(""); }).join("\n");
+  const herQuotes = (s, fn) => s.split("\n").map((ln) => { let pre = ""; return ln.split(/("[^"]*")/).map((p) => { if (p[0] !== '"') { pre += p; return p; } const last = (pre.split(/[.!?…]\s+/).filter((x) => x.trim()).pop() || "").trim(); pre = ""; const sv = new RegExp(SAYV_ALL.source + "\\s*\\.?\\s*$").test(last), other = /당신의 목소리\.?$/.test(last) || (sv && (/^당신/.test(last) || /^(그[가는]\s|이분|이이)/.test(last) || /남자(가|는|들이|들은)\s/.test(last))); return other ? p : fn(p); }).join(""); }).join("\n");
   // 남자(당신 · 그 · 그 남자)의 말만 골라 바꿈
-  const menQuotes = (s, fn) => s.split("\n").map((ln) => { let pre = ""; return ln.split(/("[^"]*")/).map((p) => { if (p[0] !== '"') { pre += p; return p; } const last = (pre.split(/[.!?…]\s+/).filter((x) => x.trim()).pop() || "").trim(); pre = ""; const sv = /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다)\s*\.?\s*$/.test(last); return sv && (/^당신/.test(last) || /^(그[가는]\s)/.test(last) || /남자(가|는|들이|들은)\s/.test(last)) ? fn(p) : p; }).join(""); }).join("\n");
+  const menQuotes = (s, fn) => s.split("\n").map((ln) => { let pre = ""; return ln.split(/("[^"]*")/).map((p) => { if (p[0] !== '"') { pre += p; return p; } const last = (pre.split(/[.!?…]\s+/).filter((x) => x.trim()).pop() || "").trim(); pre = ""; const sv = new RegExp(SAYV_ALL.source + "\\s*\\.?\\s*$").test(last); return sv && (/^당신/.test(last) || /^(그[가는]\s)/.test(last) || /남자(가|는|들이|들은)\s/.test(last)) ? fn(p) : p; }).join(""); }).join("\n");
   // 반말 → 해요체 (끝맺음 · 나/너 낱말) — shortcut: 흔한 끝맺음만 바꿈, 어색한 문장이 보이면 표를 늘림
   const JAM = (c) => { const k = c.charCodeAt(0) - 0xac00; return k < 0 || k > 11171 ? null : { cho: Math.floor(k / 588), jung: Math.floor((k % 588) / 28), jong: k % 28 }; };
   const MK = (cho, jung, jong) => String.fromCharCode(0xac00 + cho * 588 + jung * 28 + jong);
@@ -310,7 +320,8 @@
     if (o && o.absent && o.nb === 1) {
       const R = o.rel && !KEEP.test(o.rel) && window.BC_REL && window.BC_REL[o.rel];
       if (R && R.narr) for (const a of R.narr) for (const n of a || []) if (n && /당신/.test(n) && s.includes(n)) s = s.split(n).join(UN(n));
-      s = s.replace(/두 남자의 손을 한꺼번에/g, "그 남자의 손을").replace(/두 남자/g, "그 남자").replace(/(남자의 (손|입)[이가]) 동시에/g, "$1").replace(/양옆 남자들?/g, "그 남자").replace(/남자들/g, "그 남자").replace(/둘 다… 둘 다 안에/g, "끝까지 안에").replace(/둘 다 안에/g, "안에").replace(/우리 없이는/g, "나 없이는").replace(/우리 쪽이/g, "내 쪽이").replace(/박자를 번갈아 받으며/g, "박자를 받으며");
+      s = s.replace(/두 남자의 손을 한꺼번에/g, "그 남자의 손을").replace(/두 남자/g, "그 남자").replace(/(남자의 (손|입)[이가]) 동시에/g, "$1").replace(/양옆 남자들?/g, "그 남자").replace(/남자들/g, "그 남자").replace(/둘 다… 둘 다 안에/g, "끝까지 안에").replace(/둘 다 안에/g, "안에").replace(/우리 없이는/g, "나 없이는").replace(/우리 쪽이/g, "내 쪽이").replace(/박자를 번갈아 받으며/g, "박자를 받으며")
+        .replace(/둘이 같이 만지니까/g, "그렇게 만지니까").replace(/앞뒤로 /g, "").replace(/그 남자 사이에 (누운|앉은)/g, "그 남자 곁에 $1").replace(/그 남자들?에게 둘러싸/g, "그 남자에게 안기").replace(/[^.\n"]*입과 아래가 동시에 채워진다\.?\s?/g, "");   // 한 명인데 여러 명 표현
     }
     const k = groupOf(sid, o);
     const lw = (opt && opt.lw) || "crude", ar = (opt && opt.ar) || "normal", LP = LW_P[lw] || LW_P.crude, third = thirdOf(o);
@@ -325,7 +336,7 @@
     s += emoLine(sid, o, si, opt && opt.em, lw);   // 그녀의 감정 상태 (쑥스러움 · 긴장 …)
     s += seduceLine(sid, o, si, opt && opt.sd, lw);   // 그가 꼬드기는 방식 (크기 · 불만족 · 소홀 · 칭찬)
     if (/^(datetoy|dt_)/.test(sid)) s += toyLine(sid, o, si, lw, ms);   // 로터: 음란도대로
-    if (k && EX[k]) s += exchange(k, o, si, lw);   // 그녀 ↔ 상대 남자가 주고받는 말
+    if (k && EX[k]) s += exchange(k, o, si, lw, sid);   // 그녀 ↔ 상대 남자가 주고받는 말
     else {
       if (k && W2[k] && Math.random() < 0.6) { const G = window.BC_GEN2, x = pick(W2[k]); s += `\n"${G && G.lv ? G.lv(x, si) : x}"`; }   // 그녀의 말 하나 더
       if (k && M2[k] && Math.random() < 0.6) s += `\n${pick(third ? LEAD_HIM : LEAD_YOU)}. "${pick(ms === "casual" && MX2[k] && Math.random() < LP.MX ? MX2[k] : M2[k])}"`;   // 상대 남자의 말 (반말 · 음란도가 높으면 더 거친 말)
@@ -336,12 +347,66 @@
     if (o && o.place && !/^video/.test(sid)) s = homeless(s, /^(meet1|datetoy|dt_|ntrcall_date)/.test(sid) ? "" : o.place.n || "");   // 데이트 장면은 바깥(집 아님)
     if (o && o.place && o.place.bg && !/^(video|meet1|datetoy|dt_|ntrcall_date)/.test(sid)) s = bedless(s, o.place.bg);
     if (o && /^(ntr|ntori)$/.test(o.situ || "") && /^(climax|after|finish)/.test(sid)) s = ringOff(s, sid, o, si);
-    if (/^(pose|deny|climax|after|finish)/.test(sid)) s = poseFit(s, o && o.pose);
-    s = sceneFit(s, sid);
-    if (!/^(ready|pose|deny|climax|finish)/.test(sid)) s = s.replace(/(그 남자가|그가|당신이) 허리를 (멈추고|붙잡은 채)/g, "$1 그녀를 내려다보며");   // 아직 삽입 전 · 끝난 뒤엔 허리 머리말이 안 맞음
     { const b = bodyLine(sid, o); if (b) { const i = s.indexOf("\n"); s = i < 0 ? s + b : s.slice(0, i) + b + s.slice(i); } }   // 몸의 반응: 첫 서술 문단 끝에
     if (opt && opt.on) s = speakOutfit(s, opt.on);   // 대사 속 옷 이름은 짧게 (서술은 그대로)
-    return tidy(s);
+    return tidy(sceneFix(s, sid, o));
+  };
+  // 장면 검사기 — 화면에 나가는 모든 대사(시퀀스 · 다시 쓰기 · 그림 보고 맞추기)가 마지막에 거침. 새 대사 파일이 늘어도 여기서 걸러짐
+  //  장면 성격표 하나로: 입(free · busy 물고 있음 · gag 목까지 · full 머금음) · 그녀의 역할(give 해 줌 · receive 받음)
+  const SCENE = { oral: ["busy", "give"], sixtynine: ["busy", ""], irrumatio: ["gag", "give"], oral_hold: ["full", "give"], handjob: ["", "give"], paizuri: ["", "give"], footjob: ["", "give"], neck: ["", "receive"], caress: ["", "receive"], chest: ["", "receive"], nipple: ["", "receive"], hand: ["", "receive"], toy: ["", "receive"], cunni: ["", "receive"], analtoy: ["", "receive"] };
+  function sceneFix(s, sid, o) {
+    if (!s || !sid) return s;
+    if (o && /^(pose|deny|climax|after|finish)/.test(sid)) s = poseFit(s, o.pose);
+    s = sceneFit(s, sid);
+    if (!/^(ready|pose|deny|climax|finish)/.test(sid)) s = s.replace(/(그 남자가|그가|당신이) 허리를 (멈추고|붙잡은 채)/g, "$1 그녀를 내려다보며");   // 아직 삽입 전 · 끝난 뒤엔 허리 머리말이 안 맞음
+    const [mouth, role] = SCENE[sid] || ["", ""];
+    if (role === "give") s = dropBad(s, (x) => RECV.test(x));   // 해 주는 장면: 받는 쪽 반응 뺌
+    if (role === "receive" || sid === "handjob" || sid === "footjob") s = dropBad(s, (x) => ORAL_ONLY.test(x));   // 받는 장면 · 손발로 해 주기: 입으로 하는 말 뺌
+    if (mouth === "busy" || mouth === "gag") s = s.replace(/(이마를 맞댄 채|입술을 떼며|그녀 귀에 입술을 대고|귓가에 입술을 대고|그녀 눈을 보며|입을 맞추며) /g, "").replace(/[^.\n"]*(뺨을 비비|이마를 맞대|입을 맞춘다|입술을 포갠)[^.\n"]*\.\s?/g, "");   // 물고 있는 동안 얼굴을 맞대는 동작은 불가능
+    if (mouth) s = gagFit(s, mouth === "busy" ? "oral" : mouth === "gag" ? "gag" : "hold");   // 입이 막힌 정도대로
+    return s;
+  }
+  window.BC_SCENE_FIX = (s, sid, o) => tidy(sceneFix(s, sid, o));
+  // 이라마치오: 그녀의 말은 막힌 소리로 · 그녀가 말하거나 소리치는 서술은 뺌 (그의 말은 그대로)
+  const GAG = S("읍… 으읍…!/커헉… 컥…/웁, 웁… 크흡…/으븝… 읍…!/크읍… 흐읍…/컥, 커헉…!/읍, 읍, 으읍…");
+  // 말하는 동사 목록은 하나 (대사 색 viewer.js도 window.BC_SAYV로 같이 씀)
+  const SAYV_ALL = /(말한다|묻는다|되묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다|명령한다|대답한다|재촉한다|내뱉는다|다그친다|덧붙인다|부른다|던진다)/;
+  window.BC_SAYV = SAYV_ALL;
+  const HIMLEAD = new RegExp("(그 남자가|그 남자는|그가|그는|당신이|당신은|남자가)[^.\"]*?" + SAYV_ALL.source + "\\.?\\s*$");
+  const HERTALK = /소리친다|소리를 지른다|얼굴을 묻|조른다|애원한다|입술을 깨물|입을 틀어막|이름을 부른|되뇐다|중얼거린다|말한다|속삭인다|보낸다|보내고|휴대폰|답장|입을 맞|키스/;
+  // 신음만 있는 말 (낱말 없이 소리만) · 물고 있는 동안의 막힌 신음
+  const MOAN_ONLY = /^"[\s…,.!?~♡—\-아앗앙응읏흐흣하윽읍헉으옥악흑힉히윽앙]*"$/;
+  const MUFF = S("음… 으음…!/응, 읍… 으응…/으음, 음…♡/츄읍… 음…/쭈읍… 으응…");
+  const ORAL_BAD = /소리친다|소리를 지른다|입술을 깨물|입을 틀어막|입을 맞|키스|얼굴을 묻고 소리|이름을 (반쯤 )?부르|숨소리와 엉킨|목소리가 [^.]{0,12}(높아|갈라|떨리|커지|젖어)|소리를 (숨기지|참지)|소리가 [^.]{0,12}끊긴|귓가에 숨을/;
+  // 해 주는 쪽(입 · 손 · 가슴 · 발)인데 받는 쪽처럼 반응하는 문장
+  const RECV = /거기 계속|거기요|체크해 둬|다음에도 거기|더 세게 해|만지니까|안 만져|만져 줘|먼저 가|못 참아요… 제발|벗기네|등이 [^.]{0,8}휜|허리가 [^.]{0,10}(들리|휘|기운|따라)|발끝이 [^.]{0,8}허공|다리가 [^.]{0,6}벌어|시트를 (움켜|쥐어)|무릎이 [^.]{0,6}벌어|다리를 스스로 벌려|보지 벌려/;
+  // 그녀가 받는 장면(애무 · 손가락 · 클리 …)에 끼면 안 되는 입으로 하는 말
+  const ORAL_ONLY = /입에 넣|목구멍|입보지|불알|턱까지 흘러|침 범벅|빨아 줄게요|핥아 줄게요|입 벌려/;
+  // 물고 있는 동안 신음에 섞일 수 있는 짧은 말 (더 · 좋아 · 거기 …)도 막힌 소리로
+  const moanish = (q) => !q.replace(/더|좋아|거기|계속|[아앗앙응읏흣흐하읍헉으옥악흑힉히윽흡웁컥크켁흥츄쭈음]|[\s…,.!?~♡—\-"]/g, "").trim();
+  const LIFT = ["그녀가 잠깐 입을 떼고 숨을 몰아쉬며 말한다.", "그녀가 입가를 닦으며 올려다보고 말한다.", "그녀가 고개를 들고 침을 삼키며 말한다."];
+  const gagFit = (s, mode) => {
+    const full = mode === "gag";
+    if (mode === "hold") return s.split("\n").map((ln) => { let prev = ""; return ln.replace(/"[^"]*"|[^"]+/g, (tk) => { if (tk[0] !== '"') { prev = tk; return tk; } const keep = HIMLEAD.test(prev.trim()) || /\(/.test(tk) || moanish(tk); if (!keep) { prev = ""; return "\u0000"; } prev = ""; return tk; }).replace(/[^."\u0000]*(말한다|묻는다|속삭인다)\.\s*\u0000/g, "").replace(/\u0000/g, "").trim(); }).filter((ln) => ln && ln !== '""').join("\n");   // 머금은 채: 그녀의 또렷한 말만 뺌 (그의 말 · 몸짓 섞인 소리는 남김)
+    let gags = 0, lifted = 0;
+    const out = s.split("\n").map((ln, li) => {
+      const tag = (ln.match(/^\[[^\]]*\]/) || [""])[0]; let prev = "", res = [];
+      for (const tk of ln.slice(tag.length).match(/"[^"]*"|[^"]+/g) || []) {
+        if (tk[0] === '"') {
+          if (HIMLEAD.test(prev.trim())) res.push(tk);
+          else if (full) { if (gags++ < 3) res.push(`"${pick(GAG)}"`); }
+          else if (MOAN_ONLY.test(tk) || moanish(tk)) res.push(`"${pick(MUFF)}"`);
+          else if (/^"(으읍|읍|컥|커헉|웁|크읍|으븝)/.test(tk)) res.push(tk);   // 물고 있는 채 웅얼거리는 말
+          else if (li === 0) res.push(`"${pick(MUFF)}"`);   // 행위 문단 안에서는 또렷한 말 대신 막힌 소리 (말은 아래 대화 줄에서)
+          else { if (!/입을 떼|입가를 닦|고개를 들고/.test(prev)) res.push(LIFT[(lifted++) % LIFT.length]); res.push(tk); }   // 말은 입을 뗀 뒤에 (중복 확인으로 앞 말이 빠져도 머리말이 남게 말마다)
+          prev = ""; continue;
+        }
+        const keep = tk.split(/(?<=[.!?…])\s+/).filter((c) => c.trim() && (/^(그 남자가|그가|당신이|남자가)/.test(c.trim()) || !(full ? HERTALK : ORAL_BAD).test(c)));
+        prev = keep.join(" "); if (prev.trim()) res.push(prev);
+      }
+      return (tag + res.join(" ").replace(/\s{2,}/g, " ")).trim();
+    });
+    return out.filter((ln) => ln && ln !== '""').join("\n");
   };
   // 말할 때는 옷 전체 이름을 안 부름 → 왜 입었는지가 드러나게: "타이트 오피스룩 걷어 올리고" → "따먹히려고 입은 옷 걷어 올리고"
   //  (그녀의 말 · 그의 말 모두, 서술은 그대로) · 입고 / 차림 앞은 "이 옷 입고" · "이 차림"
@@ -352,7 +417,7 @@
     const J = { 을: ["을", "를"], 를: ["을", "를"], 이: ["이", "가"], 가: ["이", "가"], 은: ["은", "는"], 는: ["은", "는"], 으로: ["으로", "로"], 로: ["으로", "로"] };
     const re = new RegExp(n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(을|를|이|가|은|는|으로|로)?(\\s*(입고|입은|차림))?", "g");
     const lines = s.split("\n");
-    return lines.map((ln) => { const him = /(말한다|속삭인다|묻는다|웃는다|명령한다)\.\s*"/.test(ln) && !/^"/.test(ln); return ln.replace(/"[^"]*"/g, (q) => q.replace(re, (m, j, w, v) => {
+    return lines.map((ln) => { const him = new RegExp(SAYV_ALL.source + "\\.\\s*\"").test(ln) && !/^"/.test(ln); return ln.replace(/"[^"]*"/g, (q) => q.replace(re, (m, j, w, v) => {
       if (v === "차림") return "이 차림";
       if (v) return "이 " + sp + (j ? J[j][jong(sp) ? 0 : 1] : "") + w;
       const why = pick(him ? WHY_HIM : WHY_HER);   // "따먹히려고 입은 옷" · 그의 말이면 그녀를 두고 하는 말
@@ -603,7 +668,7 @@
   const swapNoun = (s, re, w) => s.replace(re, (m, j) => w + (j ? (JOS[j] ? JOS[j][hasJong(w) ? 0 : 1] : j) : ""));
   // 집(그녀의 집 · 부부 침대)을 전제로 한 문장은 집이 아닌 장소에서 뺌 — 모텔에서 "남편이 자는 자리야" 같은 말
   const HOME_BED = /남편이 자는 자리|남자친구가 자는 자리|쓰는 침대|고른 침대|익숙한 침대|익숙한 집/, HOME_ANY = /현관|애들 없을 때|퇴근하는 소리|남편 사진 앞|부인 집에서|칫솔|시트를 간다/;
-  const LEAD_END = /(말한다|속삭인다|묻는다|되묻는다|중얼거린다|말을 건넨다|웃는다)\.?\s*$/;
+  const LEAD_END = new RegExp(SAYV_ALL.source + "\\.?\\s*$");
   const homeless = (s, pn) => {
     const re = /그녀의 원룸/.test(pn) ? null : /주방 아일랜드|아파트 베란다/.test(pn) ? HOME_BED : new RegExp(HOME_BED.source + "|" + HOME_ANY.source);
     if (!re || !re.test(s)) return s;
@@ -655,7 +720,7 @@
   };
   // 지금 체위로는 안 되는 문장(서술 · 말)을 뺌 — 말이 빠지면 그 앞 '…말한다.'도 · 다 빠지면 원래대로
   const P_TOP = /올라타|올라탄|위에서 (내려다|허리)|내가 위/, P_BACK = /개처럼|엎드|뒤에서 박|뒤로 박|등 뒤에서|머리채 잡고/, P_FACE = /이마를 맞댄|눈을 맞춘|눈을 맞추|얼굴이 바로 앞|얼굴을 두 손으로 감싸/, P_STAND = /벽에 기대|선 채로|벽에 밀어/;
-  const SAYV = /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다)\.?$/;
+  const SAYV = new RegExp(SAYV_ALL.source + "\\.?$");
   function poseFit(s, p) {
     if (!p) return s;
     return dropBad(s, (x) => (!p.top && P_TOP.test(x)) || (!p.back && P_BACK.test(x)) || (p.back && P_FACE.test(x)) || (!p.stand && P_STAND.test(x)));
@@ -666,7 +731,7 @@
     if (/^(meet|warm_|kiss|neck|caress|undress|act_|chest|nipple|change)/.test(sid)) return (x) => PEN.test(x) || CUMW.test(x) || HERC.test(x) || (/^(neck|caress|undress|act_|chest|nipple)/.test(sid) && /처음 와 봐요/.test(x));
     if (/^(hand|toy|cunni|analtoy)_fin$/.test(sid)) return (x) => PEN.test(x) || CUMW.test(x);
     if (/^(hand|toy|cunni|analtoy)$/.test(sid)) return (x) => PEN.test(x) || CUMW.test(x) || HERC.test(x) || /처음 와 봐요/.test(x);
-    if (/^(oral|irrumatio|handjob|paizuri|footjob|thighjob|grind|sixtynine)(_fin)?$|^(oral_hold|oral_swallow|clean)/.test(sid)) return (x) => PEN.test(x) || FINGER.test(x) || (/^(oral|irrumatio|handjob|paizuri|footjob|thighjob|grind)$/.test(sid) && CUMW.test(x)) || (!/^sixtynine/.test(sid) && HERC.test(x));
+    if (/^(oral|irrumatio|handjob|paizuri|footjob|thighjob|grind|sixtynine)(_fin)?$|^(oral_hold|oral_swallow|clean)/.test(sid)) return (x) => PEN.test(x) || FINGER.test(x) || /처음 와 봐요/.test(x) || (/^(oral|irrumatio|handjob|paizuri|footjob|thighjob|grind)$/.test(sid) && CUMW.test(x)) || (!/^sixtynine/.test(sid) && HERC.test(x));
     if (/^ready/.test(sid)) return (x) => CUMW.test(x) || HERC.test(x);
     if (/^deny/.test(sid)) return (x) => /가 버렸|갔어요/.test(x);
     if (/^(after|care|bye)/.test(sid)) return (x) => /박아|쑤셔|더 세게|더 깊이|가요[,!…]|또 가요|갈 것 같|처음 와 봐요|떠나가게/.test(x);

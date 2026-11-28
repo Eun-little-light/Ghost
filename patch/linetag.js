@@ -135,6 +135,7 @@
     try { tags = await tagImage(im); } catch (e) { console.warn("대사용 태깅 실패", e); return null; }
     if (!tags.length) return null;
     const r = compose(tags, { ...o, id, base: o.base || m.base || m.t || "" });
+    if (window.BC_SCENE_FIX && r && r.t) r.t = BC_SCENE_FIX(r.t, r.sid || o.sid || m.sid, null);   // 그림 보고 붙인 말도 장면 검사기를 거침 (입이 막힌 장면 · 해 주는/받는 장면 …)
     BC_LINE.set(id, { ...m, ...pick(o, ["n", "cid", "cn", "of"]), n: m.n || o.n || "", t: r.t, base: o.base || m.base || m.t || "", sid: r.sid, vt: 1, tg: tags.slice(0, 40) });
     return r.t;
   }
