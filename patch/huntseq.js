@@ -299,7 +299,7 @@
   // 관계 지정 (Hunt처럼): 그림 분위기 태그 · 관계가 드러나는 서술 · 그녀의 말
   const RELS = { none: "지정 안 함", interest: "관심 있음", some: "썸", lover: "연인", partner: "파트너 (몸이 맞는 사이)", married: "부부", affair: "불륜 (그녀는 남의 아내 · 당신이 상대)", cheat: "아내의 바람 (당신은 남편 · 장면엔 다른 남자)", cheatwatch: "아내의 바람 → 알고 허락해 지켜봄", rebound: "홧김의 새 남자 (남편에게 정이 떨어져 만난 남자가 훨씬 좋음 · 당신은 남편 · 장면에 없음)", dom: "주인(당신) · 복종(그녀)", sub: "주인(그녀) · 복종(당신)" };
   // 다인원(3인 이상) 상황 설정
-  const SITUS = { none: "지정 안 함", pure: "순애", ntr: "네토라레 (그녀가 넘어감 · 당신은 장면에 없음)", ntori: "네토리 (남자친구 있는 그녀를 당신들이)", swap: "부부 스와핑 (2여 2남 이상 · 당신은 상대 아내와)" };
+  const SITUS = { none: "지정 안 함", pure: "순애", ntr: "네토라레 (그녀가 넘어감 · 당신은 장면에 없음)", ntori: "네토리 (남자친구 있는 그녀를 당신이 · 당신들이)", swap: "부부 스와핑 (2여 2남 이상 · 당신은 상대 아내와)" };
   let callJagi = false;   // 호칭 옵션 (UI가 그려진 뒤 저장값으로 채움)
   const ROLES = { join: "함께함", watch: "지켜보는 남편 (허락한 관계)", absent: "장면에 없음 (당신은 모름 · 상대는 다른 남자)" };
   const watchOn = (o) => !!(o && o.watch && o.nb > 1);
@@ -1134,7 +1134,7 @@
   const relLine = (t, sid, ch, o) => {
     const R = o && o.rel && o.rel !== "none" && window.BC_REL && BC_REL[o.rel];
     if (!R || !t || /^video/.test(sid)) return t;
-    if ((o.absent || o.situ === "ntr") && /^(interest|some|lover|partner|married)$/.test(o.rel)) return t;   // 당신과의 관계 서술 · 말을 장면 속 다른 남자에게 쓰면 인칭이 꼬임
+    if ((o.absent || o.situ === "ntr" || o.situ === "ntori") && /^(interest|some|lover|partner|married)$/.test(o.rel)) return t;   // 당신과의 관계 서술 · 말을 장면 속 다른 남자에게 쓰면 인칭이 꼬임
     const g = sidG(sid), si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0;
     const pk = pickU;
     const m = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/);
@@ -1483,7 +1483,7 @@
     const RL = S.proles && S.proles.length ? S.proles : ["join"];
     const RS = S.rels && S.rels.length ? S.rels : ["none"];
     const SU = S.situs && S.situs.length ? S.situs : ["none"];
-    for (const rel of RS) for (const ng of GN) for (const bk of BN) for (const nb of [bk === "1o" ? 1 : Number(bk)]) for (const rl of (bk === "1o" ? ["absent"] : nb > 1 ? RL : ["join"])) for (const situ of (ng + nb > 2 ? SU : bk === "1o" ? (SU.filter((k) => k === "ntr").length ? ["ntr"] : ["none"]) : ["none"])) {
+    for (const rel of RS) for (const ng of GN) for (const bk of BN) for (const nb of [bk === "1o" ? 1 : Number(bk)]) for (const rl of (bk === "1o" ? ["absent"] : nb > 1 ? RL : ["join"])) for (const situ of (ng + nb > 2 ? SU : bk === "1o" ? (SU.filter((k) => k === "ntr").length ? ["ntr"] : ["none"]) : (SU.includes("ntori") ? ["ntori"] : ["none"]))) {
       if (situ === "swap" && !(ng >= 2 && nb >= 2)) continue;
       const watch = rl === "watch", absent = rl === "absent";
       if (ng > 1) { const pool = [...cs, ...huntCs.filter((c) => !cs.some((x) => x.id === c.id))]; units.push({ ch: cs[0], ng, nb, watch, absent, rel, situ, extras: pool.slice(1, ng) }); }

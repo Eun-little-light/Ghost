@@ -7,6 +7,7 @@ const NTR = { rel: 'lover', situ: 'ntr', absent: true, nb: 1, ng: 1, place: { n:
 const LOVE = { rel: 'lover', place: { n: '호텔 스위트룸', bg: 'hotel room, bed' }, pose: { n: '정상위' } };
 const run = (sid, t, o = NTR, on = '타이트 오피스룩') => BC_POST(t, sid, o, { si: 0, lw: 'crude', on });
 const fails = [];
+let dateHits = 0, ntoriHits = 0;
 const check = (name, cond) => { if (!cond) fails.push(name); };
 for (let i = 0; i < 30; i++) {   // 무작위가 섞여서 여러 번
   // 이라마치오: 그녀는 말 못 함 · 말하거나 메시지 보내는 서술 없음 · 그의 말은 남음
@@ -43,9 +44,14 @@ for (let i = 0; i < 30; i++) {   // 무작위가 섞여서 여러 번
   // 대사 속 옷 전체 이름 없음 (서술은 그대로)
   const ot = run('pose1', '[정상위]타이트 오피스룩 차림의 그녀가 눕는다.\n"타이트 오피스룩 걷어 올리고 핥아 줘"', LOVE);
   check('대사 속 옷 이름', !/"[^"]*타이트 오피스룩/.test(ot) && /타이트 오피스룩 차림의/.test(ot));
+  // 상황별 데이트 말: 네토라레 데이트엔 '빨리 보고 싶었다 · 거짓말하고 나왔다' 결의 말이 자주 나옴
+  if (i < 10) ntoriHits += /남자친구 약속|반지|동창|생각만 나요|일주일|부르니까|휴대폰을 엎는다/.test(run('meet1', '[데이트 · 레스토랑]그녀가 앉는다.', { rel: 'lover', situ: 'ntori', nb: 1, ng: 1, place: { n: '호텔 스위트룸', bg: 'hotel room, bed' } })) ? 1 : 0;
+  if (i < 10) dateHits +=/거짓말|하루 종일|휴대폰만|생각했어요|보고 싶었어요|못 보니까|기다렸어|일찍 나온|달려온|'야근'/.test(run('meet1', '[데이트 · 레스토랑]그녀가 앉는다.')) ? 1 : 0;
   // 그림 보고 맞추기 경로도 검사기를 거침
   check('BC_SCENE_FIX 없음', typeof window.BC_SCENE_FIX === 'function' && !/안 돼/.test(BC_SCENE_FIX('[목 안까지]"안 돼, 빼 줘요"', 'irrumatio', null)));
 }
+if (ntoriHits < 7) fails.push(`네토리 데이트에 상황 말이 드묾 (${ntoriHits}/10)`);
+if (dateHits < 7) fails.push(`네토라레 데이트에 상황 말이 드묾 (${dateHits}/10)`);
 const uniq = [...new Set(fails)];
 console.log(uniq.length ? 'FAIL\n- ' + uniq.join('\n- ') : 'ALL OK (30회)');
 process.exit(uniq.length ? 1 : 0);
