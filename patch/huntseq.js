@@ -281,8 +281,8 @@
     prone: { n: "엎드려 눌러서", stand: false, back: true, tags: "(prone bone:1.3), lying on stomach, sex from behind, (vaginal sex:1.2), penis in pussy, from behind, from above" },
     // 더 격한 체위
     shoulders: { n: "다리 어깨에 걸고 (깊이)", stand: false, tags: "(legs over shoulders:1.3), lying on back, (deep penetration:1.2), (vaginal sex:1.2), penis in pussy, (toes curling:1.1), pov, from above" },
-    fullNelson: { n: "풀 넬슨 (뒤에서 들어 올려)", stand: true, back: true, tags: "(full nelson:1.3), (sex from behind:1.2), (lifted by man:1.15), legs spread wide, (vaginal sex:1.2), penis in pussy, (trembling legs:1.1), full body, from front" },
-    piledriver: { n: "파일드라이버 (거꾸로 접어)", stand: false, tags: "(piledriver \\(sex\\):1.3), upside-down, (legs over head:1.2), folded, deep penetration, (vaginal sex:1.2), penis in pussy, from above" },
+    armPull: { n: "팔 잡아당기며 뒤에서 (세게)", stand: false, back: true, tags: "(doggystyle:1.3), (arm grab:1.25), (arms pulled back:1.2), (sex from behind:1.2), arched back, (rough sex:1.15), (vaginal sex:1.2), penis in pussy, head tilted back, on bed, from side" },
+    bedEdge: { n: "침대 끝에서 (그는 선 채로 · 세게)", stand: false, tags: "(missionary:1.2), (lying on back on edge of bed:1.25), (man standing:1.15), (holding her legs:1.2), legs up, (rough sex:1.15), deep penetration, (vaginal sex:1.2), penis in pussy, pov, from above" },
   };
 
   // 애무 더하기 (Hunt 애무 목록) — 고른 것만 한 시퀀스 안에 이어서 들어감
@@ -1934,7 +1934,7 @@
     const sid = meta.sid || (window.BC_GUESS_SID ? BC_GUESS_SID(p) : "meet1");
     const pick = (obj, test, def) => { const k = Object.keys(obj).find((x) => test(obj[x], x)); return obj[k || def]; };
     const place = PLACES[meta.placek] || pick(PLACES, (v) => hitAll(p, v.bg, 3), "home");
-    const PSIG = [["shoulders", /legs over shoulders/], ["fullNelson", /full nelson/], ["piledriver", /piledriver/], ["reverse", /reverse cowgirl/], ["fold", /mating press/], ["prone", /prone bone/], ["wallBack", /leg lift.*(behind|cheek against wall)|pinned against wall from behind/], ["allfours", /all fours|doggystyle/], ["doggy", /bent over/], ["side", /spooning/], ["lifted", /carrying/], ["cowgirl", /cowgirl position|girl on top/], ["wall", /against wall|back against wall/], ["press", /missionary/]];
+    const PSIG = [["shoulders", /legs over shoulders/], ["armPull", /arm grab|arms pulled back/], ["bedEdge", /edge of bed/], ["reverse", /reverse cowgirl/], ["fold", /mating press/], ["prone", /prone bone/], ["wallBack", /leg lift.*(behind|cheek against wall)|pinned against wall from behind/], ["allfours", /all fours|doggystyle/], ["doggy", /bent over/], ["side", /spooning/], ["lifted", /carrying/], ["cowgirl", /cowgirl position|girl on top/], ["wall", /against wall|back against wall/], ["press", /missionary/]];
     const pose = POSES[meta.posek] || POSES[(PSIG.find(([, r]) => r.test(p)) || ["press"])[0]];
     const fin = FINISH[meta.fink] || (/cum in pussy|internal cumshot/.test(p) ? FINISH.inside : /cum on thighs/.test(p) ? FINISH.thighs : /cum on breasts/.test(p) ? FINISH.breasts : FINISH.stomach);
     const outfit = (meta.outk && OUTFITS[meta.outk] && meta.outk) || /white lace lingerie/.test(p) ? "lingerieWhite" : /black lace lingerie/.test(p) ? "lingerieBlack" : (Object.keys(OUTFITS).find((k) => OUTFITS[k] === (meta.of || g.of)) || (has(p, "loungewear") ? "lounge" : "work"));
