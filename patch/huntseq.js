@@ -652,12 +652,13 @@
   let multi = ls.get("multi", false), undress = ls.get("undress", true);
   let video = ls.get("video", false);
   let on = ls.get("on", {});
-  let lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
+  let lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
   // 대사 형식: Hunt 방식([장소] · 서술 · "말") / Wayward 방식([단계]서술 "소리" … "말" 『속마음』 — huntway.js)
   const FMTS = { hunt: "Hunt 방식", wayward: "Wayward 방식" };
   let fmtSel = FMTS[ls.get("fmt", "hunt")] ? ls.get("fmt", "hunt") : "hunt";
   let secs = Number(ls.get("secs", 14)) || 14;   // 한 장 평균 시간(초) — 실제 생성 시간으로 계속 고쳐짐
   const SPEECH = { auto: "캐릭터 말투", polite: "존댓말", formal: "격식체", casual: "반말" };
+  const MSPEECH = { casual: "남자: 반말", polite: "남자: 존댓말" };
   const SIZES = { normal: "크기 보통", large: "큼", huge: "아주 큼" };   // 상대 자지 크기 — 그림 태그 · 체위 대사가 달라짐
   const CYCLES = { none: "그녀의 날 지정 안 함", safe: "안전일", risky: "위험일", riskyWant: "위험일 (오히려 원함)" };   // 안에 사정 · 시작 전 대사가 달라짐 (한 가지만 고름)
   // 대사 = 장면 대사(huntlines.js) + 고른 선택지 문장(huntctx.js — 장소·체위·도구·옷 상태·사정 위치·복장·날씨) 최대 2개
@@ -983,7 +984,7 @@
       const nb = m0[2].split("\n").map((ln) => (ln.match(/"[^"]*"|[^"]+/g) || []).map((tk) => (tk[0] === '"' ? tk : tk.split(/(?<=[.!?…])\s+/).filter((c) => { const k = c.trim(); if (k.length < 12 || /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다|목소리)\.?$/.test(k)) return true; /* 말한 사람을 알려 주는 문장은 남김 (빠지면 대사 색이 틀림) */ if (seenQ.has("n:" + k)) return false; seenQ.add("n:" + k); return true; }).join(" "))).join(" ").replace(/\s{2,}/g, " ").trim()).filter(Boolean).join("\n");
       if (nb.trim()) t = (m0[1] || "") + nb;
     }
-    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0 }) || t; } catch {} }
+    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel }) || t; } catch {} }
     return t;
   };
   const lineOf = (sid, ch, o) => postLine(lineOfA(sid, ch, o), sid, ch, o);
@@ -1133,6 +1134,7 @@
       <div><small class="muted">대사 형식 — Hunt: [장소] · 그녀의 행동 서술 · "말" / Wayward: [단계]당신의 행동 · 반응 · "신음"과 서술이 번갈아 · "말"</small>${seg("hsFmt", FMTS, fmtSel, false)}</div>
       <label class="check"><input type="checkbox" id="hsNarrOn"${narrOn ? " checked" : ""}> 서술 넣기 <small class="muted">(Hunt 방식일 때)</small></label>
       ${seg("hsSpeech", SPEECH, speechSel, false)}
+      <div style="margin-top:6px"><small class="muted">남자 대사 말투 — 반말이면 더 거칠고 천박하게</small>${seg("hsMSpeech", MSPEECH, mspeechSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">그녀의 날 — 시작 전 · 안에 사정할 때 대사가 달라짐</small>${seg("hsCycle", CYCLES, cycleSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">상대 자지 크기 — 그림과 삽입 · 절정 대사가 달라짐</small>${seg("hsSize", SIZES, sizeSel, false)}</div></div>
     <div class="field"><label>만들 단계 <small class="muted">(1인 장면은 화풍 참조 워크플로, 2인은 Duo 워크플로)</small> <button type="button" class="mini" id="hsStagesAll">✚ 전부 켜기/끄기</button></label><div id="hsStages" class="hs-stages"></div></div>
@@ -1316,6 +1318,7 @@
   $q("#hsLineOn").addEventListener("change", (e) => { lineOn = e.target.checked; ls.set("lineOn", lineOn); });
   $q("#hsNarrOn").addEventListener("change", (e) => { narrOn = e.target.checked; ls.set("narrOn", narrOn); });
   bindSeg("hsSpeech", (v) => { speechSel = v; ls.set("speech", v); pick("hsSpeech", v); });
+  bindSeg("hsMSpeech", (v) => { mspeechSel = v; ls.set("mspeech", v); pick("hsMSpeech", v); });
   bindSeg("hsCycle", (v) => { cycleSel = v; ls.set("cycle", v); pick("hsCycle", v); });
   bindSeg("hsSize", (v) => { sizeSel = v; ls.set("psize", v); pick("hsSize", v); });
   bindSeg("hsFmt", (v) => { fmtSel = v; ls.set("fmt", v); pick("hsFmt", v); });
@@ -1385,7 +1388,9 @@
     usedLines = new Map(); usedWhole = new Set(); seenQ = new Set();
     const out = jobs.map((j, i) => {
       const b = build(j.s, j.o), jc = j.o.ch, cname = String(jc.n).split(" · ")[0];
-      return { i: i + 1, n: j.s.n(j.o), pos: b.positive, neg: b.negative, duo: b.duo, bust: j.o.bust || "global", line: lineOn ? lineOf(j.s.id, jc, j.o) : "", sid: j.s.id, sp: speechOf(jc), cid: jc.id, cn: cname, of: OUTFITS[j.o.outfit] || j.o.outfit, g: j.g || "", rel: j.o.rel && j.o.rel !== "none" ? j.o.rel : "", situ: j.o.situ && j.o.situ !== "none" ? j.o.situ : "", ng: j.o.ng || 1, nb: j.o.nb || 1, watch: !!j.o.watch, absent: !!j.o.absent, mem: [cname, ...((j.o.extras || []).map((e) => String(e.n).split(" · ")[0]))],
+      const ln = lineOn ? lineOf(j.s.id, jc, j.o) : "";
+      const pos = ln && window.BC_LINE2TAG && !j.s.date && !j.s.solo && j.s.meet == null ? BC_LINE2TAG(b.positive, ln) : b.positive;   // 대사의 행위(손짓 · 표정)를 그림에도
+      return { i: i + 1, n: j.s.n(j.o), pos, neg: b.negative, duo: b.duo, bust: j.o.bust || "global", line: ln, sid: j.s.id, sp: speechOf(jc), cid: jc.id, cn: cname, of: OUTFITS[j.o.outfit] || j.o.outfit, g: j.g || "", rel: j.o.rel && j.o.rel !== "none" ? j.o.rel : "", situ: j.o.situ && j.o.situ !== "none" ? j.o.situ : "", ng: j.o.ng || 1, nb: j.o.nb || 1, watch: !!j.o.watch, absent: !!j.o.absent, mem: [cname, ...((j.o.extras || []).map((e) => String(e.n).split(" · ")[0]))],
         pc: (() => { const nE = watchOn(j.o) ? j.o.nb - 1 : j.o.nb; return j.o.ng + nE > 2 && !j.s.self && !j.s.solo ? ((j.s.date || j.s.meet != null) ? (j.o.ng > 1 ? [j.o.ng, 0] : null) : [j.o.ng, nE]) : null; })(),
         ph: sel.poses.length > 1 ? (j.pk ? POSES[j.pk].n : j.s.part === "end" ? "마무리" : "") : "" };
     });

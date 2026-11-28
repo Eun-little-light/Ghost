@@ -115,6 +115,52 @@
     return `${head}${fill(pick(V.narr))}.\n"${lv(a)}"${b ? `\n"${lv(b)}"` : ""}`; };
   // 그녀의 말(따옴표)만 골라 바꿈 — 말한 사람이 남자 · 당신이면 그대로
   const herQuotes = (s, fn) => s.split("\n").map((ln) => { let pre = ""; return ln.split(/("[^"]*")/).map((p) => { if (p[0] !== '"') { pre += p; return p; } const last = (pre.split(/[.!?…]\s+/).filter((x) => x.trim()).pop() || "").trim(); pre = ""; const sv = /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다)\s*\.?\s*$/.test(last), other = /당신의 목소리\.?$/.test(last) || (sv && (/^당신/.test(last) || /^(그[가는]\s|이분|이이)/.test(last) || /남자(가|는|들이|들은)\s/.test(last))); return other ? p : fn(p); }).join(""); }).join("\n");
+  // 남자(당신 · 그 · 그 남자)의 말만 골라 바꿈
+  const menQuotes = (s, fn) => s.split("\n").map((ln) => { let pre = ""; return ln.split(/("[^"]*")/).map((p) => { if (p[0] !== '"') { pre += p; return p; } const last = (pre.split(/[.!?…]\s+/).filter((x) => x.trim()).pop() || "").trim(); pre = ""; const sv = /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다)\s*\.?\s*$/.test(last); return sv && (/^당신/.test(last) || /^(그[가는]\s)/.test(last) || /남자(가|는|들이|들은)\s/.test(last)) ? fn(p) : p; }).join(""); }).join("\n");
+  // 반말 → 해요체 (끝맺음 · 나/너 낱말) — shortcut: 흔한 끝맺음만 바꿈, 어색한 문장이 보이면 표를 늘림
+  const JAM = (c) => { const k = c.charCodeAt(0) - 0xac00; return k < 0 || k > 11171 ? null : { cho: Math.floor(k / 588), jung: Math.floor((k % 588) / 28), jong: k % 28 }; };
+  const MK = (cho, jung, jong) => String.fromCharCode(0xac00 + cho * 588 + jung * 28 + jong);
+  const yo = (stem) => {   // 어간 + 아요/어요 (줄임 포함)
+    if (!stem) return "요";
+    const last = stem.slice(-1), head = stem.slice(0, -1), j = JAM(last); if (!j) return stem + "요";
+    if (last === "하") return head + "해요";
+    if (last === "되") return head + "돼요";
+    if (j.jong) return stem + ([0, 8].includes(j.jung) ? "아요" : "어요");   // ㅏ · ㅗ → 아요
+    if (j.jung === 0 || j.jung === 4) return stem + "요";                    // ㅏ · ㅓ: 가요 · 서요
+    if (j.jung === 8) return head + MK(j.cho, 9, 0) + "요";                  // ㅗ → ㅘ: 와요
+    if (j.jung === 13) return head + MK(j.cho, 14, 0) + "요";                // ㅜ → ㅝ: 줘요
+    if (j.jung === 20) return head + MK(j.cho, 6, 0) + "요";                 // ㅣ → ㅕ: 여요
+    if (j.jung === 18) return head + MK(j.cho, 4, 0) + "요";                 // ㅡ → ㅓ: 써요
+    return stem + "어요";
+  };
+  const END = "(?=[…!?.,~]|$)";   // 문장 끝만 (가운데 낱말은 그대로)
+  const politeOf = (t) => String(t)
+    .replace(/(^|[^가-힣])내가(?![가-힣])/g, "$1제가").replace(/(^|[^가-힣])나는(?![가-힣])/g, "$1저는").replace(/(^|[^가-힣])나를(?![가-힣])/g, "$1저를").replace(/(^|[^가-힣])날(?=\s)/g, "$1절").replace(/(^|[^가-힣])나도(?![가-힣])/g, "$1저도").replace(/(^|[^가-힣])나한테(?![가-힣])/g, "$1저한테").replace(/(^|[^가-힣])내(?=\s)/g, "$1제")
+    .replace(/(^|[^가-힣])네가(?![가-힣])/g, "$1당신이").replace(/(^|[^가-힣])너(는|를|도|한테|랑|만)?(?![가-힣])/g, (m, a, j) => a + "당신" + (j === "는" ? "은" : j === "를" ? "을" : j || "")).replace(/(^|[^가-힣])니(?=\s)/g, "$1당신").replace(/(^|[^가-힣])나(?=\s)/g, "$1저")
+    .replace(new RegExp("([가-힣]*?)([가-힣])(는|ㄴ)?다" + END, "g"), (m, pre, c, x) => { const j = JAM(c); if (!j) return m; if (x === "는") return pre + yo(c); if (j.jong === 4 && !/[하되]/.test(c)) return pre + yo(MK(j.cho, j.jung, 0)); if (c === "한" || c === "된") return pre + (c === "한" ? "해요" : "돼요"); return pre + yo(c); })
+    .replace(new RegExp("이야" + END, "g"), "이에요").replace(new RegExp("([가-힣])야" + END, "g"), (m, c) => (JAM(c) && !JAM(c).jong ? c + "예요" : m))
+    .replace(new RegExp("지" + END, "g"), "죠").replace(new RegExp("(하|가)자" + END, "g"), (m, c) => (c === "하" ? "해요" : "가요")).replace(new RegExp("(냐|니)\\?", "g"), "나요?")
+    .replace(new RegExp("([어아해줘봐와돼게래까네든워여져려쳐켜혀겨펴셔라]|잖아|거든)" + END, "g"), "$1요");
+  // 반말 남자: 더 거칠고 천박한 말 (그녀와 같은 수위 이상)
+  const MX = {
+    pre: S("오늘 너 걸레처럼 굴어도 돼. 아니, 그렇게 굴어/벌써 팬티 젖었네. 이 발정 난 년/무릎 꿇어. 입부터 써/다리 벌려. 보지 상태 좀 보자/오늘 구멍 세 개 다 쓸 거야"),
+    fore: S("목구멍까지 처박는다. 토해도 빼지 마/입보지 좋네. 침 질질 흘려/보지 물 줄줄 새는 거 봐. 창피한 줄도 모르지/혀 더 내밀어. 불알까지 핥아/가슴으로 조여. 오나홀처럼"),
+    sex: S("보지가 자지 물고 안 놓네, 이 암캐/더 울어. 남들 다 듣게/엉덩이 들어. 개처럼 박아 줄게/네 보지 이제 내 자지 모양이야/찢어질 때까지 쑤셔 줄게/정신 차려. 아직 안 끝났어/허리 멋대로 흔드는 거 봐, 걸레 같은 년"),
+    cream: S("자궁에 다 싼다. 임신해/질싸 받으면서 가는 꼴 좀 봐/한 방울도 흘리지 마. 다 품고 있어/정액받이 다 됐네"),
+    out: S("얼굴 대. 정액 범벅 만들어 줄게/배 위에 다 뿌린다. 문질러/싸 줬으니까 고맙다고 해"),
+    after: S("보지에서 정액 새는 거 봐. 꼴 좋다/다음엔 처음부터 구멍 벌리고 기다려/씻지 마. 내 냄새 묻히고 다녀/또 서잖아. 한 번 더 박는다"),
+    fin: S("다 삼켜. 뱉으면 혼난다/얼굴에 쌌더니 예쁘네. 그대로 있어/입 벌려. 정액 보여 줘"),
+  };
+  const MX2 = Object.fromEntries(Object.entries(MX).map(([k, v]) => [k, C2(MA, v)]));
+  // 대사의 행위에 맞춰 그림 태그를 덧붙임 (손짓 · 표정 · 몸의 반응만 — 체위를 바꾸는 말은 안 씀)
+  const L2T = [
+    [/엉덩이(를)? ?(때|찰싹)|엉덩이 때려/, "(spanking:1.15), red ass"], [/머리채|머리칼을 움켜|머리를 잡/, "(hair pull:1.15)"],
+    [/입을 (막|틀어막)|손으로 입을/, "(covering own mouth:1.15)"], [/눈물|울먹|흐느/, "tears"], [/침(을)? ?(흘|질질)|침이 입가|침 흘/, "(drooling:1.1), saliva"],
+    [/혀를 (내밀|늘어뜨)/, "tongue out"], [/다리(로)? ?(허리를)? ?감|다리를 감/, "(leg lock:1.15)"], [/시트를 (움켜|하얗게)/, "sheet grab"],
+    [/가슴(을)? ?(움켜|주무르|쥐)/, "(grabbing another's breast:1.1)"], [/깍지/, "interlocked fingers"], [/눈(이)? ?뒤집/, "(rolling eyes:1.1)"],
+    [/발끝이 (오그라|굽)/, "curled toes"], [/경련|부들부들/, "trembling"], [/허리를 (붙잡|잡)/, "hands on another's hips"], [/목을 (조|움켜)/, ""],
+  ];
+  window.BC_LINE2TAG = (pos, line) => { const add = []; for (const [r, tg] of L2T) if (tg && r.test(line) && !pos.includes(tg.replace(/[()]|:[\d.]+/g, "").split(",")[0].trim())) add.push(tg); return add.length ? pos + ", " + add.slice(0, 5).join(", ") : pos; };
   window.BC_POST = (t, sid, o, opt) => {
     if (!t) return t;
     let s = String(t);
@@ -125,7 +171,7 @@
     if (o && o.absent && o.nb === 1) {
       const R = o.rel && !KEEP.test(o.rel) && window.BC_REL && window.BC_REL[o.rel];
       if (R && R.narr) for (const a of R.narr) for (const n of a || []) if (n && /당신/.test(n) && s.includes(n)) s = s.split(n).join(UN(n));
-      s = s.replace(/두 남자의 손을 한꺼번에/g, "그 남자의 손을").replace(/두 남자/g, "그 남자").replace(/(남자의 (손|입)[이가]) 동시에/g, "$1").replace(/양옆 남자들?/g, "그 남자").replace(/남자들/g, "그 남자").replace(/둘 다… 둘 다 안에/g, "끝까지 안에").replace(/둘 다 안에/g, "안에").replace(/우리 없이는/g, "나 없이는");
+      s = s.replace(/두 남자의 손을 한꺼번에/g, "그 남자의 손을").replace(/두 남자/g, "그 남자").replace(/(남자의 (손|입)[이가]) 동시에/g, "$1").replace(/양옆 남자들?/g, "그 남자").replace(/남자들/g, "그 남자").replace(/둘 다… 둘 다 안에/g, "끝까지 안에").replace(/둘 다 안에/g, "안에").replace(/우리 없이는/g, "나 없이는").replace(/우리 쪽이/g, "내 쪽이").replace(/박자를 번갈아 받으며/g, "박자를 받으며");
     }
     const k = groupOf(sid, o);
     if (k && Math.random() < 0.65) {
@@ -133,7 +179,9 @@
       s += `\n"${G && G.lv ? G.lv(x, si) : x}"`;
     }
     if (k && W2[k] && Math.random() < 0.6) { const G = window.BC_GEN2, x = pick(W2[k]); s += `\n"${G && G.lv ? G.lv(x, si) : x}"`; }   // 그녀의 말 하나 더
-    if (k && M2[k] && Math.random() < 0.6) s += `\n${pick(thirdOf(o) ? LEAD_HIM : LEAD_YOU)}. "${pick(M2[k])}"`;   // 상대 남자의 말
+    const ms = opt && opt.ms === "polite" ? "polite" : "casual";
+    if (k && M2[k] && Math.random() < 0.6) s += `\n${pick(thirdOf(o) ? LEAD_HIM : LEAD_YOU)}. "${pick(ms === "casual" && MX2[k] && Math.random() < 0.6 ? MX2[k] : M2[k])}"`;   // 상대 남자의 말 (반말이면 더 거친 말을 자주)
+    if (ms === "polite") s = menQuotes(s, (q) => '"' + politeOf(q.slice(1, -1)) + '"');   // 남자: 존댓말
     if (/^(pose|deny|climax|after|finish)/.test(sid)) s = poseFit(s, o && o.pose);
     return s;
   };
