@@ -303,6 +303,9 @@
   let callJagi = false;   // 호칭 옵션 (UI가 그려진 뒤 저장값으로 채움)
   const ROLES = { join: "함께함", watch: "지켜보는 남편 (허락한 관계)", absent: "장면에 없음 (당신은 모름 · 상대는 다른 남자)" };
   const watchOn = (o) => !!(o && o.watch && o.nb > 1);
+  // 장소에 무엇이 있나 (대사 · 그림을 장소에 맞추는 데 씀): drink 술을 마실 만한 곳 · stand 서 있는 좁은 곳(앉을 데 없음) · mirror 거울 · out 바깥 · car 차 안
+  const NO_DRINK = new Set(["stairs", "office", "meeting", "gym", "class", "car", "fitting", "bath", "pool", "sauna", "studio", "library", "elevator", "laundry", "vipRoom", "lessonRoom", "danceStudio", "massage", "greenhouse", "artStudio", "cinema"]), STAND_ONLY = new Set(["elevator", "stairs", "fitting", "bath"]);
+  const placeFlags = (pl) => { const k = pl ? keyOf(PLACES, pl) : "", bg = String((pl && pl.bg) || ""); return { key: k, drink: !NO_DRINK.has(k), stand: STAND_ONLY.has(k), mirror: /mirror/.test(bg), out: /outdoors|open-air/.test(bg), car: /car interior/.test(bg) }; };
   // 지켜보는 남편: 서술에서 행위하는 '당신'을 '그'(다른 남자)로 — 따옴표 안의 말은 그대로
   const unYou = (t) => String(t).split('"').map((seg, i) => (i % 2 ? seg : seg.replace(/당신은/g, "그는").replace(/당신이/g, "그가").replace(/당신의/g, "그의").replace(/당신을/g, "그를").replace(/당신에게/g, "그에게").replace(/당신과/g, "그와").replace(/당신도/g, "그도").replace(/당신만/g, "그만").replace(/당신/g, "그"))).join('"');
   const sidG = (sid) => (/^(meet|kiss|date|video|warm_)/.test(sid) ? 0 : /^(pose|climax|deny|ready)/.test(sid) ? 2 : /^(after|finish|bye)|^care$/.test(sid) ? 3 : 1);   // caress(애무)는 care(여운)가 아님
@@ -706,7 +709,7 @@
   const LEAD_TAG = { mutual: "", her: ", (girl leaning in:1.15), her hand on his chest", him: ", (his hand on her cheek:1.15), man leaning in", drunk: ", (drunk:1.15), flushed cheeks, holding wine glass, unfocused eyes" };
   { const i = STAGES.findIndex((s) => s.id === "kiss");
     if (i >= 0) STAGES.splice(i, 0,
-      { id: "warm_talk", part: "pre", mouth: "warm_talk", duo: 1, cloth: "main", neg: "sex, penis, nude, nipples, pussy, cum", n: () => "술 한잔 · 대화", tags: () => "sitting close together, (holding glasses:1.1), drinks on table, talking, soft smile, blush, eye contact, intimate atmosphere, from side, upper body" + (LEAD_TAG[leadSel] || "") },
+      { id: "warm_talk", part: "pre", mouth: "warm_talk", duo: 1, cloth: "main", neg: "sex, penis, nude, nipples, pussy, cum", n: (o) => (placeFlags(o && o.place).drink ? "술 한잔 · 대화" : "대화 · 분위기"), tags: (o) => { const f = placeFlags(o && o.place); return (f.stand ? "standing close together" : "sitting close together") + (f.drink ? ", (holding glasses:1.1), drinks on table" : "") + ", talking, soft smile, blush, eye contact, intimate atmosphere, from side, upper body" + (LEAD_TAG[leadSel] || ""); } },   // 술 · 앉을 곳이 없는 장소면 술잔 · 앉기 없이
       { id: "warm_touch", part: "pre", mouth: "warm_touch", after: "warm_talk", duo: 1, cloth: "main", neg: "sex, penis, nude, nipples, pussy, cum", n: () => "스킨십이 시작되는 순간", tags: () => "(hand on another's thigh:1.15), (faces close together:1.2), about to kiss, half-closed eyes, blush, nervous, holding breath, from side, upper body" + (LEAD_TAG[leadSel] || "") }); }
   // 자지 크기 '아주 큼': 펠라치오 앞에서 보고 놀라기 → 사랑스럽게 보기
   { const i = STAGES.findIndex((s) => s.id === "oral");
@@ -781,7 +784,7 @@
     if (s.date) {
       const w = o.date.out ? WEATHER[o.weather].tags : "";
       const tk = s.toy && window.BC_DATETOY && BC_DATETOY.kindOf ? BC_DATETOY.kindOf(keyOf(DATES, o.date)) : "";   // 로터 그림 자세는 장소 종류대로 (좌석 · 조수석 · 서서)
-      pos = ["1girl, solo", o.ch.body, wear, s.toy ? (tk ? BC_DATETOY.tt(tk, s.tt) : s.tt) : "intimate atmosphere, blush", s.toy ? (tk ? BC_DATETOY.tp(tk, s.id, s.tp) : s.tp) : s.call ? "(talking on phone:1.3), holding phone to ear, (man's hand on her thigh:1.1), sitting close, (nervous smile:1.1), blush, glancing sideways" : o.date.pose, dateBg(o.date, o.time), w, "cowboy shot", QUALITY];
+      pos = ["1girl, solo", o.ch.body, wear, s.toy ? toyCloth(tk ? BC_DATETOY.tt(tk, s.tt) : s.tt, wear) : "intimate atmosphere, blush", s.toy ? (tk ? BC_DATETOY.tp(tk, s.id, s.tp) : s.tp) : s.call ? "(talking on phone:1.3), holding phone to ear, (man's hand on her thigh:1.1), sitting close, (nervous smile:1.1), blush, glancing sideways" : o.date.pose, dateBg(o.date, o.time), w, "cowboy shot", QUALITY];
       neg.push(s.lewd ? "(completely nude:1.2), nipples, sex, penis" : NEG_PRE);
     } else if (s.self) {
       pos = ["1girl, solo", o.ch.body, clothTags(s.cloth, wear, o), s.tags(o), o.place.bg, QUALITY];
@@ -880,6 +883,8 @@
   const HER_BUSY = /on hands and knees|all fours|hands on wall|hands on (the )?(headboard|window|glass|table|desk|counter|railing)|arms behind back|holding phone|talking on phone|leaning on hands|gripping (the )?(sheets|railing)|holding (his )?penis|handjob|paizuri|spreading (her )?(own )?(pussy|legs)|hands on (his )?(chest|shoulders)/;
   const HER_HAND = /^\(?(covering (own )?(face|mouth|eyes|breasts|crotch|chest)( with hands?)?|hands? over (own )?mouth|hand to own mouth|hands? on own (face|cheeks?|chest|mouth)|hiding face( in pillow)?|finger to (own )?lips|shush|fidgeting|hands clasped( in front)?|biting (own )?finger|covering breasts with arm)(:\d(\.\d+)?)?\)?$/;
   const HIS_HAND = /^\(?(his (one )?hands? |grabbing another's|hair pulling|spanking|(his )?hand on her|holding her (waist|hips|legs?|wrists?))/;
+  // 로터 그림: 데이트 복장이 치마가 아니면 치마 태그를 그 옷에 맞게 (바지 내리기 · 원피스 걷기 …)
+  const toyCloth = (tt, wear) => { const b = garment(wear).bot; if (b === "skirt") return tt; const lift = b === "pants" ? "(pants pulled down:1.15)" : b === "shorts" ? "(shorts pulled down:1.15)" : b === "dress" ? "(dress lift:1.15)" : "(panties pulled down:1.15)"; return String(tt).replace(/\(skirt lift:[\d.]+\)|skirt lift|skirt_lift/g, lift).replace(/adjusting skirt/g, "adjusting clothes"); };
   function handBudget(P) {
     const busy = HER_BUSY.test(P);
     let her = 0, his = 0;
@@ -998,7 +1003,7 @@
     if (k && (lv == null || lv < 4) && Math.random() < 0.3 && !x.includes(bare)) x = k + " " + x;
     return x;
   };
-  const stageWear = (sid, ch, o) => (/^meet/.test(sid) || (LINGERIE[o.outfit] && /^video/.test(sid)) ? wearOf(ch, "date") : wearOf(ch, o.outfit));
+  const stageWear = (sid, ch, o) => (/^(meet|datetoy|dt_|ntrcall_date)/.test(sid) || (LINGERIE[o.outfit] && /^video/.test(sid)) ? wearOf(ch, "date") : wearOf(ch, o.outfit));   // 데이트 · 로터 장면은 데이트 복장
   const rnd = (a, wear, onlyFresh) => {
     if (!a || !a.length) return "";
     let c = a;
@@ -1269,7 +1274,7 @@
       if (others >= 2) t = String(t).replace(/이이가/g, "이분들이").replace(/이이는/g, "이분들은").replace(/이이를/g, "이분들을").replace(/이이(?!들)/g, "이분들");
       else if (callJagi) t = String(t).split('"').map((seg, i) => (i % 2 ? seg.replace(/이분(?!들)|이이/g, "자기") : seg)).join('"');
     }
-    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel, cr: crSel, ob: obsSel, lw: lewdSel, ar: arSel, at: attSel, em: emSel, sd: sdSel, on: ({ work: "업무복", lounge: "실내복", officeDate: "출근 옷" }[o && o.outfit] || OUTFITS[o && o.outfit] || ""), pn: (o && o.place && o.place.n) || "" }) || t; } catch {} }
+    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel, cr: crSel, ob: obsSel, lw: lewdSel, ar: arSel, at: attSel, em: emSel, sd: sdSel, wear: o && ch ? stageWear(sid, ch, o) : "", on: ({ work: "업무복", lounge: "실내복", officeDate: "출근 옷" }[o && o.outfit] || OUTFITS[o && o.outfit] || ""), pn: (o && o.place && o.place.n) || "" }) || t; } catch {} }
    // 덧붙는 말도 아래 중복 확인을 거치게 먼저
     if (seenQ && t) {   // 이미 나온 말은 빼고, 말이 빠져 '…말한다.'만 남은 줄도 뺌 (다 빠지면 그대로)
       const SV = window.BC_SAYV ? new RegExp(BC_SAYV.source + "\\.?\\s*$") : /(말한다|묻는다|속삭인다|중얼거린다|웃는다|건넨다|되묻는다)\.?\s*$/;   // 말하는 동사 목록은 huntpost의 하나를 씀
@@ -1980,5 +1985,5 @@
     };
     const t = setInterval(() => { if (tryRun()) clearInterval(t); }, 2000);   // 갤러리 기록을 불러올 때까지 기다림
   })();
-  window.BC_HUNTSEQ = { SITUS, RELS, ROLES, PARTIES, PMODES, LATENT, TRAITS, rewrite, sceneOf, HAIRS, EYES, recolor, FORES, DURING, ACTS, EXPR, EXPR_LOUD, FACES, garment, CLIMAXES, CLOTH_MAIN, build, plan, STAGES, PLACES, POSES, FINISH, DATES, WEATHER, TOOLS, OUTFITS, LOUNGE, chars, wearOf };
+  window.BC_HUNTSEQ = { placeFlags, SITUS, RELS, ROLES, PARTIES, PMODES, LATENT, TRAITS, rewrite, sceneOf, HAIRS, EYES, recolor, FORES, DURING, ACTS, EXPR, EXPR_LOUD, FACES, garment, CLIMAXES, CLOTH_MAIN, build, plan, STAGES, PLACES, POSES, FINISH, DATES, WEATHER, TOOLS, OUTFITS, LOUNGE, chars, wearOf };
 })();

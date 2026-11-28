@@ -394,13 +394,58 @@
     if (o && /^(ntr|ntori)$/.test(o.situ || "") && /^(climax|after|finish)/.test(sid)) s = ringOff(s, sid, o, si);
     { const b = bodyLine(sid, o); if (b) { const i = s.indexOf("\n"); s = i < 0 ? s + b : s.slice(0, i) + b + s.slice(i); } }   // 몸의 반응: 첫 서술 문단 끝에
     if (opt && opt.on) s = speakOutfit(s, opt.on);   // 대사 속 옷 이름은 짧게 (서술은 그대로)
-    return tidy(sceneFix(s, sid, o));
+    return tidy(sceneFix(s, sid, o, opt && opt.wear));
   };
+  // ── 입은 옷 · 있는 장소에 맞추기 (모든 장면) ──
+  //  wear: 그 장면에 실제로 입은 옷 태그 (데이트 장면 = 데이트 복장 · 영상통화 = 실내복 · 그 뒤 = 고른 복장) → garment()로 위 · 아래 종류
+  const BOTN = { pants: "바지", shorts: "반바지", dress: "원피스", linger: "팬티", panty: "팬티" };
+  const CONJ = { 풀어: "어", 풀고: "고", 풀며: "며", 풀자: "자", 풀기: "기", 풀었: "었", 풀면: "면", 푼다: "ㄴ다", 풀린: "린", 풀려: "려" };
+  const TOPV = { pull: ["옷자락을", { 어: "걷어 올려", 고: "걷어 올리고", 며: "걷어 올리며", 자: "걷어 올리자", 기: "걷어 올리기", 었: "걷어 올렸", 면: "걷어 올리면", ㄴ다: "걷어 올린다", 린: "걷어 올린", 려: "걷어 올려" }],
+    dress: ["지퍼를", { 어: "내려", 고: "내리고", 며: "내리며", 자: "내리자", 기: "내리기", 었: "내렸", 면: "내리면", ㄴ다: "내린다", 린: "내린", 려: "내려" }],
+    linger: ["브라 후크를", { 어: "풀어", 고: "풀고", 며: "풀며", 자: "풀자", 기: "풀기", 었: "풀었", 면: "풀면", ㄴ다: "푼다", 린: "풀린", 려: "풀려" }] };
+  const HIS_CLOTH = /(그|당신|남자|그 남자)(의)? ?(셔츠|와이셔츠|바지|벨트|넥타이)/;
+  function outfitFit(s, wear, o) {
+    if (!wear || !window.BC_HUNTSEQ || !BC_HUNTSEQ.garment) return s;
+    const g = BC_HUNTSEQ.garment(wear), bot = g.bot, top = g.top;
+    if (bot !== "skirt") {   // 치마가 아니면: 치마 문구를 그 옷에 맞게, 못 바꾼 건 뺌
+      const N = BOTN[bot] || "옷";
+      s = s.replace(/치마를 허리까지 걷어 올리고 팬티를 무릎까지 내린다/g, bot === "dress" ? "원피스 자락을 허리까지 걷어 올리고 팬티를 무릎까지 내린다" : /linger|panty/.test(bot) ? "팬티를 무릎까지 내린다" : `${N}와 팬티를 한꺼번에 무릎까지 내린다`)
+        .replace(/치마를 허리까지 걷어 올린다/g, bot === "dress" ? "원피스 자락을 허리까지 걷어 올린다" : /linger|panty/.test(bot) ? "팬티를 옆으로 젖힌다" : `${N}를 허벅지까지 끌어내린다`)
+        .replace(/치맛자락/g, bot === "dress" ? "원피스 자락" : bot === "pants" ? "바짓가랑이" : bot === "shorts" ? "반바지 끝자락" : "팬티 끈")
+        .replace(/(?<!앞)(치마|스커트) ?(안쪽|속)/g, (m, a, b) => `${N} ${b}`).replace(/치마폭/g, bot === "dress" ? "원피스 자락" : N);
+      s = dropBad(s, (x) => /(?<!앞)치마|스커트/.test(x));
+    }
+    if (top !== "button" && TOPV[top]) {   // 단추 없는 윗옷: '단추를 풀어' → 그 옷 벗기는 동작으로 (남자 옷 단추는 그대로)
+      const [obj, V] = TOPV[top];
+      s = s.split("\n").map((ln) => ln.split(/(?<=[.!?…"]) +/).map((c) => (HIS_CLOTH.test(c) ? c : c.replace(/(블라우스 |셔츠 )?단추를 ((?:하나씩|하나 더|천천히|다|하나) )?(풀어|풀고|풀며|풀자|풀기|풀었|풀면|푼다|풀린|풀려)/g, (m, a, adv, v) => `${obj} ${adv || ""}${V[CONJ[v]]}`))).join(" ")).join("\n");   // 줄은 그대로, 문장 단위로
+      s = dropBad(s, (x) => /블라우스/.test(x) || (/단추/.test(x) && !HIS_CLOTH.test(x)));
+    }
+    if (!/pantyhose|thighhighs|stockings|garter|legwear|kneehighs|knee socks|fishnet/.test(wear) && !(o && (o.acts || []).includes("tear"))) s = dropBad(s, (x) => /스타킹/.test(x));   // 안 신은 스타킹
+    return s;
+  }
+  // 바깥 · 차 안 장소: 방 · 천장 · 커튼 · 문 잠그기 같은 실내 전제 말을 뺌 (배경에 있으면 그대로)
+  function placeFit(s, place) {
+    const bg = String((place && place.bg) || ""), out = /outdoors|open-air/.test(bg), car = /car interior/.test(bg);
+    const F = window.BC_HUNTSEQ && BC_HUNTSEQ.placeFlags ? BC_HUNTSEQ.placeFlags(place) : { drink: true, stand: false, mirror: true };
+    const w = [];
+    if (out || car) w.push("방 안", "이런 방", "방에서", "방이 ", "방을 ", "방문", "천장", "불을 끄", "불 꺼"), /curtain/.test(bg) || w.push("커튼");
+    if (out) w.push("문을 잠그", "문이 닫히", "문을 닫", "문 잠갔", "문을 열", "현관"), /window|glass/.test(bg) || w.push("창문", "창밖", "통유리");
+    if (car) w.push("선 채", "문가에 기대 선", "기대 선다", "일어나", "까치발", "걸어 들어");   // 차 안: 서거나 걷는 동작 없음
+    if (!F.drink) w.push("잔이 부딪", "잔을", "잔만", "잔 테두리", "술 한잔", "술을", "와인", "건배", "취했", "취한", "한 잔", "잔도");   // 술 없는 곳 (엘리베이터 · 차 안 · 헬스장 …)
+    if (!F.mirror) w.push("거울");   // 거울 없는 곳
+    if (F.stand) w.push("나란히 앉", "앉자", "소파", "의자", "걸터앉", "무릎 위로", "드러눕");   // 서 있는 좁은 곳 (엘리베이터 · 비상계단 · 탈의실 · 샤워부스)
+    if (!w.length) return s;
+    const re = new RegExp(w.join("|"));
+    return dropBad(s, (x) => re.test(x));
+  }
   // 장면 검사기 — 화면에 나가는 모든 대사(시퀀스 · 다시 쓰기 · 그림 보고 맞추기)가 마지막에 거침. 새 대사 파일이 늘어도 여기서 걸러짐
   //  장면 성격표 하나로: 입(free · busy 물고 있음 · gag 목까지 · full 머금음) · 그녀의 역할(give 해 줌 · receive 받음)
   const SCENE = { oral: ["busy", "give"], sixtynine: ["busy", ""], irrumatio: ["gag", "give"], oral_hold: ["full", "give"], handjob: ["", "give"], paizuri: ["", "give"], footjob: ["", "give"], neck: ["", "receive"], caress: ["", "receive"], chest: ["", "receive"], nipple: ["", "receive"], hand: ["", "receive"], toy: ["", "receive"], cunni: ["", "receive"], analtoy: ["", "receive"] };
-  function sceneFix(s, sid, o) {
+  function sceneFix(s, sid, o, wear) {
     if (!s || !sid) return s;
+    s = outfitFit(s, wear, o);   // 입은 옷대로 (치마 · 단추 · 스타킹)
+    if (o && o.place && !/^(meet1|datetoy|dt_|ntrcall_date|video)/.test(sid)) { s = placeFit(s, o.place); if (o.place.bg) s = bedless(s, o.place.bg); }   // 관계 장소에 없는 것(방 · 술 · 거울 · 침대 …) 말 정리 — 몸 반응처럼 뒤에 붙은 문장까지
+    if (/^(kiss|neck)$/.test(sid)) s = dropBad(s, (x) => /손가락 .{0,8}넣|보지 벌려/.test(x));   // 아직 옷도 안 벗은 단계: 손가락 · 벌려 보이기 말은 이름
     if (o && /^(pose|deny|climax|after|finish)/.test(sid)) s = poseFit(s, o.pose);
     s = sceneFit(s, sid);
     if (!/^(ready|pose|deny|climax|finish)/.test(sid)) s = s.replace(/(그 남자가|그가|당신이) 허리를 (멈추고|붙잡은 채)/g, "$1 그녀를 내려다보며");   // 아직 삽입 전 · 끝난 뒤엔 허리 머리말이 안 맞음
@@ -412,7 +457,7 @@
     if (mouth) s = gagFit(s, mouth === "busy" ? "oral" : mouth === "gag" ? "gag" : "hold");   // 입이 막힌 정도대로
     return s;
   }
-  window.BC_SCENE_FIX = (s, sid, o) => tidy(sceneFix(s, sid, o));
+  window.BC_SCENE_FIX = (s, sid, o, wear) => tidy(sceneFix(s, sid, o, wear));
   // 이라마치오: 그녀의 말은 막힌 소리로 · 그녀가 말하거나 소리치는 서술은 뺌 (그의 말은 그대로)
   const GAG = S("읍… 으읍…!/커헉… 컥…/웁, 웁… 크흡…/으븝… 읍…!/크읍… 흐읍…/컥, 커헉…!/읍, 읍, 으읍…");
   // 말하는 동사 목록은 하나 (대사 색 viewer.js도 window.BC_SAYV로 같이 씀)
@@ -427,7 +472,7 @@
   // 해 주는 쪽(입 · 손 · 가슴 · 발)인데 받는 쪽처럼 반응하는 문장
   const RECV = /거기 계속|거기요|체크해 둬|다음에도 거기|더 세게 해|만지니까|안 만져|만져 줘|먼저 가|못 참아요… 제발|벗기네|등이 [^.]{0,8}휜|허리가 [^.]{0,10}(들리|휘|기운|따라)|발끝이 [^.]{0,8}허공|다리가 [^.]{0,6}벌어|시트를 (움켜|쥐어)|무릎이 [^.]{0,6}벌어|다리를 스스로 벌려|보지 벌려/;
   // 그녀가 받는 장면(애무 · 손가락 · 클리 …)에 끼면 안 되는 입으로 하는 말
-  const ORAL_ONLY = /입에 넣|목구멍|입보지|불알|턱까지 흘러|침 범벅|빨아 줄게요|핥아 줄게요|입 벌려/;
+  const ORAL_ONLY = /입에 넣|입 안에 넣|입에 물|목구멍|입보지|불알|턱까지 흘러|침 범벅|빨아 줄게요|핥아 줄게요|입 벌려/;
   // 물고 있는 동안 신음에 섞일 수 있는 짧은 말 (더 · 좋아 · 거기 …)도 막힌 소리로
   const moanish = (q) => !q.replace(/더|좋아|거기|계속|[아앗앙응읏흣흐하읍헉으옥악흑힉히윽흡웁컥크켁흥츄쭈음]|[\s…,.!?~♡—\-"]/g, "").trim();
   const LIFT = ["그녀가 잠깐 입을 떼고 숨을 몰아쉬며 말한다.", "그녀가 입가를 닦으며 올려다보고 말한다.", "그녀가 고개를 들고 침을 삼키며 말한다."];
@@ -811,7 +856,7 @@
     return dropBad(s, (x) => (!p.top && P_TOP.test(x)) || (!p.back && P_BACK.test(x)) || (p.back && P_FACE.test(x)) || (!p.stand && P_STAND.test(x)));
   }
   // 지금 장면에서 일어나지 않는 행위를 말하는 문장을 뺌 (애무 중 '박힌다' · 입으로 중 '손가락' · 여운 중 '가요' 등)
-  const PEN = /박히|박혀|박아|박는|박을|박힐|자지에 박|쑤셔|안에 줘|안에 싸|안에 다 |자궁|임신|허리를 흔들|허리를 내리누르|올라타|체위/, CUMW = /정액|삼켰|삼켜|꿀꺽|입안 가득|싸 줄|쌌어|쌌네/, HERC = /가 버렸|또 가요|가요, 가|갈 것 같|가요…!|가요!|갔어요/, FINGER = /손가락[이을]? .{0,12}(빨아들|쑤|넣)|젖꼭지가 .{0,8}입 안/;
+  const PEN = /박히|박혀|박아|박는|박을|박힐|자지에 박|쑤셔|안에 줘|안에 싸|안에 다 |자궁|임신|허리를 흔들|허리를 내리누르|올라타|체위/, CUMW = /정액|삼켰|삼켜|꿀꺽|입안 가득|싸 줄|쌌어|쌌네/, HERC = /가 버렸|또 가요|가요, 가|갈 것 같|가요…!|가요!|갔어요|먼저 가면|가게 해 줘/, FINGER = /손가락[이을]? .{0,12}(빨아들|쑤|넣)|젖꼭지가 .{0,8}입 안/;
   const sceneBad = (sid) => {
     if (/^(meet|warm_|kiss|neck|caress|undress|act_|chest|nipple|change)/.test(sid)) return (x) => PEN.test(x) || CUMW.test(x) || HERC.test(x) || (/^(neck|caress|undress|act_|chest|nipple)/.test(sid) && /처음 와 봐요/.test(x));
     if (/^(hand|toy|cunni|analtoy)_fin$/.test(sid)) return (x) => PEN.test(x) || CUMW.test(x);
@@ -851,7 +896,13 @@
       const out = [];
       for (const tk of ln.match(/"[^"]*"|[^"]+/g) || []) {
         if (tk[0] === '"') { if (bad(tk)) { if (out.length && SAYV.test(out[out.length - 1].trim())) out.pop(); } else out.push(tk); }
-        else for (const c of tk.split(/(?<=[.!?…])\s+/)) if (c.trim() && !bad(c)) out.push(c);
+        else for (const c of tk.split(/(?<=[.!?…])\s+/)) {
+          if (!c.trim()) continue;
+          if (!bad(c)) { out.push(c); continue; }
+          // 빠지는 문장이 말한 사람을 알려 주는 머리말이면 중립 머리말로 (빼면 뒤의 말이 그녀 말처럼 보임)
+          const who = SAYV.test(c.trim()) && c.trim().match(/^(당신이|그 남자가|그가|남편이|남자친구가|그녀가)/);
+          if (who) out.push(`${who[1]} ${/속삭인다\.?$/.test(c.trim()) ? "속삭인다" : "말한다"}.`);
+        }
       }
       return out.join(" ").replace(/\s{2,}/g, " ").replace(/ "/g, ' "').trim();
     }).filter(Boolean).join("\n");

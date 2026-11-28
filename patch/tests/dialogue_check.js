@@ -3,10 +3,15 @@
 const fs = require('fs'), path = require('path');
 globalThis.window = globalThis;
 eval(fs.readFileSync(path.join(__dirname, '..', 'huntmore2.js'), 'utf8'));   // 반말 변환기(BC_GEN2.lv)
+{ const src = fs.readFileSync(path.join(__dirname, '..', 'huntseq.js'), 'utf8'); const m = src.match(/function garment\(w\) \{[\s\S]*?\n  \}/); window.BC_HUNTSEQ = { garment: new Function(m[0] + '; return garment;')() };
+  // 장소 기준표도 실제 코드 그대로 (장소 이름 → 키는 PLACES에서)
+  const sets = src.match(/const NO_DRINK = new Set\(\[[^\]]*\]\), STAND_ONLY = new Set\(\[[^\]]*\]\);/)[0], keys = {}; for (const mm of src.matchAll(/^\s+(\w+): \{\s*n: "([^"]+)", bg:/gm)) keys[mm[2]] = mm[1];
+  const pf = new Function(sets + ' return { NO_DRINK, STAND_ONLY };')();
+  window.BC_HUNTSEQ.placeFlags = (pl) => { const k = keys[pl && pl.n] || '', bg = String((pl && pl.bg) || ''); return { key: k, drink: !pf.NO_DRINK.has(k), stand: pf.STAND_ONLY.has(k), mirror: /mirror/.test(bg), out: /outdoors|open-air/.test(bg), car: /car interior/.test(bg) }; }; }   // 옷 종류 판정 · 장소 기준표는 실제 코드 그대로
 eval(fs.readFileSync(path.join(__dirname, '..', 'huntpost.js'), 'utf8'));
 const NTR = { rel: 'lover', situ: 'ntr', absent: true, nb: 1, ng: 1, place: { n: '호텔 스위트룸', bg: 'hotel room, bed' }, pose: { n: '정상위' } };
 const LOVE = { rel: 'lover', place: { n: '호텔 스위트룸', bg: 'hotel room, bed' }, pose: { n: '정상위' } };
-const run = (sid, t, o = NTR, on = '타이트 오피스룩') => BC_POST(t, sid, o, { si: 0, lw: 'crude', on });
+const run = (sid, t, o = NTR, on = '타이트 오피스룩', wear) => BC_POST(t, sid, o, { si: 0, lw: 'crude', on, wear });
 const fails = [];
 let dateHits = 0, ntoriHits = 0;
 const check = (name, cond) => { if (!cond) fails.push(name); };
@@ -62,6 +67,24 @@ for (let i = 0; i < 30; i++) {   // 무작위가 섞여서 여러 번
   check('영상통화: 짝 위치 말이 엇갈림', (vw.match(/샤워|옆에 누워|자는 옆|잠든|TV 보는/g) || []).length <= 1);
   for (const [nm, oo] of [['네토라레', { rel: 'lover', situ: 'ntr', absent: true, nb: 1, place: P }], ['네토리', { rel: 'lover', situ: 'ntori', nb: 1, place: P }], ['바람', { rel: 'cheat', absent: true, nb: 1, place: P }], ['불륜', { rel: 'affair', nb: 1, place: P }], ['홧김', { rel: 'rebound', absent: true, nb: 1, place: P }], ['연인', { rel: 'lover', nb: 1, place: P }]])
     for (const v of ['video3', 'video4']) { const t = run(v, '[영상통화]', oo); check(`영상통화 ${v} ${nm}: 비었거나 받아침 없음`, t.split('\n').length >= 3 && /화면 너머로/.test(t)); check(`영상통화 ${v} ${nm}: 자리표시`, !/\{[YWHM]/.test(t)); }
+  // 입은 옷대로: 청바지면 치마 문구가 바지로 · 니트면 단추 대신 옷자락 · 안 신은 스타킹 말 없음 · 남자 셔츠 단추는 그대로
+  const JEANS = '(white crop top:1.1), high-waisted jeans, navel, sneakers', KNIT = '(beige knit sweater:1.1), short pleated skirt, black thighhighs, ankle boots';
+  const w1 = run('dt_wear', '[화장실]좁은 칸 안, 그녀가 치마를 허리까지 걷어 올리고 팬티를 무릎까지 내린다. 그녀가 치맛자락을 정리한다.\n"스타킹 신은 채로 해 줘요"', LOVE, '', JEANS);
+  check('청바지인데 치마', !/치마|치맛/.test(w1) && /바지와 팬티를 한꺼번에/.test(w1));
+  check('안 신은 스타킹', !/스타킹/.test(w1));
+  const w2 = run('undress1', '[옷 벗기기]그녀가 블라우스 단추를 하나씩 풀어 간다. 그녀가 그의 셔츠 단추를 푼다.', LOVE, '', KNIT);
+  check('니트인데 단추', !/블라우스/.test(w2) && /옷자락을 하나씩 걷어 올려/.test(w2) && /그의 셔츠 단추를 푼다/.test(w2));
+  check('신은 스타킹 말이 빠짐', /스타킹/.test(run('pose1', '[정상위]그녀가 웃는다.\n"스타킹 신은 채로 해 줘요"', LOVE, '', KNIT)));
+  // 바깥 장소: 방 · 커튼 · 문 잠그기 말 없음 (배경에 있는 건 그대로)
+  const BEACH = { rel: 'lover', place: { n: '밤바다 모래사장', bg: '(beach at night:1.2), sand, waves, moonlight, starry sky, beach towel, outdoors, night' } };
+  const bch = run('kiss', '[키스]그녀가 웃는다.\n"이런 방 처음 와 봐요… 커튼은 열어 둬요."\n"문 잠갔어요?"\n"파도 소리 들려요"', BEACH);
+  check('바깥인데 방 · 커튼 · 문', !/이런 방|커튼|문 잠갔/.test(bch) && /파도 소리/.test(bch));
+  check('바깥인데 시트', !/시트/.test(run('neck', '[목덜미]그녀가 웃는다. 그녀의 손가락이 시트를 하얗게 움켜쥔다.', BEACH)));
+  // 술 없는 곳: 술 말이 빠져도 말한 사람(머리말)은 남음
+  const EL = { rel: 'lover', place: { n: '멈춘 엘리베이터', bg: '(elevator interior:1.2), mirrored walls, handrail, dim emergency light, indoors' } };
+  const el = run('warm_talk', '[대화]둘이 나란히 앉자 잔이 부딪힌다. 그녀가 웃는다.\n당신이 잔을 내려놓으며 말한다. "오늘 예쁘다"', EL);
+  check('엘리베이터에 술 · 앉기', !/잔이|잔을|나란히 앉/.test(el));
+  check('머리말이 빠져 말한 사람이 바뀜', /당신이 말한다\. "오늘 예쁘다"/.test(el));
   // 그림 보고 맞추기 경로도 검사기를 거침
   check('BC_SCENE_FIX 없음', typeof window.BC_SCENE_FIX === 'function' && !/안 돼/.test(BC_SCENE_FIX('[목 안까지]"안 돼, 빼 줘요"', 'irrumatio', null)));
 }
