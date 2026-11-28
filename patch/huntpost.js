@@ -134,7 +134,25 @@
     }
     if (k && W2[k] && Math.random() < 0.6) { const G = window.BC_GEN2, x = pick(W2[k]); s += `\n"${G && G.lv ? G.lv(x, si) : x}"`; }   // 그녀의 말 하나 더
     if (k && M2[k] && Math.random() < 0.6) s += `\n${pick(thirdOf(o) ? LEAD_HIM : LEAD_YOU)}. "${pick(M2[k])}"`;   // 상대 남자의 말
+    if (/^(pose|deny|climax|after|finish)/.test(sid)) s = poseFit(s, o && o.pose);
     return s;
   };
+  // 지금 체위로는 안 되는 문장(서술 · 말)을 뺌 — 말이 빠지면 그 앞 '…말한다.'도 · 다 빠지면 원래대로
+  const P_TOP = /올라타|올라탄|위에서 (내려다|허리)|내가 위/, P_BACK = /개처럼|엎드|뒤에서 박|뒤로 박|등 뒤에서|머리채 잡고/, P_FACE = /이마를 맞댄|눈을 맞춘|눈을 맞추|얼굴이 바로 앞|얼굴을 두 손으로 감싸/, P_STAND = /벽에 기대|선 채로|벽에 밀어/;
+  const SAYV = /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다)\.?$/;
+  function poseFit(s, p) {
+    if (!p) return s;
+    const bad = (x) => (!p.top && P_TOP.test(x)) || (!p.back && P_BACK.test(x)) || (p.back && P_FACE.test(x)) || (!p.stand && P_STAND.test(x));
+    const m = s.match(/^(\[[^\]]*\])?([\s\S]*)$/);
+    const body = m[2].split("\n").map((ln) => {
+      const out = [];
+      for (const tk of ln.match(/"[^"]*"|[^"]+/g) || []) {
+        if (tk[0] === '"') { if (bad(tk)) { if (out.length && SAYV.test(out[out.length - 1].trim())) out.pop(); } else out.push(tk); }
+        else for (const c of tk.split(/(?<=[.!?…])\s+/)) if (c.trim() && !bad(c)) out.push(c);
+      }
+      return out.join(" ").replace(/\s{2,}/g, " ").replace(/ "/g, ' "').trim();
+    }).filter(Boolean).join("\n");
+    return body.trim() ? (m[1] || "") + body : s;
+  }
   window.BC_POST._crude = L;   // 시험용
 })();
