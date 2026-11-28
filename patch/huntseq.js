@@ -98,7 +98,7 @@
   };
   const FACE = "(expressive face:1.1), detailed eyes";   // 예전 natural facial expression은 표정을 늘 비슷하게 눌러서 바꿈   // 절정 표정과 부딪치지 않게 'subtle'은 뺌   // 사실적인 표정일 때만 붙임
   const EXPR_USE = {
-    video1: ["sweet", "shy", "teasing"], video2: ["shy", "teasing"], meet1: ["sweet", "shy", "teasing"], meet2: ["shy", "sweet", "teasing"],
+    video1: ["sweet", "shy", "teasing"], video2: ["shy", "teasing"], video3: ["needy", "shy"], video4: ["pleasure", "needy"], meet1: ["sweet", "shy", "teasing"], meet2: ["shy", "sweet", "teasing"],
     kiss: ["shy", "sweet"], neck: ["shy", "teasing", "pleasure"], caress: ["shy", "needy", "teasing"],
     undress1: ["shy", "teasing"], undress2: ["shy", "teasing", "needy"], undress3: ["shy", "needy"], self: ["shy", "needy", "pleasure", "teasing"],
     chest: ["shy", "pleasure", "teasing"], hand: ["needy", "pleasure", "shy"], oral: ["teasing", "shy", "needy"], ready: ["needy", "shy", "sweet"],
@@ -587,11 +587,14 @@
     // 영상통화 (그림 공방 '영상통화' — 1인, 휴대폰 화면 구도). 기본은 꺼짐
     { id: "video1", part: "pre", video: 1, solo: 1, n: () => "영상통화 · 1", tags: () => "video call, (phone screen:1.1), selfie angle, holding phone, looking at viewer, close-up, sitting on bed, bedroom, warm light, shy smile, light blush" },
     { id: "video2", part: "pre", video: 1, solo: 1, n: () => "영상통화 · 2", tags: (o) => `video call, (phone screen:1.1), selfie angle, holding phone, looking at viewer, close-up, sitting on bed, bedroom, warm light, ${G.open[garment(wearOf(o.ch, o.outfit)).top]}, (lace bra:1.3), blush, biting lip` },
+    // 영상통화 이어서: 3 화면 앞에서 그가 시키는 대로 · 4 화면 앞 절정 → 내일 약속
+    { id: "video3", part: "pre", video: 1, solo: 1, n: () => "영상통화 · 3 (화면 앞에서)", tags: () => "video call, (phone screen:1.1), selfie angle, holding phone, looking at viewer, lying on bed, bedroom, dim light, (female masturbation:1.2), (hand in panties:1.15), lace bra, spread legs, (heavy blush:1.2), heavy breathing, biting lip, half-closed eyes" },
+    { id: "video4", part: "pre", video: 1, solo: 1, n: () => "영상통화 · 4 (화면 앞 절정)", tags: () => "video call, (phone screen:1.1), selfie angle, holding phone, looking at viewer, lying on bed, bedroom, dim light, (female orgasm:1.25), (trembling:1.2), arched back, (trembling legs:1.15), (toes curling:1.1), (full-face blush:1.25), tears, open mouth, messy hair" },
     // 만남 첫 장 = 그림 공방의 데이트 장면 (장소 · 때 · 날씨)
     { id: "meet1", part: "pre", n: (o) => `데이트 · ${o.date.n}`, date: 1 },
     { id: "datetoy", part: "pre", optIn: 1, date: 1, toy: 1, n: (o) => `몰래 로터 ① 건네받기 (${o.date.n})`, tp: "sitting at table, upper body", tt: "(man's hand offering a small pink vibrator:1.2), remote control vibrator, (surprised:1.15), (blush:1.15), looking down at the vibrator, flustered, hand over mouth" },
     { id: "dt_wear", part: "pre", after: "datetoy", date: 1, toy: 1, lewd: 1, n: () => "몰래 로터 ② 화장실에서 넣기", tp: "(public restroom:1.2), toilet stall, standing, one leg raised, from side", tt: "(inserting vibrator:1.25), (skirt lift:1.15), (panties pulled down:1.15), pink vibrator, (embarrassed:1.2), biting lip, heavy blush, looking back nervously, door" },
-    { id: "dt_back", part: "pre", after: "datetoy", date: 1, toy: 1, n: () => "몰래 로터 ③ 넣고 돌아와 앉기", tp: "sitting at table, (knees together:1.15), hands on lap, upper body", tt: "(hidden vibrator:1.1), (nervous smile:1.15), (blush:1.15), avoiding eye contact, fidgeting, adjusting skirt" },
+    { id: "dt_back", part: "pre", after: "datetoy", date: 1, toy: 1, n: (o) => (o && o.date && window.BC_DATETOY && BC_DATETOY.kindOf && /^(walk|active)/.test(BC_DATETOY.kindOf(keyOf(DATES, o.date))) ? "몰래 로터 ③ 넣고 돌아오기" : "몰래 로터 ③ 넣고 돌아와 앉기"), tp: "sitting at table, (knees together:1.15), hands on lap, upper body", tt: "(hidden vibrator:1.1), (nervous smile:1.15), (blush:1.15), avoiding eye contact, fidgeting, adjusting skirt" },
     { id: "dt_low", part: "pre", after: "datetoy", date: 1, toy: 1, n: () => "몰래 로터 ④ 약하게", tp: "sitting at table, upper body", tt: "(remote control vibrator:1.1), (vibrator under clothes:1.1), (surprised:1.2), wide-eyed, (light blush:1.1), squirming, holding cup, trying to act normal" },
     { id: "dt_mid", part: "pre", after: "datetoy", date: 1, toy: 1, n: () => "몰래 로터 ⑤ 중간", tp: "sitting, leaning forward, cowboy shot", tt: "(vibrator under clothes:1.1), (trembling:1.2), (heavy blush:1.2), biting lip, teary eyes, (legs pressed together:1.2), clutching table edge, sweat, wavy mouth, people in background" },
     { id: "dt_high", part: "pre", after: "datetoy", date: 1, toy: 1, n: () => "몰래 로터 ⑥ 강하게", tp: "standing, hunched over, cowboy shot", tt: "(vibrator under clothes:1.15), (trembling:1.3), (full-face blush:1.25), (open mouth:1.15), drooling, (teary eyes:1.2), (knees shaking:1.2), covering mouth, hand between legs, people in background" },
@@ -777,14 +780,15 @@
     let pos;
     if (s.date) {
       const w = o.date.out ? WEATHER[o.weather].tags : "";
-      pos = ["1girl, solo", o.ch.body, wear, s.toy ? s.tt : "intimate atmosphere, blush", s.toy ? s.tp : s.call ? "(talking on phone:1.3), holding phone to ear, (man's hand on her thigh:1.1), sitting close, (nervous smile:1.1), blush, glancing sideways" : o.date.pose, dateBg(o.date, o.time), w, "cowboy shot", QUALITY];
+      const tk = s.toy && window.BC_DATETOY && BC_DATETOY.kindOf ? BC_DATETOY.kindOf(keyOf(DATES, o.date)) : "";   // 로터 그림 자세는 장소 종류대로 (좌석 · 조수석 · 서서)
+      pos = ["1girl, solo", o.ch.body, wear, s.toy ? (tk ? BC_DATETOY.tt(tk, s.tt) : s.tt) : "intimate atmosphere, blush", s.toy ? (tk ? BC_DATETOY.tp(tk, s.id, s.tp) : s.tp) : s.call ? "(talking on phone:1.3), holding phone to ear, (man's hand on her thigh:1.1), sitting close, (nervous smile:1.1), blush, glancing sideways" : o.date.pose, dateBg(o.date, o.time), w, "cowboy shot", QUALITY];
       neg.push(s.lewd ? "(completely nude:1.2), nipples, sex, penis" : NEG_PRE);
     } else if (s.self) {
       pos = ["1girl, solo", o.ch.body, clothTags(s.cloth, wear, o), s.tags(o), o.place.bg, QUALITY];
       neg.push("1boy, penis, cum");
     } else if (s.solo) {
       pos = ["1girl, solo", o.ch.body, wear, s.tags(o), QUALITY];
-      neg.push(s.id === "video1" ? NEG_PRE : "sex, penis, pussy, cum");
+      neg.push(s.id === "video1" ? NEG_PRE : /^video[34]$/.test(s.id) ? "sex, penis, 1boy, cum" : "sex, penis, pussy, cum");
     } else if (s.meet != null) {
       pos = ["1girl, solo", o.ch.body, wear, o.place.meet[s.meet][1], QUALITY];
       neg.push(NEG_PRE);
@@ -867,6 +871,7 @@
     if (!s.date && s.meet == null && o.place && !/\bbed\b/.test(o.place.bg)) P = P.replace(/lying on bed/g, "lying down").replace(/sitting on (the )?bed( edge)?/g, "sitting").replace(/gripping sheets/g, "clenched hands"); if (!s.date && s.meet == null && o.place && !/\bbed\b/.test(o.place.bg)) P = P.split(/,\s*/).filter((x) => !/\b(bed|bedroom|bedsheet|bed sheets)\b/.test(x)).join(", ");   // 침대 없는 장소에서 침대 태그 빼기
     if (linger && garment(LINGERIE[o.outfit]).top === "linger" && !s.date && !s.solo && s.meet == null) P = P.replace(/fully clothed/g, "wearing only lingerie").replace(/, crotch hole/g, "").replace(/pantyhose/g, "thighhighs");
     P = handBudget(P);
+    if (/\bphone\b|cellphone/.test(P)) { P = P.replace(/\bcellphone\b/g, "smartphone").replace(/holding phone\b/g, "holding smartphone") + ", (smartphone:1.15), modern smartphone"; neg.push("flip phone, feature phone, old cellphone, landline phone, rotary phone, telephone receiver, payphone"); }   // 휴대폰은 스마트폰으로 (옛날 전화기 안 나오게)
     if (s.duo) neg.push("dark-skinned male, dark skin male");   // 프롬프트에 없는데 자주 나옴
     return { positive: P, negative: neg.filter(Boolean).join(", "), duo: !!s.duo, phone: !!s.solo };
   }
@@ -1197,16 +1202,18 @@
       const M = other ? { i: "그 남자가", ui: "그 남자의", ege: "그 남자에게", n: "그 남자", l: "그 남자를" } : { i: "당신이", ui: "당신의", ege: "당신에게", n: "당신", l: "당신을" };
       const fm = (x) => fill(x).replace(/\{M이\}/g, M.i).replace(/\{M의\}/g, M.ui).replace(/\{M에게\}/g, M.ege).replace(/\{M을\}/g, M.l).replace(/\{M\}/g, M.n);
       const sv = (a) => { const v = String(pk(a)).split("|"); return fm(v[si] || v[0] || ""); };
-      const out = [fm(pk(ST.narr)) + ". " + fm(pk(ST.narr2 || ST.narr)) + "."];
-      if (ST.pub && Math.random() < 0.6) out[0] += " " + fm(pk(ST.pub)) + ".";
+      const kind = D.kindOf ? D.kindOf(keyOf(DATES, o.date)) : "table", P = (f) => (D.pool ? D.pool(kind, step, f, ST[f]) : ST[f]);   // 장소 종류에 맞는 문장만 (식당 · 길거리 전제 문장 걸러 냄)
+      const out = [fm(pk(P("narr"))) + ". " + fm(pk(P(ST.narr2 ? "narr2" : "narr"))) + "."];
+      if (ST.pub && Math.random() < 0.6) out[0] += " " + fm(pk(P("pub"))) + ".";
       if (ST.snd) out.push(`"${sv(ST.snd)}"`);
-      if (ST.say) out.push(`"${sv(ST.say)}"`);
-      if (other && ST.husb && !watchOn(o) && o.rel !== "cheatwatch" && Math.random() < 0.6) out.push(fm(pk(ST.husb)) + ".");
+      if (ST.say) out.push(`"${sv(P("say"))}"`);
+      if (other && ST.husb && !watchOn(o) && o.rel !== "cheatwatch" && Math.random() < 0.6) out.push(fm(pk(P("husb"))) + ".");
       const stg = STAGES.find((x) => x.id === sid);
       return `[${stg ? stg.n(o) : "몰래 로터"}]` + out.join("\n");
     }
-    const parts = [fill(pk(W.setup)) + ".", fill(pk(D.jolt)) + ".", fill(pk(D.cover)) + "."];
-    if (Math.random() < 0.6) parts.push(fill(pk(D.public)) + ".");
+    const kd = D.kindOf ? D.kindOf(keyOf(DATES, o.date)) : "table", Q = (a) => (D.pool ? D.pool(kd, "", "", a) : a);
+    const parts = [fill(pk(Q(W.setup))) + ".", fill(pk(Q(D.jolt))) + ".", fill(pk(Q(D.cover))) + "."];
+    if (Math.random() < 0.6) parts.push(fill(pk(Q(D.public))) + ".");
     const say1 = String(pk(W.say)).split("|")[si] || "", say2 = String(pk(D.after)).split("|")[si] || "";
     if (other && /^(cheatwatch)$/.test(o && o.rel) === false && !watchOn(o)) parts.push(fill(pk(D.husband)) + ".");
     return `[몰래 로터 · ${place}]` + parts.join(" ") + `\n"${say1}"` + (Math.random() < 0.7 ? `\n"${say2}"` : "");
@@ -1391,7 +1398,7 @@
       ${seg("hsTime", TIMES, sel.times)}
       ${seg("hsWeather", WEATHER, sel.weathers)}
       <small class="muted" id="hsWeatherHint"></small>
-      <label class="check"><input type="checkbox" id="hsVideo"${video ? " checked" : ""}> 영상통화 장면 넣기 <small class="muted">(맨 앞 2장 · 옷 입은 채 → 셔츠 풀고)</small></label></div>
+      <label class="check"><input type="checkbox" id="hsVideo"${video ? " checked" : ""}> 영상통화 장면 넣기 <small class="muted">(맨 앞 4장 · 옷 입은 채 → 풀어 보이기 → 화면 앞에서 → 화면 앞 절정)</small></label></div>
     <div class="field"><label>관계 장소</label>${seg("hsPlace", PLACES, sel.places)}</div>
     <div class="field"><label>표정 <small class="muted">(사실적 = 자연스러운 얼굴 · 과장 = 아헤가오 · 하트 눈 · 흰자 · 혀 · 침 · 윙크 · 만화식 홍조 · 여러 개 고르면 스타일마다 따로 묶어서 생성)</small></label>${seg("hsFace", FACES, sel.faces)}</div>
     <div class="field"><label>관계 <small class="muted">(그녀와 당신의 사이 · 그림 분위기와 서술 · 그녀의 말이 달라짐 · 부부면 반지 · 여러 개 고르면 관계마다 따로 묶어서 생성)</small></label>${seg("hsRel", RELS, sel.rels)}</div>

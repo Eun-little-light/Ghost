@@ -71,4 +71,65 @@
       husb: L("숨을 고르며 그녀가 당신에게 '이제 갈게'라고 보낸다. 다리 사이는 아직도 젖어 있다"),
     },
   };
+  // 데이트 장소 종류 — 위 대사는 식당(테이블)과 길거리를 전제로 써서, 다른 장소에선 안 맞는 문장을 빼고 종류별 문장을 더함
+  //  table 테이블에 앉음 · walkOut 바깥을 걸어 다님 · walkIn 실내를 걸어 다님 · seat 좌석에 앉아서 봄 · car 차 안 · active 몸을 씀
+  const KIND = { cafe: "table", bar: "table", restaurant: "table", izakaya: "table", rooftopBar: "table", boardgame: "table", footbath: "table", winebar: "table",
+    street: "walkOut", river: "walkOut", festival: "walkOut", seaside: "walkOut", zoo: "walkOut", nightMarket: "walkOut", hanokVillage: "walkOut", amusement: "walkOut",
+    gallery: "walkIn", bookstore: "walkIn", aquarium: "walkIn", botanical: "walkIn",
+    cinema: "seat", concert: "seat", baseball: "seat", cablecar: "seat", karaoke: "seat",
+    nightDrive: "car", club: "active", bowling: "active", vr: "active", escape: "active", iceRink: "active", pottery: "active" };
+  const TBL = /주문|메뉴판|메뉴를|테이블|숟가락|포크|접시|점원|물잔|물을 한 모금|컵을|의자|자리에 돌아와 앉|옆 테이블|뒤 테이블|밥 먹|식사|맛있는 거 먹는 중|물을 따르|밥 먹으라/;
+  const STREET = /길모퉁이|가로등|횡단보도|길에서|지나가던 사람|밖으로 데리고 나간|신호를 기다리/;
+  const STAND = /서 있다|선 채로|매달려 겨우 서|걸음을 멈춘다|우뚝 멈춰 선다/, SIT = /앉으니까|자리에 앉|의자|좌석/, CROWD = /사람들… 다 보는데|사람들이 다 보는데|다 보는데|사람들 사이|옆 테이블|주변 사람들/;
+  const BAD = { table: null, walkOut: new RegExp(TBL.source + "|" + SIT.source), walkIn: new RegExp(TBL.source + "|" + STREET.source + "|" + SIT.source), seat: new RegExp(TBL.source + "|" + STREET.source + "|" + STAND.source),
+    car: new RegExp(TBL.source + "|" + STREET.source + "|" + STAND.source + "|" + CROWD.source + "|걷는|걸음|걸었|걷던|걸을 때마다|엘리베이터|팔짱을 끼고 걷"), active: new RegExp(TBL.source + "|" + STREET.source + "|" + SIT.source) };
+  const WALK = {   // 걸어 다니는 곳 (바깥 · 실내 공통)
+    give: { narr: L("{P} 입구에서 {M이} 그녀의 손에 작은 상자를 슬쩍 쥐여 준다") },
+    back: { narr: L("그녀가 아무 일 없다는 얼굴로 돌아와 다시 {M의} 팔짱을 낀다. 걸음이 조금 어색하다/그녀가 {M} 곁으로 돌아와 보폭을 줄여 걷는다. 허벅지를 꼭 붙인 채다"), narr2: L("걸음을 뗄 때마다 안쪽의 이물감에 그녀의 어깨가 살짝 굳는다") },
+    low: { narr2: L("구경하던 그녀의 발걸음이 멈칫한다. 모른 척 웃는 {M의} 얼굴이 돌아온다/그녀가 아무렇지 않은 척 앞을 보지만, 허벅지가 저절로 모아진다"), pub: L("옆에서 구경하던 사람이 그녀를 힐끔 본다/사람들 사이를 지나며 그녀가 괜히 휴대폰만 들여다본다") },
+    mid: { narr2: L("그녀가 {M의} 팔에 매달리듯 기대 걷는다. 걸을 때마다 진동이 더 깊이 울린다/그녀가 난간을 붙잡고 멈춰 선다. 다리가 후들거린다"), pub: L("곁을 지나던 사람이 '괜찮으세요?' 하고 묻는다. 그녀가 웃으며 고개를 끄덕이지만 입술이 떨린다") },
+    high: { narr: L("{M이} 그녀를 사람이 드문 구석으로 데려간다. 걷는 내내 진동은 멈추지 않는다"), pub: L("근처 사람들이 무슨 일인가 돌아본다. 그녀가 고개를 숙여 얼굴을 숨긴다") },
+  };
+  const CORNER = {   // 실내 · 좌석 · 몸 쓰는 곳의 절정 (길거리 말 대신)
+    cum: { narr: L("사람이 드문 구석 벽에 등을 기댄 채 그녀가 무릎을 안으로 모으며 간다. 온몸이 크게 한 번 튄다"), narr2: L("젖은 허벅지가 조명 아래 번들거린다"), say: L("…{P}에서… 가 버렸어요… 다 젖었어요…|…{P}에서… 가 버렸습니다… 다 젖었어요…|…{P}에서… 가 버렸어… 다 젖었어…") },
+  };
+  const ALT = {
+    walkOut: WALK,
+    walkIn: { ...WALK, ...CORNER },
+    active: { ...WALK, low: { narr2: L("다음 차례를 기다리던 그녀가 멈칫한다. 모른 척 웃는 {M의} 얼굴이 돌아온다/그녀가 아무렇지 않은 척 몸을 움직이지만, 허벅지가 저절로 모아진다"), pub: L("직원이 다음 순서를 안내한다. 그녀가 너무 빨리 '네!' 하고 대답한다") }, mid: { narr2: L("그녀가 난간을 붙잡고 허벅지를 꽉 붙인다/몸을 움직일 때마다 진동이 더 깊이 울린다"), pub: L("직원이 '괜찮으세요?' 하고 묻는다. 그녀가 웃으며 고개를 끄덕이지만 입술이 떨린다") }, ...CORNER },
+    seat: {
+      give: { narr: L("{P}에서 자리에 앉자 {M이} 그녀의 손에 작은 상자를 슬쩍 쥐여 준다") },
+      back: { narr: L("그녀가 아무 일 없다는 얼굴로 자리로 돌아와 앉는다. 무릎을 꼭 붙인 채다") },
+      low: { narr2: L("그녀가 앞을 보는 척하지만, 엉덩이가 좌석 위에서 살짝 들썩인다/그녀가 팔걸이를 꼭 쥔다"), pub: L("옆자리 사람이 그녀를 힐끔 본다") },
+      mid: { narr2: L("그녀가 팔걸이를 붙잡고 허벅지를 꽉 붙인다. 붙일수록 더 깊이 울린다/그녀가 두 손을 무릎 사이에 끼운다. 손등까지 떨린다"), pub: L("옆자리 사람이 '괜찮으세요?' 하고 속삭인다. 그녀가 고개를 끄덕이지만 입술이 떨린다/주위가 떠들썩한 사이 그녀가 숨을 꾹 참는다") },
+      high: { narr: L("진동이 최대로 치솟는다. 주변 소리에 묻혀 그녀의 숨소리만 커진다"), narr2: L("그녀가 좌석에 몸을 웅크린 채 떤다. 무릎이 저절로 안쪽으로 모인다/그녀가 {M의} 팔에 얼굴을 묻고 소리를 삼킨다"), pub: L("옆자리 사람이 걱정스러운 눈으로 돌아본다. 그녀가 고개를 숙여 얼굴을 숨긴다") },
+      cum: { narr: L("좌석에 앉은 채 그녀가 {M의} 팔을 움켜쥐고 몸을 부르르 떨며 간다/그녀가 입을 틀어막은 채 좌석 위에서 허리를 튀어 올린다"), narr2: L("젖은 허벅지가 어둠 속에서 번들거린다"), pub: L("주변 사람들은 그녀가 그냥 들뜬 줄로만 안다"), say: CORNER.cum.say },
+    },
+    car: {
+      give: { narr: L("출발 전, {M이} 조수석의 그녀 손바닥 위에 분홍색 작은 로터를 올려놓는다") },
+      wear: { narr: L("그녀가 휴게소 화장실 칸 안으로 들어가 문을 잠근다. 심장 소리가 귀까지 울린다") },
+      back: { narr: L("그녀가 아무 일 없다는 얼굴로 조수석에 돌아와 안전벨트를 맨다. 무릎을 꼭 붙인 채다"), narr2: L("차가 출발하자 안쪽의 이물감에 그녀의 어깨가 살짝 굳는다") },
+      low: { narr2: L("그녀가 창밖 야경을 보는 척하지만, 엉덩이가 시트 위에서 살짝 들썩인다"), pub: L("신호에 걸려 선 옆 차 운전자와 눈이 마주친다. 그녀가 황급히 고개를 돌린다") },
+      mid: { narr2: L("그녀가 안전벨트를 움켜쥐고 허벅지를 꽉 붙인다/그녀가 시트에 등을 붙이고 숨을 몰아쉰다. 창문에 김이 서린다"), pub: L("옆 차선의 차가 나란히 달린다. 그녀가 숨을 꾹 참는다") },
+      high: { narr: L("{M이} 한 손으로 운전하며 다른 손으로 리모컨을 끝까지 올린다"), narr2: L("그녀가 조수석에서 몸을 웅크린 채 떤다/그녀가 창문에 이마를 대고 소리를 삼킨다"), pub: L("터널 조명이 차 안을 번갈아 비춘다. 그녀의 얼굴이 새빨갛다") },
+      cum: { narr: L("조수석에 앉은 채 그녀가 안전벨트를 움켜쥐고 몸을 부르르 떨며 간다/{M이} 갓길에 차를 세우자마자 그녀가 시트 위에서 허리를 튀어 올리며 간다"), narr2: L("젖은 허벅지가 계기판 불빛에 번들거린다"), pub: L("지나가는 차들의 헤드라이트가 차 안을 스친다"), say: L("…차 안에서… 가 버렸어요… 시트까지 다 젖었어요…|…차 안에서… 가 버렸습니다… 시트까지 다 젖었어요…|…차 안에서… 가 버렸어… 시트까지 다 젖었어…") },
+    },
+  };
+  // 그림: 로터 단계 자세 (테이블은 원래 태그 그대로)
+  const TP = {
+    walk: { datetoy: "standing, upper body", dt_back: "walking, (knees together:1.15), cowboy shot", dt_low: "standing, upper body", dt_mid: "standing, (holding railing:1.1), leaning forward, cowboy shot" },
+    seat: { datetoy: "sitting in a seat, upper body", dt_back: "sitting in a seat, (knees together:1.15), hands on lap, upper body", dt_low: "sitting in a seat, upper body", dt_mid: "sitting in a seat, leaning forward, (gripping armrest:1.1), cowboy shot", dt_high: "sitting in a seat, hunched over, cowboy shot", dt_cum: "sitting in a seat, (legs trembling:1.1), cowboy shot" },
+    car: { datetoy: "(sitting in car passenger seat:1.2), seatbelt, car interior, upper body", dt_back: "(sitting in car passenger seat:1.2), seatbelt, (knees together:1.15), car interior", dt_low: "(sitting in car passenger seat:1.2), seatbelt, car interior, upper body", dt_mid: "(sitting in car passenger seat:1.2), (gripping seatbelt:1.1), car interior, cowboy shot", dt_high: "(sitting in car passenger seat:1.2), hunched over, car interior, cowboy shot", dt_cum: "(sitting in car passenger seat:1.2), (legs trembling:1.1), car interior, cowboy shot" },
+  };
+  window.BC_DATETOY.kindOf = (key) => KIND[key] || "table";
+  // 장면 검사기(huntpost)용: 이 데이트 장소에 안 맞는 말 (로터 음란도 대사 등 덧붙는 말도 거름)
+  window.BC_DATETOY.badFor = (date) => { const D = window.BC_HUNTSEQ && window.BC_HUNTSEQ.DATES; const key = D && Object.keys(D).find((k) => D[k] === date); return BAD[KIND[key] || "table"]; };
+  // 이 장소에 맞는 문장만: 원래 문장 중 안 맞는 건 빼고, 종류별 문장을 더함 (다 빠지면 종류별 문장만)
+  window.BC_DATETOY.pool = (kind, step, field, base) => {
+    const bad = BAD[kind], add = (ALT[kind] && ALT[kind][step] && ALT[kind][step][field]) || [];
+    const keep = (base || []).filter((x) => !bad || !bad.test(x));
+    return keep.concat(add).length ? keep.concat(add) : base || [];
+  };
+  window.BC_DATETOY.tp = (kind, sid, tp) => { const t = (TP[kind === "walkOut" || kind === "walkIn" || kind === "active" ? "walk" : kind] || {})[sid]; return t || tp; };
+  window.BC_DATETOY.tt = (kind, tt) => (kind === "table" ? tt : String(tt).replace(/clutching table edge/g, "clutching her skirt").replace(/,\s*holding cup/g, ""));
 })();

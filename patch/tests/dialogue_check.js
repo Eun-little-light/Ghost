@@ -60,6 +60,8 @@ for (let i = 0; i < 30; i++) {   // 무작위가 섞여서 여러 번
   check('영상통화: 조사 (남편는)', !/남편는|남자친구은/.test(vr + vw));
   check('영상통화: 반말 변환 깨짐 (너이)', !/너이\b|너이"/.test(vc));
   check('영상통화: 짝 위치 말이 엇갈림', (vw.match(/샤워|옆에 누워|자는 옆|잠든|TV 보는/g) || []).length <= 1);
+  for (const [nm, oo] of [['네토라레', { rel: 'lover', situ: 'ntr', absent: true, nb: 1, place: P }], ['네토리', { rel: 'lover', situ: 'ntori', nb: 1, place: P }], ['바람', { rel: 'cheat', absent: true, nb: 1, place: P }], ['불륜', { rel: 'affair', nb: 1, place: P }], ['홧김', { rel: 'rebound', absent: true, nb: 1, place: P }], ['연인', { rel: 'lover', nb: 1, place: P }]])
+    for (const v of ['video3', 'video4']) { const t = run(v, '[영상통화]', oo); check(`영상통화 ${v} ${nm}: 비었거나 받아침 없음`, t.split('\n').length >= 3 && /화면 너머로/.test(t)); check(`영상통화 ${v} ${nm}: 자리표시`, !/\{[YWHM]/.test(t)); }
   // 그림 보고 맞추기 경로도 검사기를 거침
   check('BC_SCENE_FIX 없음', typeof window.BC_SCENE_FIX === 'function' && !/안 돼/.test(BC_SCENE_FIX('[목 안까지]"안 돼, 빼 줘요"', 'irrumatio', null)));
 }

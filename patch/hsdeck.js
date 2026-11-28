@@ -26,7 +26,7 @@ body:has(#tab-hseq.active) main{max-width:none}
   bar.innerHTML = `<button type="button" class="mini" data-a="prev" title="이전 카드 (←)">◀</button><span class="ct"></span><button type="button" class="mini" data-a="next" title="다음 카드 (→)">▶</button><span class="tt"></span><span class="sp"></span><button type="button" class="mini" data-a="follow" title="방금 완성된 장이 든 카드를 앞으로">최신 따라가기</button><button type="button" class="mini" data-a="mode"></button>`;
   grid.before(bar);
 
-  const MEET = /^(video1|video2|meet1|meet2)$/, END = /^(after1|after2|finish|finish_both|care)$/, POSE = /^(ready|pose1|pose2|deny1|deny2|climax|climax_both)$/;
+  const MEET = /^(video[1-4]|meet1|meet2)$/, END = /^(after1|after2|finish|finish_both|care)$/, POSE = /^(ready|pose1|pose2|deny1|deny2|climax|climax_both)$/;
   // 바로 아래 칸들을 장면 카드로 묶음 (목록을 새로 그리면 다시)
   function regroup() {
     const kids = [...grid.children];
