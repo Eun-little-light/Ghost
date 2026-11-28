@@ -647,8 +647,27 @@
   const wearOf = (ch, key) => (key === "date" && DWEAR[dwearSel] && DWEAR[dwearSel].t ? DWEAR[dwearSel].t : key === "lounge" ? LOUNGE : LINGERIE[key] || (ch.outfits && ch.outfits[key]) || ch.wear);
 
   // ---------- 워크플로 (1인 = 화풍 참조 우선, 2인 = Duo) ----------
+  // 작가 그림체일 때: 고른 워크플로의 참조 그림(IPAdapter) 세기를 0으로 한 숨김 사본(이름~style)을 만들어 씀 — 빠른 모드 사본과 같은 방식
+  const styleMade = new Map();
+  async function styleWf(baseName) {
+    try {
+      if (!baseName || baseName === "builtin") return baseName;
+      const list = await api("/api/workflows"), base = list.find((w) => w.name === baseName);
+      if (!base || !base.prompt) return baseName;
+      let graph = base.prompt;
+      if (base.source) { try { const u = await api("/api/comfy/userworkflow?path=" + encodeURIComponent(base.source)); if (u && u.prompt) graph = u.prompt; } catch {} }
+      graph = JSON.parse(JSON.stringify(graph));
+      let n = 0; for (const id of Object.keys(graph)) { const nd = graph[id]; if (nd && /IPAdapter/.test(String(nd.class_type || "")) && nd.inputs && typeof nd.inputs.weight === "number") { nd.inputs.weight = 0; n++; } }
+      if (!n) return baseName;   // 참조 그림이 없는 워크플로는 그대로
+      const name = baseName + "~style", js = JSON.stringify(graph), old = list.find((w) => w.name === name);
+      if (styleMade.get(name) !== js && !(old && JSON.stringify(old.prompt) === js))
+        await api("/api/workflows", { json: { name, prompt: graph, positive: base.positive, negative: base.negative, seeds: base.seeds || [], checkpoint: base.checkpoint || null, latent: base.latent || "", sampler: base.sampler || "", source: "" } });
+      styleMade.set(name, js);
+      return name;
+    } catch (e) { console.warn("그림체 사본을 만들지 못해 원래 워크플로로", e); return baseName; }
+  }
   function pickWf(duo) {
-    const opts = [...document.querySelectorAll("#wfSelect option")].map((o) => o.value).filter((x) => x && x !== "builtin" && !x.includes("@") && !/~fast$|~lightning$/.test(x));
+    const opts = [...document.querySelectorAll("#wfSelect option")].map((o) => o.value).filter((x) => x && x !== "builtin" && !x.includes("@") && !/~fast$|~lightning$|~style/.test(x));
     // Hunt 시퀀스 통일 워크플로가 있으면 1인 · 2인 모두 그것으로 (화풍 참조 세기 0.75 하나로 — 그림체 · 인체 비율이 장마다 오가지 않게)
     const uni = opts.find((x) => /Hunt_Unified/i.test(x)); if (uni) return uni;
     const c = duo
@@ -749,6 +768,7 @@
     for (const k of o.traits || []) { const L = LATENT[k]; if (L && L.t && !s.solo) pos.push(L.t[latGroup(s)] || ""); }
     const ex = exprFor(s.id, o.face || "mix", [...(((window.BC_VOICE || {})[o.ch && o.ch.id] || {}).tone || []), ...(o.traits || []).flatMap((k) => (LATENT[k] || {}).tone || [])]); pos.push(emphExpr(ex), ex && !EXPR_LOUD_SET.has(ex) ? FACE : "");
     let P = pos.filter(Boolean).join(", ");
+    if (artistSel) P = `(${artistSel}:1.3), ` + P;   // 고른 작가 그림체
     for (const k of acts) if (ACTS[k].swap && si >= STAGES.findIndex((x) => x.act === k)) P = P.replace(ACTS[k].swap[0], ACTS[k].swap[1]);
     if (o.anal && s.part === "pose") P = P.replace(/\(vaginal sex:1\.2\)/g, "(anal sex:1.3), anal").replace(/penis in pussy/g, "penis in anus").replace(/pussy focus/g, "ass focus").replace(/\(cum in pussy:1\.4\)/g, "(cum in ass:1.3)").replace(/cum in pussy/g, "cum in ass").replace(/\(penis on pussy:1\.25\)/g, "(penis on anus:1.2)").replace(/imminent vaginal/g, "imminent anal");
     if (!s.date && s.meet == null && o.place && !/\bbed\b/.test(o.place.bg)) P = P.replace(/lying on bed/g, "lying down").replace(/sitting on (the )?bed( edge)?/g, "sitting").replace(/gripping sheets/g, "clenched hands"); if (!s.date && s.meet == null && o.place && !/\bbed\b/.test(o.place.bg)) P = P.split(/,\s*/).filter((x) => !/\b(bed|bedroom|bedsheet|bed sheets)\b/.test(x)).join(", ");   // 침대 없는 장소에서 침대 태그 빼기
@@ -797,7 +817,7 @@
   let multi = ls.get("multi", false), undress = ls.get("undress", true);
   let video = ls.get("video", false);
   let on = ls.get("on", {});
-  let sameSeed = ls.get("sameSeed", true), lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), leadSel = ls.get("leadin", "mutual"), obsSel = ls.get("obsess", "none"), lewdSel = ls.get("lewd", "crude"), attSel = ls.get("attitude", "none"), arSel = ls.get("arousal", "normal"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
+  let sameSeed = ls.get("sameSeed", true), lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), leadSel = ls.get("leadin", "mutual"), obsSel = ls.get("obsess", "none"), lewdSel = ls.get("lewd", "crude"), attSel = ls.get("attitude", "none"), artistSel = ls.get("artist", ""), arSel = ls.get("arousal", "normal"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
   // 대사 형식: Hunt 방식([장소] · 서술 · "말") / Wayward 방식([단계]서술 "소리" … "말" 『속마음』 — huntway.js)
   const FMTS = { hunt: "Hunt 방식", wayward: "Wayward 방식" };
   let fmtSel = FMTS[ls.get("fmt", "hunt")] ? ls.get("fmt", "hunt") : "hunt";
@@ -1286,6 +1306,7 @@
       <div id="hsNames" class="hidden" style="margin-top:6px"></div></div>
     <div class="field" id="hsOutfitBox"><label>복장 <small class="muted">(Hunt 인물은 상황별 복장 · 모두 '집에서 입는 옷' · 란제리 가능 — 란제리는 만남 장면까진 데이트 옷, 키스부터 란제리)</small></label><div id="hsOutfit"></div></div>
     <div class="field"><label>대사 <small class="muted">(Hunt 형식 · 그림 아래 그녀의 한마디 · 보기 창 대사창에도 나옴)</small></label>
+      <div style="margin:4px 0 6px"><small class="muted">그림체 (작가 태그) — 비우면 기본 그림체. 적으면 그 작가 그림체로 (프롬프트 맨 앞 · 참조 그림은 끔). 모델이 아는 단부루 작가 태그여야 해요</small><input id="hsArtist" type="text" placeholder="예: ratatatat74" value="${esc(artistSel)}" style="width:100%;margin-top:3px"></div>
       <label class="check"><input type="checkbox" id="hsSameSeed"${sameSeed ? " checked" : ""}> 한 시퀀스는 같은 시드 <small class="muted">(장소 · 복장 · 그림체가 장면마다 덜 바뀜)</small></label>
       <label class="check"><input type="checkbox" id="hsLineOn"${lineOn ? " checked" : ""}> 장면마다 대사 붙이기</label>
       <div><small class="muted">대사 형식 — Hunt: [장소] · 그녀의 행동 서술 · "말" / Wayward: [단계]당신의 행동 · 반응 · "신음"과 서술이 번갈아 · "말"</small>${seg("hsFmt", FMTS, fmtSel, false)}</div>
@@ -1481,6 +1502,7 @@
   });
   $q("#hsLineOn").addEventListener("change", (e) => { lineOn = e.target.checked; ls.set("lineOn", lineOn); });
   $q("#hsSameSeed").addEventListener("change", (e) => { sameSeed = e.target.checked; ls.set("sameSeed", sameSeed); });
+  $q("#hsArtist").addEventListener("change", (e) => { artistSel = String(e.target.value || "").replace(/[(),:]/g, " ").replace(/\s+/g, " ").trim(); e.target.value = artistSel; ls.set("artist", artistSel); });
   $q("#hsNarrOn").addEventListener("change", (e) => { narrOn = e.target.checked; ls.set("narrOn", narrOn); });
   bindSeg("hsSpeech", (v) => { speechSel = v; ls.set("speech", v); pick("hsSpeech", v); });
   bindSeg("hsMSpeech", (v) => { mspeechSel = v; ls.set("mspeech", v); pick("hsMSpeech", v); });
@@ -1563,7 +1585,7 @@
       const b = build(j.s, j.o), jc = j.o.ch, cname = String(jc.n).split(" · ")[0];
       const ln = lineOn ? lineOf(j.s.id, jc, j.o) : "";
       const pos = ln && window.BC_LINE2TAG && !j.s.date && !j.s.solo && j.s.meet == null ? BC_LINE2TAG(b.positive, ln) : b.positive;   // 대사의 행위(손짓 · 표정)를 그림에도
-      return { i: i + 1, seed: SEED, n: j.s.n(j.o), pos, neg: b.negative, duo: b.duo, bust: j.o.bust || "global", line: ln, sid: j.s.id, sp: speechOf(jc), cid: jc.id, cn: cname, of: OUTFITS[j.o.outfit] || j.o.outfit, g: j.g || "", rel: j.o.rel && j.o.rel !== "none" ? j.o.rel : "", situ: j.o.situ && j.o.situ !== "none" ? j.o.situ : "", ng: j.o.ng || 1, nb: j.o.nb || 1, watch: !!j.o.watch, absent: !!j.o.absent, posek: keyOf(POSES, j.o.pose), placek: keyOf(PLACES, j.o.place), fink: keyOf(FINISH, j.o.fin), outk: j.o.outfit, cx: j.o.cx || "", anal: !!j.o.anal, durk: j.o.dur || "", mem: [cname, ...((j.o.extras || []).map((e) => String(e.n).split(" · ")[0]))],
+      return { i: i + 1, art: artistSel, seed: SEED, n: j.s.n(j.o), pos, neg: b.negative, duo: b.duo, bust: j.o.bust || "global", line: ln, sid: j.s.id, sp: speechOf(jc), cid: jc.id, cn: cname, of: OUTFITS[j.o.outfit] || j.o.outfit, g: j.g || "", rel: j.o.rel && j.o.rel !== "none" ? j.o.rel : "", situ: j.o.situ && j.o.situ !== "none" ? j.o.situ : "", ng: j.o.ng || 1, nb: j.o.nb || 1, watch: !!j.o.watch, absent: !!j.o.absent, posek: keyOf(POSES, j.o.pose), placek: keyOf(PLACES, j.o.place), fink: keyOf(FINISH, j.o.fin), outk: j.o.outfit, cx: j.o.cx || "", anal: !!j.o.anal, durk: j.o.dur || "", mem: [cname, ...((j.o.extras || []).map((e) => String(e.n).split(" · ")[0]))],
         pc: (() => { const nE = watchOn(j.o) ? j.o.nb - 1 : j.o.nb; return j.o.ng + nE > 2 && !j.s.self && !j.s.solo ? ((j.s.date || j.s.meet != null) ? (j.o.ng > 1 ? [j.o.ng, 0] : null) : [j.o.ng, nE]) : null; })(),
         ph: sel.poses.length > 1 ? (j.pk ? POSES[j.pk].n : j.s.part === "end" ? "마무리" : "") : "" };
     });
@@ -1611,7 +1633,7 @@
           if (inQueue.has(r.pid)) { byId.set(r.pid, s); setSlot(s, "", "대기열"); continue; }
         }
         const params = r.duo ? { width: 1216, height: 832, batch: 1 } : { width: 832, height: 1216, batch: 1 };
-        const res = await api("/api/generate", { json: { workflow: pickWf(r.duo), positive: r.pos, negative: r.neg, params: r.seed ? { ...params, seed: r.seed } : params, randomSeed: !r.seed, ...(r.bust && r.bust !== "global" ? { bust: r.bust } : {}) } });
+        const res = await api("/api/generate", { json: { workflow: r.art ? await styleWf(pickWf(r.duo)) : pickWf(r.duo), positive: r.pos, negative: r.neg, params: r.seed ? { ...params, seed: r.seed } : params, randomSeed: !r.seed, ...(r.bust && r.bust !== "global" ? { bust: r.bust } : {}) } });
         r.pid = res.prompt_id; s.id = r.pid; r.err = 0; saveRun();
         // 보기 창 · 갤러리 폴더용 정보 (대사 · 캐릭터 · 복장)
         if (window.BC_LINE) BC_LINE.set(r.pid, { t: r.line, n: r.cn, cid: r.cid, cn: r.cn, of: r.of, sid: r.sid, rel: r.rel, situ: r.situ, ng: r.ng, nb: r.nb, watch: r.watch, absent: r.absent, posek: r.posek, placek: r.placek, fink: r.fink, outk: r.outk, cx: r.cx, anal: r.anal, durk: r.durk, mem: r.mem });
@@ -1696,7 +1718,7 @@
     byId.delete(s.id);
     try {
       const params = r.duo ? { width: 1216, height: 832, batch: 1 } : { width: 832, height: 1216, batch: 1 };
-      const res = await api("/api/generate", { json: { workflow: pickWf(r.duo), positive: r.pos, negative: r.neg, params: r.seed ? { ...params, seed: r.seed } : params, randomSeed: !r.seed, ...(r.bust && r.bust !== "global" ? { bust: r.bust } : {}) } });
+      const res = await api("/api/generate", { json: { workflow: r.art ? await styleWf(pickWf(r.duo)) : pickWf(r.duo), positive: r.pos, negative: r.neg, params: r.seed ? { ...params, seed: r.seed } : params, randomSeed: !r.seed, ...(r.bust && r.bust !== "global" ? { bust: r.bust } : {}) } });
       r.pid = res.prompt_id; s.id = r.pid; s.checked = 0; saveRun();
       if (window.BC_LINE) BC_LINE.set(r.pid, { t: r.line, n: r.cn, cid: r.cid, cn: r.cn, of: r.of, sid: r.sid, rel: r.rel, situ: r.situ, ng: r.ng, nb: r.nb, watch: r.watch, absent: r.absent, posek: r.posek, placek: r.placek, fink: r.fink, outk: r.outk, cx: r.cx, anal: r.anal, durk: r.durk, mem: r.mem });
       byId.set(r.pid, s); state.myPrompts && state.myPrompts.add(r.pid);
