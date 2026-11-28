@@ -14,8 +14,8 @@
   const QUALITY = "masterpiece, best quality, amazing quality, very aesthetic, absurdres, anime coloring";
   const NEG_BASE = "realistic, photorealistic, 3d, real life, photo, semi-realistic, bad quality, worst quality, worst detail, lowres, sketch, censor, censored, mosaic censoring, bar censor, bad anatomy, bad hands, extra fingers, missing fingers, text, watermark, signature, logo, blurry, jpeg artifacts, child, loli, shota";
   const NEG_PRE = "sex, penis, nude, nipples, pussy, cum, orgasm";   // 만남·키스 단계: 아직 아님
-  const DUO = "1girl, (1boy:1.2), (only one man:1.15), adult male, (faceless male:1.35), (head out of frame:1.25), (male face out of frame:1.2), hetero";
-  const DUO_FX = "depth of field, dynamic pose, clothes wrinkles, unobstructed view, (uncensored:1.2), game cg, anime coloring, two people in frame";
+  const DUO = "1girl, 1boy, hetero, (faceless male:1.3), (male face out of frame:1.15)";
+  const DUO_FX = "(uncensored:1.2), clothes wrinkles";
   // 옷 상태 (Hunt)
   const CLOTH = {
     top: "shirt lift, top pulled up, exposed breasts, bare nipples, breasts out, bra lift, partially undressed",          // t2 위
@@ -236,19 +236,20 @@
     camper: { n: "캠핑카", bg: "(camper van interior:1.2), small bed, fairy lights, wooden interior, curtains, forest outside window, night", meet: [["캠핑장 · 모닥불", "sitting by campfire, blanket on shoulders, holding mug, smile, looking at viewer, night, forest"], ["캠핑카 · 문이 닫힘", "sitting on small bed, fairy lights, blush, looking at viewer, (camper van interior:1.2), night"]], lie: true, care: "lying under blanket, fairy lights, afterglow, flushed, sleepy smile, camper van", floor: "clothes on camper floor" },
   };
   const POSES = {
-    wall: { n: "벽 (선 채로)", stand: true, tags: "woman upright, back against wall, male standing, his hand holding her thigh up, one leg raised, (vaginal sex:1.2), man penetrating woman, penis in pussy, penetration, from side, full body, standing" },
-    doggy: { n: "뒤에서", stand: true, back: true, tags: "sex from behind, (woman bent over:1.3), hands on wall, back arched, ass out, (vaginal sex:1.2), man penetrating woman, penis in pussy, penetration, from behind" },
-    cowgirl: { n: "위에서 (그녀가 위)", stand: false, top: true, tags: "girl on top, cowgirl position, straddling, (vaginal sex:1.2), penis in pussy, penetration, hands on his chest, from below, pov" },
-    press: { n: "누르기 (정상위)", stand: false, tags: "missionary, lying on back, legs up, spread legs, man above her, (vaginal sex:1.2), penis in pussy, penetration, from above, pov, full body" },
-    side: { n: "옆으로 누워", stand: false, back: true, tags: "lying on side, spooning, sex from behind, (vaginal sex:1.2), penis in pussy, penetration, his one hand on her breast, from side" },
-    lifted: { n: "들어올리기", stand: true, tags: "standing sex, carrying, legs wrapped around, arms around neck, (vaginal sex:1.2), penis in pussy, penetration, from side, full body, floor visible" },
-    // Hunt 체위에서 더 가져옴 (Hunt 프롬프트의 자세 태그)
-    wallBack: { n: "벽에 기대 뒤에서 (다리 들고)", stand: true, back: true, tags: "(standing sex:1.2), (leg lift:1.3), pinned against wall from behind, (woman pressed against wall:1.3), her chest and cheek against wall, (standing on one leg:1.2), (one leg lifted:1.3), behind woman, male standing, his hand holding her thigh up, (vaginal sex:1.2), man penetrating woman, penis in pussy, penetration, from side, full body, standing" },
-    allfours: { n: "네 발로 (뒤에서)", stand: false, back: true, tags: "doggystyle, sex from behind, (woman on all fours:1.35), on hands and knees, back arched, behind woman, male kneeling, (vaginal sex:1.2), man penetrating woman, penis in pussy, penetration, on bed, from behind, pov" },
-    reverse: { n: "등 돌려 올라타기", stand: false, back: true, top: true, tags: "(reverse cowgirl position:1.2), woman on top, (woman straddling man facing away:1.3), below woman, male lying on back, (vaginal sex:1.2), man penetrating woman, penis in pussy, penetration, ass focus, from behind, pov, from below" },
-    fold: { n: "접어 누르기 (깊이)", stand: false, tags: "(mating press:1.35), face-to-face, (man on top of woman:1.3), (knees pressed beside shoulders:1.3), (thighs folded against torso:1.25), (deep penetration:1.2), folded, (woman lying on back:1.3), above woman, male leaning over woman, (vaginal sex:1.2), man penetrating woman, penis in pussy, penetration, from above, pov, full body" },
-    prone: { n: "엎드려 눌러서", stand: false, back: true, tags: "(prone bone:1.2), sex from behind, (woman lying face down:1.35), prone, chest down, above woman, male leaning over woman, (vaginal sex:1.2), man penetrating woman, penis in pussy, penetration, from above, from behind" },
+    wall: { n: "벽 (선 채로)", stand: true, tags: "(standing sex:1.3), against wall, (leg lift:1.2), arms around neck, face-to-face, (vaginal sex:1.2), penis in pussy, from side" },
+    doggy: { n: "뒤에서", stand: true, back: true, tags: "(sex from behind:1.3), standing, (bent over:1.3), hands on wall, arched back, (vaginal sex:1.2), penis in pussy, looking back, from behind" },
+    cowgirl: { n: "위에서 (그녀가 위)", stand: false, top: true, tags: "(cowgirl position:1.3), girl on top, straddling, hands on another's chest, bouncing breasts, (vaginal sex:1.2), penis in pussy, pov, from below" },
+    press: { n: "누르기 (정상위)", stand: false, tags: "(missionary:1.3), lying on back, on bed, spread legs, (vaginal sex:1.2), penis in pussy, pov, from above" },
+    side: { n: "옆으로 누워", stand: false, back: true, tags: "(spooning:1.3), lying on side, sex from behind, grabbing another's breast, (vaginal sex:1.2), penis in pussy, from side" },
+    lifted: { n: "들어올리기", stand: true, tags: "(standing sex:1.2), (carrying:1.3), legs wrapped around, arms around neck, (vaginal sex:1.2), penis in pussy, from side, full body" },
+    // Hunt 체위에서 더 가져옴
+    wallBack: { n: "벽에 기대 뒤에서 (다리 들고)", stand: true, back: true, tags: "(standing sex:1.2), (sex from behind:1.2), against wall, (leg lift:1.3), standing on one leg, cheek against wall, (vaginal sex:1.2), penis in pussy, from side" },
+    allfours: { n: "네 발로 (뒤에서)", stand: false, back: true, tags: "(doggystyle:1.3), (all fours:1.3), sex from behind, arched back, on bed, (vaginal sex:1.2), penis in pussy, looking back, from behind, pov" },
+    reverse: { n: "등 돌려 올라타기", stand: false, back: true, top: true, tags: "(reverse cowgirl position:1.3), girl on top, straddling, facing away, ass, (vaginal sex:1.2), penis in pussy, from behind, pov" },
+    fold: { n: "접어 누르기 (깊이)", stand: false, tags: "(mating press:1.3), lying on back, (legs up:1.2), folded, deep penetration, (vaginal sex:1.2), penis in pussy, pov, from above" },
+    prone: { n: "엎드려 눌러서", stand: false, back: true, tags: "(prone bone:1.3), lying on stomach, sex from behind, (vaginal sex:1.2), penis in pussy, from behind, from above" },
   };
+
   // 애무 더하기 (Hunt 애무 목록) — 고른 것만 한 시퀀스 안에 이어서 들어감
   // 숨은 성향 (Wayward latent traits · huntlatent.js) — 고른 성향은 한 시퀀스에 다 들어감 (조합 아님)
   const LATENT = window.BC_LATENT || {};
@@ -418,8 +419,8 @@
     { id: "pose1", part: "pose", duo: 1, cloth: "main", n: (o) => `${o.pose.n} · 1`, tags: (o) => `${o.pose.tags}, sweat, her cheeks flushed, heavy breathing, motion lines` },
     { id: "pose2", part: "pose", duo: 1, cloth: "main", n: (o) => `${o.pose.n} · ${o.again ? "한 번 더" : 2}`, tags: (o) => `${o.pose.tags}, sweat, wet hair, her cheeks flushed, heavy breathing, motion lines, trembling, moaning` },
     // 애태우기: 절정 직전에 멈춰서 애태우는 2장 → 그다음 절정 · 여운 (애태우기를 고른 경우만)
-    { id: "deny1", part: "pose", skip: (o) => o.cx !== "no" && o.cx !== "denyBoth", duo: 1, cloth: "main", n: () => "애태우기 · 1", tags: (o) => `${o.pose.tags}, (edging:1.2), (orgasm denial:1.2), movement stopped, frustrated, pleading eyes, needy, biting lip, her cheeks flushed, heavy breathing, sweat, trembling` },
-    { id: "deny2", part: "pose", skip: (o) => o.cx !== "no" && o.cx !== "denyBoth", duo: 1, cloth: "main", n: () => "애태우기 · 2", tags: (o) => `${o.pose.tags}, (orgasm denial:1.25), (begging:1.1), teary eyes, desperate, squirming, ${o.place.lie ? "gripping sheets" : "hands on wall"}, her cheeks flushed, heavy breathing, sweat, wet hair, unsatisfied` },
+    { id: "deny1", part: "pose", skip: (o) => o.cx !== "no" && o.cx !== "denyBoth", duo: 1, cloth: "main", n: () => "애태우기 · 1", tags: (o) => `${o.pose.tags}, penis inside, (stopped moving:1.1), (pleading eyes:1.2), needy, frustrated, biting lip, her cheeks flushed, heavy breathing, sweat, trembling` },
+    { id: "deny2", part: "pose", skip: (o) => o.cx !== "no" && o.cx !== "denyBoth", duo: 1, cloth: "main", n: () => "애태우기 · 2", tags: (o) => `${o.pose.tags}, penis inside, (begging:1.2), teary eyes, desperate, squirming, ${o.place.lie ? "gripping sheets" : "hands on wall"}, her cheeks flushed, heavy breathing, sweat, wet hair, unsatisfied` },
     { id: "climax", part: "pose", skip: isBoth, duo: 1, cloth: "main", n: () => "절정", tags: (o) => `${o.pose.tags}, sweat, wet hair, her cheeks flushed, orgasm, arched back, trembling, tears of pleasure` },
     // 동시 절정: 그녀와 그가 함께 — 사정 위치(안에 / 배 위 …)는 '사정 위치'에서 고른 대로
     { id: "climax_both", part: "pose", skip: (o) => !isBoth(o), duo: 1, cloth: "main", n: (o) => `동시 절정 · ${o.fin.n}`, tags: (o) => `${o.pose.tags}, (simultaneous orgasm:1.25), (ejaculation:1.25), ${o.fin === FINISH.inside ? "(internal cumshot:1.2), cum in pussy, penis deep inside, hips pressed together" : `(pulling out:1.1), cumshot, ${cumLoc(o)}`}, both climaxing, her orgasm, arched back, trembling, holding each other, sweat, wet hair, her cheeks flushed, tears of pleasure` },
@@ -435,7 +436,7 @@
   { const i = STAGES.findIndex((s) => s.id === "ready");
     STAGES.splice(i + 1, 0,
       { id: "ntrcall_pre", part: "pre", optIn: 1, duo: 1, cloth: "main", skip: (o) => !unaware(o), n: () => "시작 전 남편에게 전화 걸기", tags: () => "(talking on phone:1.3), (holding phone to ear:1.2), cellphone, sitting on bed, (man behind her:1.15), (his hands groping her breasts:1.15), partially undressed, (biting lip:1.1), blush, nervous smile, from front" },
-      { id: "ntrcall", part: "pre", optIn: 1, duo: 1, cloth: "main", skip: (o) => !unaware(o), n: () => "하는 중 남편 전화 받기", tags: () => "(talking on phone:1.3), (holding phone to ear:1.2), cellphone, (covering mouth:1.15), trying to stay quiet, (sex:1.1), missionary, vaginal, lying on back, man above her, (nervous:1.1), blush, sweat, tears, from above" },
+      { id: "ntrcall", part: "pose", optIn: 1, duo: 1, cloth: "main", skip: (o) => !unaware(o), n: () => "하는 중 남편 전화 받기", tags: () => "(talking on phone:1.3), (holding phone to ear:1.2), cellphone, (covering mouth:1.15), trying to stay quiet, (sex:1.1), missionary, vaginal, lying on back, man above her, (nervous:1.1), blush, sweat, tears, from above" },
       { id: "ntrphoto", part: "pre", optIn: 1, duo: 1, cloth: "main", skip: (o) => !unaware(o), n: () => "하면서 남편에게 사진 보내기", tags: () => "(selfie:1.3), (holding phone up:1.2), cellphone, phone screen, (taking photo:1.15), peace sign, (sex:1.1), girl on top, straddling, vaginal, (blush:1.15), half-closed eyes, smile, from below" });
   }
   // 두 번째 복장부터 갈아입는 곳 — 고른 장소 안의 다른 자리 · 방 (장소 배경 태그는 그대로 붙임) · 절반은 상대가 갈아입혀 줌
@@ -474,6 +475,19 @@
     const b = STAGES[i];
     STAGES.splice(i + 1, 0, { ...b, id: id + "_fin", after: id, finWho: who, n: (o) => `${b.n(o)} · ${who === "m" ? "사정" : "절정"}`, tags: (o) => `${b.tags(o)}, ${tg}` });
   }
+  // 입에 받은 정액: 입안에 머금고 보여 주기 → 삼키고 반응 기다리기 (펠라치오 사정 뒤 · 마지막 사정 뒤 청소)
+  const M_HOLD = "(cum in mouth:1.35), (open mouth:1.2), (showing cum in mouth:1.2), cum pool on tongue, tongue out, cum string, kneeling, looking up at viewer, blush, half-closed eyes, pov, from above, upper body";
+  const M_SWAL = "(after swallowing:1.2), (empty mouth:1.2), open mouth, tongue out, showing tongue, cum on lips, kneeling, looking up at viewer, (expectant:1.15), waiting, blush, smile, pov, from above, upper body";
+  const M_NEG = "fellatio, penis in mouth, (sex:1.2), vaginal, penetration";
+  { const i = STAGES.findIndex((s) => s.id === "oral_fin");
+    if (i >= 0) STAGES.splice(i + 1, 0,
+      { id: "oral_hold", part: "pre", after: "oral_fin", mouth: "hold", duo: 1, cloth: "main", neg: M_NEG, n: () => "입으로 · 입안에 머금기", tags: () => M_HOLD },
+      { id: "oral_swallow", part: "pre", after: "oral_hold", mouth: "swallow", duo: 1, cloth: "main", neg: M_NEG, n: () => "입으로 · 삼키기", tags: () => M_SWAL }); }
+  { const i = STAGES.findIndex((s) => s.id === "care");
+    STAGES.splice(i, 0,
+      { id: "clean", part: "end", mouth: "clean", duo: 1, cloth: "main", n: () => "청소 · 입으로", tags: () => "(cleaning fellatio:1.3), (licking penis:1.2), cum on penis, penis, holding penis, kneeling, looking up at viewer, after sex, messy hair, sweat, pov, from above" },
+      { id: "clean_hold", part: "end", after: "clean", mouth: "hold", duo: 1, cloth: "main", neg: M_NEG, n: () => "청소 · 입안에 머금기", tags: () => M_HOLD + ", messy hair, sweat" },
+      { id: "clean_swallow", part: "end", after: "clean_hold", mouth: "swallow", duo: 1, cloth: "main", neg: M_NEG, n: () => "청소 · 삼키기", tags: () => M_SWAL + ", messy hair, sweat" }); }
 
   // ---------- 캐릭터 (Ghost 기본·내 캐릭터 + Hunt 인물) ----------
   const PEOPLE = /^(\d+(girl|boy)s?|multiple (girls|boys)|solo|solo focus|hetero|\dpeople)$/i;
@@ -518,6 +532,9 @@
       default: return "";
     }
   }
+  // 행위 장면: 가방 · 우산 같은 소지품 태그는 빼고, 장소 배경은 앞 6개만 (구도를 덮지 않게)
+  const noProps = (w) => String(w).split(/,\s*/).filter((x) => !/\b(bag|tote|handbag|purse|backpack|umbrella|phone|holding)\b/.test(x)).join(", ");
+  const shortBg = (bg) => String(bg).split(/,\s*/).slice(0, 6).join(", ");
   function build(s, o) {
     if (watchOn(o)) o = { ...o, nb: o.nb - 1, party: o.ng + o.nb - 1, watchP: true };
     if (o.ch && o.ch.body && !/\(\w+ eyes:/.test(o.ch.body)) o = { ...o, ch: { ...o.ch, body: o.ch.body.replace(/\b([a-z]+ eyes)\b/, "($1:1.15)") } };   // 눈 색이 바뀌지 않게
@@ -541,7 +558,7 @@
       pos = ["1girl, solo", o.ch.body, wear, o.place.meet[s.meet][1], QUALITY];
       neg.push(NEG_PRE);
     } else {
-      pos = [o.party > 2 ? partyHead(o) : DUO, o.ch.body, clothTags(s.cloth, wear, o), s.tags(o), o.place.bg, DUO_FX, QUALITY];
+      pos = [QUALITY, o.party > 2 ? partyHead(o) : DUO, s.tags(o), o.ch.body, clothTags(s.cloth, noProps(wear), o), shortBg(o.place.bg), DUO_FX, ""];   // 마지막 빈칸: 뒤에서 splice(len-1)로 넣는 태그 자리
       if (s.neg) neg.push(s.neg);
       neg.push("male face, man's face, detailed male face, male eyes, male mouth, male head, bearded man, male focus");   // 남성은 얼굴 없이
     }
@@ -966,7 +983,7 @@
       const nb = m0[2].split("\n").map((ln) => (ln.match(/"[^"]*"|[^"]+/g) || []).map((tk) => (tk[0] === '"' ? tk : tk.split(/(?<=[.!?…])\s+/).filter((c) => { const k = c.trim(); if (k.length < 12 || /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다|목소리)\.?$/.test(k)) return true; /* 말한 사람을 알려 주는 문장은 남김 (빠지면 대사 색이 틀림) */ if (seenQ.has("n:" + k)) return false; seenQ.add("n:" + k); return true; }).join(" "))).join(" ").replace(/\s{2,}/g, " ").trim()).filter(Boolean).join("\n");
       if (nb.trim()) t = (m0[1] || "") + nb;
     }
-    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o) }) || t; } catch {} }
+    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0 }) || t; } catch {} }
     return t;
   };
   const lineOf = (sid, ch, o) => postLine(lineOfA(sid, ch, o), sid, ch, o);
@@ -1007,7 +1024,7 @@
     const parts = [pk(K.narr) + ".", pk(K.narr2 || K.narr) + ".", pk(F.react[st.finWho]) + "."];
     const snd = F.sound && F.sound[st.finWho] ? `"${pk(F.sound[st.finWho])}"` : "";
     const sv = String(pk(K.say)).split("|"), say = sv[si] || sv[0] || "";   // 말투가 하나뿐인 문장은 그대로
-    return `[${st.n(o)}]` + [...new Set(parts)].join(" ") + (snd ? " " + snd : "") + (say ? `\n"${say}"` : "");
+    return `[${st.n(o)}]` + [...new Set(parts)].join(" ") + (snd ? "\n" + snd : "") + (say ? `\n"${say}"` : "");   // 신음은 줄을 바꿔서 — 앞 문장이 '그가 웃는다'면 그의 말로 잘못 읽힘
   };
   const callLine = (sid, ch, o) => {
     const KEY = { ntrcall: "call", ntrcall_date: "callDate", ntrcall_pre: "callPre", ntrcall_after: "callAfter", ntrphoto: "photo" }[sid];
@@ -1031,6 +1048,7 @@
   };
   const lineOf0 = (sid, ch, o) => {
     if (/_fin$/.test(sid)) return foreFinLine(sid, ch, o);
+    { const st = STAGES.find((x) => x.id === sid); if (st && st.mouth && window.BC_MOUTH) return `[${st.n(o)}]` + BC_MOUTH(st.mouth, { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0); }
     if (/^ntr(call|photo)/.test(sid)) return callLine(sid, ch, o);
     if (sid === "change" && window.BC_CHANGE) {
       const w = wearOf(ch, o.outfit), kind = garment(w).top === "linger" ? "linger" : LINGERIE[o.outfit] ? "costume" : "normal";
@@ -1216,8 +1234,10 @@
       push("ready", PO(poses[0]));
       for (let j = 0; j < K; j++) {
         const pk = poses[j];
-        push("pose1", PO(pk, { dur: durNext(pk) })); push("pose2", PO(pk, { dur: durNext(pk) }));
-        if (j < K - 1) climaxAt(pk, j < M - 1 ? cxs[j] : "yes", false);
+        push("pose1", PO(pk, { dur: durNext(pk) }));
+        if (j === 0 && !STAGES.find((x) => x.id === "ntrcall").skip(b)) push("ntrcall", PO(pk));   // 하는 중 남편 전화: 넣은 뒤 첫 체위 사이
+        push("pose2", PO(pk, { dur: durNext(pk) }));
+        if (j < K - 1) climaxAt(pk, cxs.find((c) => c === "no" || c === "denyBoth") || (j < M - 1 ? cxs[j] : "yes"), false);   // 애태우기를 골랐으면 체위마다 애태우기 2장 → 절정
         else { const rest = cxs.slice(Math.min(j, M - 1)); rest.forEach((cx, i) => climaxAt(pk, cx, i === rest.length - 1)); }
       }
       while (fi < fins.length) { const pk = poses[K - 1], oo = PO(pk, { cx: "yes", fin: FINISH[fins[fi++]], again: 1 }); push("pose2", { ...oo, dur: durNext(pk) }); push("finish", oo); }

@@ -20,7 +20,7 @@
   const pick = (a) => { let m = Infinity, c = []; for (const x of a) { const n = used.get(x) || 0; if (n < m) { m = n; c = [x]; } else if (n === m) c.push(x); } const x = c[Math.floor(Math.random() * c.length)]; used.set(x, m + 1); return x; };
   const speech = (t) => { const q = (String(t).match(/"[^"]+"/g) || []).join(" "); return /(습니다|십시오|입니까|합니다)/.test(q) ? 1 : /요[.!?…"\s]/.test(q) ? 0 : q ? 2 : 0; };
   const groupOf = (sid, o) => {
-    if (/^(video|self|dt_|datetoy|ntrcall|ntrphoto|care)/.test(sid)) return null;
+    if (/^(video|self|dt_|datetoy|ntrcall|ntrphoto|care|clean)/.test(sid) || /_(hold|swallow)$/.test(sid)) return null;
     if (/_fin$/.test(sid)) return "fin";
     if (/^(meet|kiss|change|undress|act_)/.test(sid)) return "pre";
     if (/^(neck|caress|chest|nipple|hand|toy|cunni|analtoy|oral|handjob|paizuri|footjob|thighjob|sixtynine|grind)/.test(sid)) return "fore";
@@ -42,20 +42,98 @@
     if (o.watch && o.nb > 1) return "남편";
     return /^(ntr|ntori)$/.test(o.situ || "") || o.absent ? "남자친구" : "";
   };
-  window.BC_POST = (t, sid, o) => {
+  // 입에 받은 정액 장면 대사 (머금기 · 삼키기 · 청소) — 서술의 행위자는 '당신'(다른 남자면 앞에서 '그'로 바뀜)
+  const MO = {
+    hold: {
+      narr: S("그녀가 입술을 꼭 다문 채 볼을 부풀린다/그녀가 고개를 들고 천천히 입을 벌린다. 혀 위에 하얀 것이 고여 있다/그녀가 당신을 올려다보며 혀를 길게 내민다. 정액이 혀끝에서 늘어진다/입가로 흘러내리려는 것을 그녀가 손바닥으로 받친다/그녀가 입안에 고인 것을 혀로 천천히 굴려 보인다/그녀가 입을 벌린 채 '봐' 하는 눈으로 당신을 기다린다/그녀의 입안 가득 하얀 것이 찰랑거린다. 그녀가 눈웃음을 친다/그녀가 입술 사이로 정액을 실처럼 늘였다가 다시 빨아들인다"),
+      say: S("음… 으응… (입을 벌려 보인다)/으음, 으읍… (혀를 내밀어 보인다)/응… 응… (삼켜도 되냐는 눈짓)/하으… 음… (입안 가득이라는 듯 볼을 가리킨다)/으응… (아직 안 삼켰다는 듯 고개를 젓는다)/음, 으음…♡ (입을 더 크게 벌린다)"),
+      men: S("다 보여. 아직 삼키지 마/착하네. 입 더 벌려 봐/그대로 있어. 내 거 입에 물고 있는 얼굴 보고 싶어/혀 굴려 봐. 천천히/흘리지 마. 한 방울도"),
+      lead: S("당신이 그녀의 턱을 들어 올리며 말한다/당신이 그녀의 머리를 쓰다듬으며 말한다/당신이 숨을 고르며 말한다"),
+    },
+    swallow: {
+      narr: S("그녀가 눈을 감고 꿀꺽, 소리가 나게 삼킨다. 목이 한 번 크게 움직인다/그녀가 두 번에 나눠 삼키고는 입을 크게 벌려 보인다. 텅 비어 있다/그녀가 목을 울리며 삼킨 뒤 혀를 내밀어 빈 입안을 보여 준다/그녀가 입술에 남은 것까지 혀로 핥아 삼킨다/삼킨 뒤에도 그녀가 입을 벌린 채 당신의 반응을 기다린다/그녀가 빈 입을 보여 주고는 칭찬을 기다리는 얼굴로 올려다본다"),
+      say: S("다 마셨어요… 봐요, 하나도 안 남았어요/꿀꺽… 진하다. 목에 걸려요/맛있었어요. 진짜예요/다 삼켰는데… 칭찬 안 해 줘요?/배 속이 뜨거워요… 자기 거 다 내 안에 들어갔어요/입안에 아직 냄새가 나요… 이거 좋아요/한 방울도 안 흘렸어요. 잘했죠?/다음엔 더 많이 줘요. 다 마실게요/목구멍으로 넘어가는 게 느껴졌어요… 또 젖었어요"),
+      men: S("잘했어. 착하네/진짜 다 마셨네… 예쁘다/입 다시 벌려 봐. …정말 다 먹었네/이런 얼굴 하고 마시면 또 서잖아/칭찬해 줄게. 이리 와"),
+      lead: S("당신이 그녀의 뺨을 감싸며 말한다/당신이 그녀의 입술을 엄지로 쓸며 말한다/당신이 웃으며 말한다"),
+    },
+    clean: {
+      narr: S("그녀가 막 빠져나온 것을 손으로 잡고 혀를 댄다/그녀가 끈적하게 젖은 기둥을 뿌리부터 끝까지 핥아 올린다/그녀가 끝에 맺힌 마지막 한 방울을 쪽 빨아낸다/그녀가 제 애액과 정액이 섞인 것을 아무렇지 않게 입에 문다/그녀가 무릎을 꿇고 정성스럽게 구석구석 닦아 낸다/그녀가 한 번 더 깊이 물었다가 천천히 빼며 깨끗해진 것을 보여 준다"),
+      say: S("깨끗하게 해 줄게요… 가만히 있어요/내 맛이랑 섞여 있어요… 이상하게 좋아요/아직 안에 남아 있죠? 다 빨아 줄게요/청소는 제 일이에요. 다른 사람한테 시키지 마요/또 딱딱해지면… 그건 자기 책임이에요/다 핥았어요. 반짝반짝해졌죠?"),
+      men: S("방금 쌌는데 또 그러면 곤란해/거기까지 다 핥아 주는 거야?/착하네… 끝까지 해 줘/그 얼굴로 그러면 한 번 더 하고 싶어지잖아"),
+      lead: S("당신이 그녀의 머리를 쓰다듬으며 말한다/당신이 낮게 웃으며 말한다"),
+    },
+  };
+  window.BC_MOUTH = (k, si) => {
+    const M = MO[k]; if (!M) return "";
+    const G = window.BC_GEN2, lv = (x) => (G && G.lv ? G.lv(x, si) : x);
+    const n1 = pick(M.narr); let n2 = pick(M.narr); if (n2 === n1) n2 = "";
+    return `${n1}.${n2 ? " " + n2 + "." : ""}\n"${lv(pick(M.say))}"\n${pick(M.lead)}. "${pick(M.men)}"`;
+  };
+  // 대사량 늘리기: 그녀 · 상대 남자의 말을 조합으로 (앞말 × 본말) — 단계별 · 덜 쓴 조합부터
+  const C2 = (a, b) => a.flatMap((x) => b.map((y) => (x ? x + " " : "") + y));
+  const WA = S("/하아… /있잖아요, /솔직히, /아… /흐읏… /진짜, ");
+  const WB = {
+    pre: S("오늘 하루 종일 이 생각만 했어요/이 손 기다렸어요/숨소리만 들어도 젖어요/아무것도 안 했는데 다리가 떨려요/오늘은 끝까지 갈 거예요/눈 마주치면 못 참겠어요/만져 줘요, 어디든요/심장 터질 것 같아요/벗기는 거 천천히 해요, 보는 거 좋으니까/이렇게 가까이 있으니까 냄새가 좋아요"),
+    fore: S("거기, 거기 계속요/혀가 닿을 때마다 허리가 떠요/손가락 하나 더요/소리 참기 힘들어요/이거 너무 좋아서 무서워요/입에 넣으니까 더 커졌어요/계속 이러면 금방 갈 것 같아요/물 나오는 소리 들려요?/핥는 거 보여 줄게요, 봐요/조금만 더 세게요"),
+    sex: S("깊어요, 너무 깊어요/거기 계속 박아요/안에서 꽉 차요/멈추지 마요, 제발요/허리가 멋대로 움직여요/이대로 계속 박혀 있고 싶어요/더 빨리, 더 세게요/안쪽이 저려요/쑤실 때마다 머리가 하얘져요/이 자세 좋아요, 끝까지 보여요"),
+    fin: S("입안이 뜨거워요/얼굴이 끈적해요… 그래도 좋아요/한 방울도 안 남기고 다 받았어요/아직 껄떡거려요, 귀여워/냄새가 진해서 머리가 어지러워요/또 나오게 해 줄까요?"),
+    cream: S("안에 다 줘요/뜨거운 게 배 안쪽까지 차요/빼지 마요, 아직이에요/꿀렁꿀렁 나오는 거 느껴져요/가득 채워 줘서 고마워요/아직도 안에서 껄떡거려요"),
+    out: S("배 위가 뜨거워요/많이도 쌌네요/손으로 찍어 볼래요/다음엔 안에 줘요/몸에 뿌려진 거 보니까 또 젖어요"),
+    after: S("다리에 힘이 하나도 없어요/아직 안이 떨려요/조금만 이대로 안고 있어요/오늘 일, 계속 생각날 거예요/또 하고 싶어요, 벌써요/흘러나오는 거 느껴져요/숨 좀 고르고… 한 번 더 해요/몸이 다 녹은 것 같아요"),
+  };
+  const MA = S("/하아… /그래, /좋아, /봐, /쉿, ");
+  const MB = {
+    pre: S("오늘 예쁘다. 다 벗기고 싶어/입술 줘/가만히 있어. 내가 할게/벌써 이렇게 젖었어?/떨지 마. 천천히 할게/그 얼굴 하지 마. 못 참아/여기 만지면 소리 내는 거 알아/눈 감지 마. 나 봐"),
+    fore: S("여기 좋아? 다 보여/소리 더 내도 돼/허리 들썩거리는 거 봐/입에 넣은 얼굴 진짜 야하다/조금만 더. 아직 가지 마/물 엄청 나온다/혀 더 써 봐/다리 벌려. 끝까지"),
+    sex: S("조인다… 미치겠다/깊이 들어간다, 느껴져?/허리 더 들어/소리 참지 마/내 거 모양 기억해/더 세게 박아 줄까?/여기지? 여기 박으면 우는 거/끝까지 넣을게"),
+    fin: S("다 받아. 흘리지 말고/그 얼굴 사진 찍고 싶다/아직 나온다, 입 벌려/착하네… 진짜 잘한다"),
+    cream: S("안에 싼다, 다 받아/쭉 빨아들이네/아직 나온다. 빼지 말까?/가득 채워 줄게/흘리지 마"),
+    out: S("밖에 싼다/몸에 다 뿌려 줄게/움직이지 마/많이 나왔다"),
+    after: S("수고했어. 이리 와/아직 떨고 있네/물 가져올게. 누워 있어/오늘 진짜 예뻤어/또 하고 싶어지잖아/조금만 쉬었다가 한 번 더"),
+  };
+  const LEAD_YOU = S("당신이 귓가에 속삭인다/당신이 숨을 고르며 말한다/당신이 허리를 붙잡은 채 말한다/당신이 낮게 웃으며 말한다/당신이 그녀의 머리칼을 쓸어 넘기며 말한다");
+  const LEAD_HIM = S("그가 귓가에 속삭인다/그가 숨을 고르며 말한다/그 남자가 허리를 붙잡은 채 말한다/그 남자가 낮게 웃으며 말한다/그가 그녀의 머리칼을 쓸어 넘기며 말한다");
+  const W2 = Object.fromEntries(Object.entries(WB).map(([k, v]) => [k, C2(WA, v)]));
+  const M2 = Object.fromEntries(Object.entries(MB).map(([k, v]) => [k, C2(MA, v)]));
+  const thirdOf = (o) => !!o && (o.absent || (o.watch && o.nb > 1) || /^(cheat|cheatwatch|rebound)$/.test(o.rel || "") || o.situ === "swap" || !!(o.situ && (o.party > 2 || o.absent) && window.BC_SITU && window.BC_SITU[o.situ] && window.BC_SITU[o.situ].third));
+  // 바람 · 불륜 · 네토라레의 영상통화: 상대는 그녀의 바람 상대 — 남편과 비교하거나 얼른 와서 범해 달라는 말
+  //  {Y}: 화면 속 상대 (불륜 = 당신 / 그 밖 = 그) · '남편'은 아래에서 관계대로 남자친구로 바뀜
+  const VC = {
+    video1: {
+      narr: S("그녀가 이불을 머리끝까지 덮고 휴대폰 불빛만 얼굴에 비춘다. 거실에서 남편이 TV 보는 소리가 작게 들린다/욕실 물소리가 들리는 사이, 그녀가 서둘러 영상통화 버튼을 누른다. 화면 속 {Y}을 보자마자 입꼬리가 올라간다/그녀가 남편이 잠든 쪽을 한 번 돌아보고 화면에 바짝 얼굴을 댄다/그녀가 소리를 죽인 채 입 모양으로 '보고 싶어'를 만든다. 화면 속 {Y}에게만 보이게"),
+      say: S("남편 지금 샤워해요… 오래 안 걸리니까 빨리 말해요/남편 옆에 누워 있는데 자기 목소리 듣고 싶어서 못 참았어요/저녁 내내 남편이랑 밥 먹으면서 자기 생각만 했어요/남편이 안으려고 해서 피곤하다고 했어요. 자기 거 아니면 싫어요/내일 남편 출근하면 바로 와요. 아니, 지금 와요/남편 목소리보다 자기 숨소리가 더 좋아요/얼른 와서 데려가요… 남편 옆은 이제 답답해요"),
+    },
+    video2: {
+      narr: S("그녀가 잠옷 단추를 하나씩 풀어 화면 앞에 레이스 속옷을 보인다/그녀가 휴대폰을 기울여 가슴께를 비추고는 문 쪽을 힐끔 본다/그녀가 화면 속 {Y}을 보며 손가락으로 브래지어 끈을 내린다/그녀가 숨을 죽인 채 화면 가까이 다가와 젖은 입술을 깨문다"),
+      say: S("이거 남편한테는 한 번도 안 보여 준 속옷이에요/보여요? 벌써 이렇게 됐어요… 빨리 와서 범해 줘요/남편은 이거 입어도 몰라봐요. 자기는 바로 알죠?/화면 말고 직접 만져 줘요… 언제 와요? 지금 와요/남편 손으로는 이렇게 안 젖어요. 자기 얼굴만 봐도 이래요/오늘 밤 몰래 나갈게요. 도착하자마자 그냥 박아 줘요/남편 자는 옆에서 이러는 거… 들키면 어쩌죠. 근데 멈추기 싫어요"),
+    },
+  };
+  const vcOf = (o) => !!o && (/^(affair|cheat|cheatwatch|rebound)$/.test(o.rel || "") || o.situ === "ntr" || !!o.absent);
+  const vcLine = (sid, o, si, head) => { const V = VC[sid]; if (!V) return ""; const Y = o.rel === "affair" ? "당신" : "그", G = window.BC_GEN2, lv = (x) => (G && G.lv ? G.lv(x, si) : x);
+    const fill = (x) => x.replace(/\{Y\}을/g, Y === "당신" ? "당신을" : "그를").replace(/\{Y\}에게/g, Y + "에게").replace(/\{Y\}/g, Y);
+    const a = pick(V.say); let b = pick(V.say); if (b === a) b = "";
+    return `${head}${fill(pick(V.narr))}.\n"${lv(a)}"${b ? `\n"${lv(b)}"` : ""}`; };
+  // 그녀의 말(따옴표)만 골라 바꿈 — 말한 사람이 남자 · 당신이면 그대로
+  const herQuotes = (s, fn) => s.split("\n").map((ln) => { let pre = ""; return ln.split(/("[^"]*")/).map((p) => { if (p[0] !== '"') { pre += p; return p; } const last = (pre.split(/[.!?…]\s+/).filter((x) => x.trim()).pop() || "").trim(); pre = ""; const sv = /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다)\s*\.?\s*$/.test(last), other = /당신의 목소리\.?$/.test(last) || (sv && (/^당신/.test(last) || /^(그[가는]\s|이분|이이)/.test(last) || /남자(가|는|들이|들은)\s/.test(last))); return other ? p : fn(p); }).join(""); }).join("\n");
+  window.BC_POST = (t, sid, o, opt) => {
     if (!t) return t;
     let s = String(t);
+    const si = opt && opt.si != null ? opt.si : speech(s);
+    if (/^video[12]$/.test(sid) && vcOf(o)) { const h = (s.match(/^\[[^\]]*\]/) || [""])[0]; s = vcLine(sid, o, si, h) || s; }
+    if (si === 2 && window.BC_GEN2 && window.BC_GEN2.lv) s = herQuotes(s, (q) => '"' + window.BC_GEN2.lv(q.slice(1, -1), 2) + '"');   // 반말 캐릭터: 해요체로만 쓴 문장 · 저/제도 반말로
     { const w = whoOf(o); if (w === "남편") s = toHB(s); else if (w === "남자친구") s = toBF(s); }
     if (o && o.absent && o.nb === 1) {
       const R = o.rel && !KEEP.test(o.rel) && window.BC_REL && window.BC_REL[o.rel];
       if (R && R.narr) for (const a of R.narr) for (const n of a || []) if (n && /당신/.test(n) && s.includes(n)) s = s.split(n).join(UN(n));
-      s = s.replace(/두 남자의 손을 한꺼번에/g, "그 남자의 손을").replace(/두 남자/g, "그 남자").replace(/(남자의 (손|입)[이가]) 동시에/g, "$1").replace(/양옆 남자들?/g, "그 남자").replace(/남자들/g, "그 남자");
+      s = s.replace(/두 남자의 손을 한꺼번에/g, "그 남자의 손을").replace(/두 남자/g, "그 남자").replace(/(남자의 (손|입)[이가]) 동시에/g, "$1").replace(/양옆 남자들?/g, "그 남자").replace(/남자들/g, "그 남자").replace(/둘 다… 둘 다 안에/g, "끝까지 안에").replace(/둘 다 안에/g, "안에").replace(/우리 없이는/g, "나 없이는");
     }
     const k = groupOf(sid, o);
     if (k && Math.random() < 0.65) {
-      const G = window.BC_GEN2, si = speech(s), x = pick(L[k]);
+      const G = window.BC_GEN2, x = pick(L[k]);
       s += `\n"${G && G.lv ? G.lv(x, si) : x}"`;
     }
+    if (k && W2[k] && Math.random() < 0.6) { const G = window.BC_GEN2, x = pick(W2[k]); s += `\n"${G && G.lv ? G.lv(x, si) : x}"`; }   // 그녀의 말 하나 더
+    if (k && M2[k] && Math.random() < 0.6) s += `\n${pick(thirdOf(o) ? LEAD_HIM : LEAD_YOU)}. "${pick(M2[k])}"`;   // 상대 남자의 말
     return s;
   };
   window.BC_POST._crude = L;   // 시험용
