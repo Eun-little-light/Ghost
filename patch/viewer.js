@@ -253,12 +253,14 @@
 #gallery .bc-ghd b{margin:0 6px;font-size:15px}#gallery .bc-ghd button.on{background:var(--accent);color:#000}`;
   document.head.append(css);
   // 대사 색: 그녀 · 여자(분홍) · 남자(파랑) · 당신(초록) — 따옴표 바로 앞 문장이 '…말한다/묻는다'처럼 말하는 문장이면 그 주어로, 아니면 그녀(신음 · 혼잣말)
-  const SAY_V = /(말한다|묻는다|되묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다)\s*[.。]?\s*$/;
+  // 남편 · 남자친구(장면 밖의 짝)는 주황 — 그녀(분홍) · 다른 남자(파랑) · 당신(초록)과 따로
+  const SAY_V = /(말한다|묻는다|되묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다|명령한다|대답한다|재촉한다|내뱉는다|다그친다|덧붙인다|부른다|던진다|으르렁거린다|낮게 말한다|숨을 고른다)\s*[.。]?\s*$/;
   const whoOf = (pre) => {
     const s = (String(pre).split(/[.!?…]\s+/).filter((x) => x.trim()).pop() || "").trim();
     if (/당신의 (목소리|답장)\.?$/.test(s)) return "y";   // 전화기 너머 당신의 목소리. "…"
-    if (/(남편|남자친구)의 (목소리|답장)\.?$/.test(s)) return "m";
+    if (/(남편|남자친구)의 (목소리|답장)\.?$/.test(s)) return "h";
     if (!SAY_V.test(s)) return "w";
+    if (/^(남편|남자친구)(이|가|은|는)\s/.test(s)) return "h";
     if (/^당신/.test(s)) return "y";
     if (/^(그[가는]\s|이분|이이)/.test(s) || /남자(가|는|들이|들은)\s/.test(s)) return "m";   // 주어가 남자 (\"그녀의 입에서 빠져나온 남자가\" 포함)
     if (/^그녀/.test(s)) return "w";
@@ -275,7 +277,7 @@
     return `<span class="wy">${m ? `<b class="hd">[${esc(m[1])}]</b>` : ""}${parts}</span>`;
   }).join("");
   window.BC_SAY_HTML = sayHTML;
-  { const c2 = document.createElement("style"); c2.textContent = ".s-w{color:#ffb3cf;font-weight:600}.s-m{color:#8fc3ff;font-weight:600}.s-y{color:#9fe39a;font-weight:600}.wy{display:block;margin-bottom:3px}.wy i{opacity:.82}"; document.head.append(c2); }
+  { const c2 = document.createElement("style"); c2.textContent = ".s-w{color:#ffb3cf;font-weight:600}.s-m{color:#8fc3ff;font-weight:600}.s-y{color:#9fe39a;font-weight:600}.s-h{color:#ffc27a;font-weight:600}.wy{display:block;margin-bottom:3px}.wy i{opacity:.82}"; document.head.append(c2); }
 
   // ---------- 보기 창 ----------
   let list = [], pos = 0, pure = false;

@@ -25,7 +25,7 @@
     if (/_fin$/.test(sid)) return "fin";
     if (/^(meet|change)/.test(sid)) return null;   // 데이트 · 장소 도착 · 옷 갈아입기: 아직 밖이거나 막 도착
     if (/^(kiss|undress|act_)/.test(sid)) return "pre";
-    if (/^(neck|caress|chest|nipple|hand|toy|cunni|analtoy|oral|handjob|paizuri|footjob|thighjob|sixtynine|grind)/.test(sid)) return "fore";
+    if (/^(neck|caress|chest|nipple|hand|toy|cunni|analtoy|oral|irrumatio|handjob|paizuri|footjob|thighjob|sixtynine|grind)/.test(sid)) return "fore";
     if (/^deny/.test(sid)) return "deny";
     if (/^(ready|pose)/.test(sid)) return "sex";
     if (/^(climax|finish)/.test(sid)) return o && o.fin && /cum in pussy|internal/.test(o.fin.tags || "") ? "cream" : "out";
@@ -220,7 +220,7 @@
   const herLine = (x, o, si, third) => {
     const V = o && o.ch && window.BC_VOICE && window.BC_VOICE[o.ch.id], G = window.BC_GEN2;
     let w = x;
-    if (V && V.tone && V.tone.length && Math.random() < 0.25) { const T = TONE_TAIL[V.tone[Math.floor(Math.random() * V.tone.length)]]; if (T) w = w.replace(/[.…]+$/, "") + (/[?!]$/.test(w) ? " " : "… ") + pick(T).replace(/^…/, ""); }
+    if (V && V.tone && V.tone.length && Math.random() < 0.1) { const T = TONE_TAIL[V.tone[Math.floor(Math.random() * V.tone.length)]]; if (T) w = w.replace(/[.…]+$/, "") + (/[?!]$/.test(w) ? " " : "… ") + pick(T).replace(/^…/, ""); }
     if (V && V.tics && V.tics.length && Math.random() < 0.3 && !/^(아|하|흐|있잖|솔직|진짜|…)/.test(w)) w = pick(V.tics) + " " + w;
     const call = third ? "자기" : V && V.call && V.call !== "자기" ? V.call : "";
     if (call) w = w.replace(/당신(이에요|이요|이랑|이|은|을|과)?/g, (m, j) => callJo(call, j));   // 반말로 바꾸기 전에 (반말은 당신 → 너)
@@ -337,7 +337,10 @@
     if (o && o.place && o.place.bg && !/^(video|meet1|datetoy|dt_|ntrcall_date)/.test(sid)) s = bedless(s, o.place.bg);
     if (o && /^(ntr|ntori)$/.test(o.situ || "") && /^(climax|after|finish)/.test(sid)) s = ringOff(s, sid, o, si);
     if (/^(pose|deny|climax|after|finish)/.test(sid)) s = poseFit(s, o && o.pose);
-    return s;
+    s = sceneFit(s, sid);
+    if (!/^(ready|pose|deny|climax|finish)/.test(sid)) s = s.replace(/(그 남자가|그가|당신이) 허리를 (멈추고|붙잡은 채)/g, "$1 그녀를 내려다보며");   // 아직 삽입 전 · 끝난 뒤엔 허리 머리말이 안 맞음
+    { const b = bodyLine(sid, o); if (b) { const i = s.indexOf("\n"); s = i < 0 ? s + b : s.slice(0, i) + b + s.slice(i); } }   // 몸의 반응: 첫 서술 문단 끝에
+    return tidy(s);
   };
   // 그녀의 집착 (약간 · 강함 · 아주 강함): 단계별 말 — 강할수록 자주
   const OBS = {
@@ -428,7 +431,7 @@
     },
   };
   const attOn = (o) => !!o && (o.situ === "ntr" || o.absent || /^(cheat|cheatwatch|rebound|affair)$/.test(o.rel || ""));
-  const attGroup = (sid) => (/^warm_/.test(sid) ? "pre" : /^(kiss|neck|caress|undress|act_)/.test(sid) ? "kiss" : /^(chest|nipple|hand|toy|cunni|analtoy|oral|handjob|paizuri|footjob|thighjob|sixtynine|grind)(?!_fin)/.test(sid) && !/_fin$/.test(sid) ? "fore" : sid === "ready" ? "ready" : /^(pose|deny)/.test(sid) ? "sex" : /^(climax|finish)|_fin$/.test(sid) ? "climax" : /^(after|clean)/.test(sid) ? "after" : "");
+  const attGroup = (sid) => (/^warm_/.test(sid) ? "pre" : /^(kiss|neck|caress|undress|act_)/.test(sid) ? "kiss" : /^(chest|nipple|hand|toy|cunni|analtoy|oral|irrumatio|handjob|paizuri|footjob|thighjob|sixtynine|grind)(?!_fin)/.test(sid) && !/_fin$/.test(sid) ? "fore" : sid === "ready" ? "ready" : /^(pose|deny)/.test(sid) ? "sex" : /^(climax|finish)/.test(sid) ? "climax" : /^(after|clean)/.test(sid) ? "after" : "");
   const attLine = (sid, o, si, at, lw) => {
     if (!at || at === "none" || !attOn(o)) return "";
     const A = ATT[at] && ATT[at][attGroup(sid)]; if (!A || Math.random() > 0.55) return "";
@@ -560,6 +563,7 @@
       after: { narr: S("그녀가 {H}의 가슴에 손가락으로 장난스럽게 원을 그린다"), her: S("말로 사람 넘어가게 하는 거, 진짜 나빠요/오늘 들은 칭찬 평생 들은 것보다 많아요/또 듣고 싶어요. 또 불러 줘요"), him: S("나쁜 남자 할게, 너한텐/언제든 또 해 줄게") },
     },
   };
+  const SD_LEAD_HIM = S("그 남자가 잔을 기울이며 말한다/그 남자가 그녀 쪽으로 몸을 기울이며 낮게 말한다/그 남자가 그녀의 눈을 빤히 보며 말한다/그 남자가 귓가에 대고 속삭인다"), SD_LEAD_YOU = S("당신이 잔을 기울이며 말한다/당신이 그녀 쪽으로 몸을 기울이며 낮게 말한다/당신이 그녀의 눈을 빤히 보며 말한다/당신이 귓가에 대고 속삭인다");
   const sdOn = (o) => !!o && (/^(ntr|ntori)$/.test(o.situ || "") || o.absent || /^(cheat|cheatwatch|rebound|affair)$/.test(o.rel || ""));
   const seduceLine = (sid, o, si, sd, lw) => {
     if (!sd || sd === "none" || !sdOn(o)) return "";
@@ -570,7 +574,8 @@
       .replace(/\{W\}(는|은)/g, W + (jong(W) ? "은" : "는")).replace(/\{W\}(가|이)/g, W + (jong(W) ? "이" : "가")).replace(/\{W\}(를|을)/g, W + (jong(W) ? "을" : "를")).replace(/\{W\}(랑|이랑)/g, W + (jong(W) ? "이랑" : "랑")).replace(/\{W\}/g, W);
     let out = "";
     if (Math.random() < 0.55) out += `\n${fill(pick(A.narr))}.`;
-    if (A.him && Math.random() < 0.7) out += `\n${pick(third ? LEAD_HIM : LEAD_YOU)}. "${fill(pick(A.him))}"`;   // 그가 먼저 파고들고
+    const lead = g === "pre" || g === "kiss" ? pick(third ? SD_LEAD_HIM : SD_LEAD_YOU) : pick(third ? LEAD_HIM : LEAD_YOU);   // 빌드업에선 허리를 붙잡은 채 같은 머리말이 안 맞음
+    if (A.him && Math.random() < 0.7) out += `\n${lead}. "${fill(pick(A.him))}"`;   // 그가 먼저 파고들고
     const her = fill(pick(A.her)); if (lw === "soft" && SOFT_BAN.test(her)) return out;
     out += `\n"${herLine(her, o, si, third)}"`;   // 그녀가 넘어감
     return out;
@@ -580,7 +585,7 @@
   const JOS = { 이: ["이", "가"], 가: ["이", "가"], 을: ["을", "를"], 를: ["을", "를"], 은: ["은", "는"], 는: ["은", "는"], 과: ["과", "와"], 와: ["과", "와"] };
   const swapNoun = (s, re, w) => s.replace(re, (m, j) => w + (j ? (JOS[j] ? JOS[j][hasJong(w) ? 0 : 1] : j) : ""));
   // 집(그녀의 집 · 부부 침대)을 전제로 한 문장은 집이 아닌 장소에서 뺌 — 모텔에서 "남편이 자는 자리야" 같은 말
-  const HOME_BED = /남편이 자는 자리|남자친구가 자는 자리|쓰는 침대|고른 침대|익숙한 침대|익숙한 집/, HOME_ANY = /현관|애들 없을 때|퇴근하는 소리|남편 사진 앞|부인 집에서/;
+  const HOME_BED = /남편이 자는 자리|남자친구가 자는 자리|쓰는 침대|고른 침대|익숙한 침대|익숙한 집/, HOME_ANY = /현관|애들 없을 때|퇴근하는 소리|남편 사진 앞|부인 집에서|칫솔|시트를 간다/;
   const LEAD_END = /(말한다|속삭인다|묻는다|되묻는다|중얼거린다|말을 건넨다|웃는다)\.?\s*$/;
   const homeless = (s, pn) => {
     const re = /그녀의 원룸/.test(pn) ? null : /주방 아일랜드|아파트 베란다/.test(pn) ? HOME_BED : new RegExp(HOME_BED.source + "|" + HOME_ANY.source);
@@ -636,7 +641,44 @@
   const SAYV = /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다)\.?$/;
   function poseFit(s, p) {
     if (!p) return s;
-    const bad = (x) => (!p.top && P_TOP.test(x)) || (!p.back && P_BACK.test(x)) || (p.back && P_FACE.test(x)) || (!p.stand && P_STAND.test(x));
+    return dropBad(s, (x) => (!p.top && P_TOP.test(x)) || (!p.back && P_BACK.test(x)) || (p.back && P_FACE.test(x)) || (!p.stand && P_STAND.test(x)));
+  }
+  // 지금 장면에서 일어나지 않는 행위를 말하는 문장을 뺌 (애무 중 '박힌다' · 입으로 중 '손가락' · 여운 중 '가요' 등)
+  const PEN = /박히|박혀|박아|박는|박을|박힐|자지에 박|쑤셔|안에 줘|안에 싸|안에 다 |자궁|임신|허리를 흔들|허리를 내리누르|올라타|체위/, CUMW = /정액|삼켰|삼켜|꿀꺽|입안 가득|싸 줄|쌌어|쌌네/, HERC = /가 버렸|또 가요|가요, 가|갈 것 같|가요…!|가요!|갔어요/, FINGER = /손가락[이을]? .{0,12}(빨아들|쑤|넣)|젖꼭지가 .{0,8}입 안/;
+  const sceneBad = (sid) => {
+    if (/^(meet|warm_|kiss|neck|caress|undress|act_|chest|nipple|change)/.test(sid)) return (x) => PEN.test(x) || CUMW.test(x) || HERC.test(x) || (/^(neck|caress|undress|act_|chest|nipple)/.test(sid) && /처음 와 봐요/.test(x));
+    if (/^(hand|toy|cunni|analtoy)_fin$/.test(sid)) return (x) => PEN.test(x) || CUMW.test(x);
+    if (/^(hand|toy|cunni|analtoy)$/.test(sid)) return (x) => PEN.test(x) || CUMW.test(x) || HERC.test(x) || /처음 와 봐요/.test(x);
+    if (/^(oral|irrumatio|handjob|paizuri|footjob|thighjob|grind|sixtynine)(_fin)?$|^(oral_hold|oral_swallow|clean)/.test(sid)) return (x) => PEN.test(x) || FINGER.test(x) || (/^(oral|irrumatio|handjob|paizuri|footjob|thighjob|grind)$/.test(sid) && CUMW.test(x)) || (!/^sixtynine/.test(sid) && HERC.test(x));
+    if (/^ready/.test(sid)) return (x) => CUMW.test(x) || HERC.test(x);
+    if (/^deny/.test(sid)) return (x) => /가 버렸|갔어요/.test(x);
+    if (/^(after|care|bye)/.test(sid)) return (x) => /박아|쑤셔|더 세게|더 깊이|가요[,!…]|또 가요|갈 것 같|처음 와 봐요|떠나가게/.test(x);
+    return null;
+  };
+  const sceneFit = (s, sid) => { const b = sceneBad(sid); return b ? dropBad(s, b) : s; };
+  // 몸의 반응 (눈 · 팔 · 다리 · 피부) — 단계마다 서로 다른 부위 두 가지를 서술 끝에 붙임
+  const BODY = {
+    fore: { e: S("그녀의 눈동자가 초점을 잃고 천장을 헤맨다/속눈썹이 파르르 떨린다/젖은 눈이 반쯤 감긴 채 풀린다"), a: S("그녀의 손가락이 시트를 하얗게 움켜쥔다/그녀의 손이 {H}의 팔뚝을 붙잡고 놓지 않는다/그녀가 손등을 깨물며 소리를 삼킨다"), l: S("허벅지 안쪽이 경련하듯 떨린다/발가락이 저절로 오므라든다/무릎이 벌어졌다 모였다를 되풀이한다"), x: S("목덜미까지 붉은 홍조가 번진다/쇄골 위로 땀방울이 맺힌다/귀 끝까지 빨갛게 달아오른다") },
+    oral: { e: S("눈가에 눈물이 고여 관자놀이로 흘러내린다/젖은 눈이 {H}를 올려다보며 흔들린다/목 깊이 닿을 때마다 눈동자가 위로 밀려 올라간다"), a: S("그녀의 손이 {H}의 허벅지를 붙잡았다가 시트 위로 떨어진다/그녀의 두 손이 시트를 쥐어뜯는다"), l: S("목 깊이 닿을 때마다 그녀의 다리가 바르르 떨린다/벌어진 무릎이 덜덜 떨리고 발가락이 시트를 긁는다/허벅지가 움찔움찔 오므라든다"), x: S("얼굴이 터질 듯 새빨개진다/턱을 타고 침이 줄줄 흘러내린다/눈가부터 목까지 붉게 물든다") },
+    sex: { e: S("눈동자가 위로 밀려 올라가 흰자가 비친다/초점 풀린 눈에서 눈물이 흘러내린다/눈꺼풀이 파르르 떨리며 반쯤 감긴다"), a: S("그녀의 손톱이 {H}의 등에 붉은 자국을 긋는다/시트를 움켜쥔 손등에 힘줄이 선다/그녀의 팔이 {H}의 목을 감고 끌어당긴다"), l: S("허공에 뜬 다리가 박자마다 흔들린다/발끝이 하얗게 굽어 오그라든다/허벅지가 덜덜 떨리며 {H}의 허리를 조인다"), x: S("온몸이 붉게 달아올라 땀으로 번들거린다/가슴께까지 홍조가 번진다/이마에 젖은 머리칼이 달라붙는다") },
+    climax: { e: S("눈이 뒤집히며 동공이 위로 말려 올라간다/눈물에 젖은 눈이 허공에 멈춘다/눈이 질끈 감겼다가 멍하게 풀린다"), a: S("두 손이 시트를 찢을 듯 움켜쥔다/그녀의 팔이 {H}의 등을 끌어안은 채 굳는다/손끝까지 부들부들 떨린다"), l: S("다리가 경련하듯 퍼덕이고 발가락이 활처럼 오므라든다/허벅지가 걷잡을 수 없이 떨린다/곧게 뻗은 다리 끝이 바르르 떤다"), x: S("목부터 얼굴까지 새빨갛게 물든다/온몸에서 땀이 비 오듯 흐른다/벌어진 입가로 침이 흘러내린다") },
+    after: { e: S("풀린 눈이 한참 동안 초점을 찾지 못한다/눈가에 마른 눈물 자국이 남아 있다"), l: S("허벅지가 아직도 간헐적으로 움찔거린다/다리에 힘이 들어가지 않아 그대로 벌어져 있다"), x: S("식어 가는 땀 위로 홍조가 천천히 빠진다/숨을 쉴 때마다 젖은 가슴이 크게 오르내린다") },
+  };
+  const bodyLine = (sid, o) => {
+    const g = /^(oral|irrumatio)(_fin)?$/.test(sid) ? "oral" : /^(climax|finish)|^(hand|toy|cunni|nipple|analtoy|sixtynine)_fin$/.test(sid) ? "climax" : /^(pose|deny)/.test(sid) ? "sex" : /^(after|care)/.test(sid) ? "after" : /^(neck|caress|chest|nipple|hand|toy|cunni|analtoy|grind|thighjob)$/.test(sid) ? "fore" : "";
+    const B = BODY[g]; if (!B || Math.random() > (g === "climax" ? 1 : 0.85)) return "";
+    const third = thirdOf(o), parts = Object.keys(B).sort(() => Math.random() - 0.5).slice(0, 2);
+    return " " + parts.map((k) => pick(B[k]).replace(/\{H\}를/g, third ? "그를" : "당신을").replace(/\{H\}의/g, third ? "그의" : "당신의").replace(/\{H\}/g, third ? "그" : "당신") + ".").join(" ");
+  };
+  // 겹치는 연결 문장 · 부사 겹침 정리 ("곧 그녀가 또다시 이제 …" → "이제 …")
+  const CONNECT = /^(그 사이|곧|이내|그때|그러자)\s/;
+  const tidy = (s) => {
+    s = s.replace(/(또다시|결국|쉴 새 없이|점점 더|점점|다시|또|살짝|조금씩) (이제|또다시|결국|점점 더|점점|다시|또|살짝|조금씩)(?=\s)/g, "$2").replace(/한동안 한참/g, "한참");
+    const lines = s.split("\n"); let n = 0;
+    lines[0] = dropBad(lines[0], (x) => CONNECT.test(x.trim()) && ++n > 2);
+    return lines.join("\n");
+  };
+  function dropBad(s, bad) {
     const m = s.match(/^(\[[^\]]*\])?([\s\S]*)$/);
     const body = m[2].split("\n").map((ln) => {
       const out = [];

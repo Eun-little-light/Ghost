@@ -279,6 +279,10 @@
     reverse: { n: "등 돌려 올라타기", stand: false, back: true, top: true, tags: "(reverse cowgirl position:1.3), girl on top, straddling, facing away, ass, (vaginal sex:1.2), penis in pussy, from behind, pov" },
     fold: { n: "접어 누르기 (깊이)", stand: false, tags: "(mating press:1.3), lying on back, (legs up:1.2), folded, deep penetration, (vaginal sex:1.2), penis in pussy, pov, from above" },
     prone: { n: "엎드려 눌러서", stand: false, back: true, tags: "(prone bone:1.3), lying on stomach, sex from behind, (vaginal sex:1.2), penis in pussy, from behind, from above" },
+    // 더 격한 체위
+    shoulders: { n: "다리 어깨에 걸고 (깊이)", stand: false, tags: "(legs over shoulders:1.3), lying on back, (deep penetration:1.2), (vaginal sex:1.2), penis in pussy, (toes curling:1.1), pov, from above" },
+    fullNelson: { n: "풀 넬슨 (뒤에서 들어 올려)", stand: true, back: true, tags: "(full nelson:1.3), (sex from behind:1.2), (lifted by man:1.15), legs spread wide, (vaginal sex:1.2), penis in pussy, (trembling legs:1.1), full body, from front" },
+    piledriver: { n: "파일드라이버 (거꾸로 접어)", stand: false, tags: "(piledriver \\(sex\\):1.3), upside-down, (legs over head:1.2), folded, deep penetration, (vaginal sex:1.2), penis in pussy, from above" },
   };
 
   // 애무 더하기 (Hunt 애무 목록) — 고른 것만 한 시퀀스 안에 이어서 들어감
@@ -301,7 +305,7 @@
   const watchOn = (o) => !!(o && o.watch && o.nb > 1);
   // 지켜보는 남편: 서술에서 행위하는 '당신'을 '그'(다른 남자)로 — 따옴표 안의 말은 그대로
   const unYou = (t) => String(t).split('"').map((seg, i) => (i % 2 ? seg : seg.replace(/당신은/g, "그는").replace(/당신이/g, "그가").replace(/당신의/g, "그의").replace(/당신을/g, "그를").replace(/당신에게/g, "그에게").replace(/당신과/g, "그와").replace(/당신도/g, "그도").replace(/당신만/g, "그만").replace(/당신/g, "그"))).join('"');
-  const sidG = (sid) => (/^(meet|kiss|date|video|warm_)/.test(sid) ? 0 : /^(pose|climax|deny|ready)/.test(sid) ? 2 : /^(after|finish|care)/.test(sid) ? 3 : 1);
+  const sidG = (sid) => (/^(meet|kiss|date|video|warm_)/.test(sid) ? 0 : /^(pose|climax|deny|ready)/.test(sid) ? 2 : /^(after|finish|bye)|^care$/.test(sid) ? 3 : 1);   // caress(애무)는 care(여운)가 아님
   const givenName = (ch) => { const n = String(ch.n || "").split(" · ")[0].replace(/\s*\(.*\)$/, ""); return /^[가-힣]{3}$/.test(n) ? n.slice(1) : n; };
   const gTag = (n) => (n === 1 ? "1girl" : `${n}girls`), bTag = (n) => (n === 1 ? "1boy" : `${n}boys`);
   // 서술 · 말 묶음: 여성 여럿이면 fem, 남성 여럿이면 male, 둘 다면 그때그때 섞음
@@ -337,7 +341,7 @@
     : ["(everyone participating:1.15)", o.ng === 2 && o.nb === 1 ? "(ffm threesome:1.2)" : "",
     o.nb > 1 ? (o.nb === 2 && o.ng === 1 ? "(fellatio:1.0), (groping:1.05), both men touching her" : "(multiple penises:1.1), handjob, (fellatio:0.9), (groping:1.05), all men touching the girls") : "",
     o.ng > 1 ? "(girl on girl:1.1), yuri, (breast sucking:0.95), (french kiss:0.9), (fingering:0.9), all girls touching each other" : "", "bodies pressed together"].filter(Boolean).join(", ");
-  const FORES = { nipple: "젖꼭지", toy: "진동기", cunni: "그가 입으로", analtoy: "애널 비즈", handjob: "손으로 해 주기", paizuri: "가슴으로", footjob: "발로", thighjob: "허벅지 사이로", sixtynine: "69", grind: "비비기 (넣지 않고)" };
+  const FORES = { irrumatio: "목 안까지 (이라마치오)", nipple: "젖꼭지", toy: "진동기", cunni: "그가 입으로", analtoy: "애널 비즈", handjob: "손으로 해 주기", paizuri: "가슴으로", footjob: "발로", thighjob: "허벅지 사이로", sixtynine: "69", grind: "비비기 (넣지 않고)" };
   // 하면서 (Hunt '하면서') — 체위 장마다 돌아가며 하나씩 붙음 · 애널로는 체위 전체에 적용
   const DURING = {
     np: { n: "젖꼭지 만지며", tags: "(nipple tweak:1.15), his fingers on her nipple" },
@@ -619,6 +623,7 @@
     { id: "cunni", part: "pre", fore: "cunni", duo: 1, cloth: "main", n: () => "그가 입으로", tags: () => "(cunnilingus:1.25), (man licking pussy:1.2), his head between her thighs, (woman lying on back:1.3), spread legs, her hand on his head, thighs around his head, pussy focus, arched back, from above, pov" },
     { id: "analtoy", part: "pre", fore: "analtoy", duo: 1, cloth: "main", n: () => "애널 비즈", tags: () => "(anal beads:1.3), (anal beads in anus:1.25), sex toy, (woman on all fours:1.35), on hands and knees, looking back over shoulder, behind woman, man inserting anal beads into her anus, ass focus, from behind, close-up" },
     { id: "oral", part: "pre", duo: 1, cloth: "main", n: () => "입으로", tags: () => "fellatio, oral, kneeling, (penis in mouth:1.1), looking up at viewer, hand on his thigh, mouth focus, her cheeks flushed, from above, pov" },
+    { id: "irrumatio", part: "pre", fore: "irrumatio", duo: 1, cloth: "main", n: () => "목 안까지 (이라마치오)", tags: (o) => `(irrumatio:1.3), (deepthroat:1.2), (penis in mouth:1.2), ${o.place.lie ? "(woman lying on back:1.2), (head hanging off bed edge:1.25), upside-down face, (man standing over her head:1.2), (gripping sheets:1.2), spread legs, (trembling legs:1.25), (toes curling:1.15), from above" : "kneeling, (his hands holding her head:1.2), man standing, (trembling legs:1.2), from side"}, throat bulge, saliva, drooling, (teary eyes:1.2), (full-face blush:1.2), sweat` },
     { id: "handjob", part: "pre", fore: "handjob", hands: 1, duo: 1, cloth: "main", n: () => "손으로 해 주기", tags: () => "(handjob:1.25), (her hand on penis:1.2), stroking penis, sitting beside him, looking at viewer, smile, penis, pov, from above" },
     { id: "paizuri", part: "pre", fore: "paizuri", hands: 1, duo: 1, cloth: "main", n: () => "가슴으로", tags: () => "(paizuri:1.2), man receiving paizuri from woman, breast sex, breast press, her hands pressing her breasts together, kneeling, looking up at viewer, breast focus, from above, pov, upper body" },
     { id: "footjob", part: "pre", fore: "footjob", duo: 1, cloth: "main", n: () => "발로", tags: () => "barefoot, (footjob:1.2), (woman sitting leaning back:1.25), leaning back on her hands, (both legs extended forward toward viewer:1.3), (feet raised:1.2), knees slightly bent, foreshortening, (two-footed footjob:1.15), penis between her feet, soles, toes, pov, from above, feet focus" },
@@ -673,6 +678,7 @@
     footjob: ["m", "(footjob:1.15), (ejaculation:1.2), (excessive cum:1.2), (cum on feet:1.3), soles, toes, penis, smug, blush"],
     thighjob: ["m", "(thigh sex:1.15), (ejaculation:1.2), (excessive cum:1.2), (cum on thighs:1.3), cum on stomach, legs together, penis"],
     grind: ["m", "(sumata:1.15), (ejaculation:1.2), (excessive cum:1.2), (cum on stomach:1.3), cum on pussy, (no penetration:1.2), penis, pussy juice"],
+    irrumatio: ["m", "(irrumatio:1.15), (cum in mouth:1.3), (cum in throat:1.2), (excessive cum:1.25), (cum overflow from mouth:1.15), cum on face, tears, (trembling legs:1.25), (toes curling:1.2), saliva trail"],
     sixtynine: ["m", "(69:1.2), (ejaculation:1.15), (cum in mouth:1.15), (female orgasm:1.15), trembling, cunnilingus"],
     hand: ["f", "(female orgasm:1.3), (fingering:1.15), (trembling:1.2), arched back, (pussy juice:1.2), squirting, toes curled, open mouth, tears, heavy breathing"],
     toy: ["f", "(female orgasm:1.3), (vibrator:1.15), (trembling:1.2), arched back, (pussy juice:1.2), squirting, legs shaking, toes curled, open mouth, tears"],
@@ -842,10 +848,13 @@
         clingy: ["(clingy:1.1), puppy eyes, pleading eyes, hugging, nuzzling", "(clingy:1.05), hugging, pleading eyes"],
         bold: ["(confident:1.1), smirk, seductive smile, looking at viewer, half-closed eyes", "(confident:1.05), seductive smile, looking at viewer"] }[emSel];
       if (EM_IMG && !s.solo && !/^(climax|video|datetoy|dt_)/.test(s.id)) pos.push(/^(pose|deny)/.test(s.id) ? EM_IMG[1] : EM_IMG[0]); }
+    { const lie = o.place && o.place.lie && !(o.pose && o.pose.stand);   // 몸의 반응 (눈 · 다리 · 발가락 · 홍조) — 단계가 오를수록 세게
+      const BX = /^climax|^(hand|toy|cunni|nipple|analtoy)_fin$/.test(s.id) ? `(trembling legs:1.3), (toes curling:1.25), (rolling eyes:1.15), (full-face blush:1.3), arched back, sweat, tears, drooling${lie ? ", (gripping sheets:1.15)" : ""}` : /^deny/.test(s.id) ? "(trembling legs:1.2), (teary eyes:1.15), clenched teeth, (full-face blush:1.2), sweat" : /^pose/.test(s.id) ? "(trembling legs:1.1), (toes curling:1.1), (full-face blush:1.15), sweat, half-closed eyes" : /^(hand|toy|cunni|nipple|chest)$/.test(s.id) ? "(trembling:1.1), (toes curling:1.05), full-face blush" : "";
+      if (BX && !s.solo && !s.date && s.meet == null) pos.push(BX); }
     { const LW_IMG = {
         crude: { sex: "(lewd face:1.1), heavy breathing, saliva, sweat, open mouth", fore: "(lewd face:1.05), saliva, heavy breathing", after: "dazed, heavy breathing, sweat" },
         extreme: { sex: "(ahegao:1.15), (tongue out:1.1), drooling, saliva trail, (heart-shaped pupils:1.1), rolling eyes, sweaty, (fucked silly:1.1)", fore: "(lewd face:1.15), drooling, tongue out, (heart-shaped pupils:1.05)", after: "(fucked silly:1.05), dazed, drooling, sweaty, messy hair" } }[lewdSel];
-      const g = /^(pose|deny|climax)/.test(s.id) ? "sex" : /^(chest|nipple|hand|toy|cunni|analtoy|oral|handjob|paizuri|footjob|thighjob|sixtynine|grind)/.test(s.id) ? "fore" : /^(after|finish)/.test(s.id) ? "after" : "";
+      const g = /^(pose|deny|climax)/.test(s.id) ? "sex" : /^(chest|nipple|hand|toy|cunni|analtoy|oral|irrumatio|handjob|paizuri|footjob|thighjob|sixtynine|grind)/.test(s.id) ? "fore" : /^(after|finish)/.test(s.id) ? "after" : "";
       if (LW_IMG && g && !s.solo && !s.date && s.meet == null) pos.push(LW_IMG[g]); }   // 음란도대로 그림의 표정도
     if (o.fin === FINISH.inside && /^(care|bye|finish_both)$/.test(s.id)) pos.push("(cum leaking from pussy:1.25), cum drip, creampie, cum on thighs");   // 안에 싼 뒤: 흘러나옴
     if ((obsSel === "strong" || obsSel === "extreme") && /^(after|finish_both|clean_swallow)/.test(s.id)) pos.push(obsSel === "extreme" ? "(clinging:1.2), (hugging his arm tightly:1.15), possessive gaze, intense eyes" : "(clinging:1.1), holding his arm, possessive smile");
@@ -1125,6 +1134,7 @@
   const relLine = (t, sid, ch, o) => {
     const R = o && o.rel && o.rel !== "none" && window.BC_REL && BC_REL[o.rel];
     if (!R || !t || /^video/.test(sid)) return t;
+    if ((o.absent || o.situ === "ntr") && /^(interest|some|lover|partner|married)$/.test(o.rel)) return t;   // 당신과의 관계 서술 · 말을 장면 속 다른 남자에게 쓰면 인칭이 꼬임
     const g = sidG(sid), si = { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0;
     const pk = pickU;
     const m = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/);
@@ -1924,7 +1934,7 @@
     const sid = meta.sid || (window.BC_GUESS_SID ? BC_GUESS_SID(p) : "meet1");
     const pick = (obj, test, def) => { const k = Object.keys(obj).find((x) => test(obj[x], x)); return obj[k || def]; };
     const place = PLACES[meta.placek] || pick(PLACES, (v) => hitAll(p, v.bg, 3), "home");
-    const PSIG = [["reverse", /reverse cowgirl/], ["fold", /mating press/], ["prone", /prone bone/], ["wallBack", /leg lift.*(behind|cheek against wall)|pinned against wall from behind/], ["allfours", /all fours|doggystyle/], ["doggy", /bent over/], ["side", /spooning/], ["lifted", /carrying/], ["cowgirl", /cowgirl position|girl on top/], ["wall", /against wall|back against wall/], ["press", /missionary/]];
+    const PSIG = [["shoulders", /legs over shoulders/], ["fullNelson", /full nelson/], ["piledriver", /piledriver/], ["reverse", /reverse cowgirl/], ["fold", /mating press/], ["prone", /prone bone/], ["wallBack", /leg lift.*(behind|cheek against wall)|pinned against wall from behind/], ["allfours", /all fours|doggystyle/], ["doggy", /bent over/], ["side", /spooning/], ["lifted", /carrying/], ["cowgirl", /cowgirl position|girl on top/], ["wall", /against wall|back against wall/], ["press", /missionary/]];
     const pose = POSES[meta.posek] || POSES[(PSIG.find(([, r]) => r.test(p)) || ["press"])[0]];
     const fin = FINISH[meta.fink] || (/cum in pussy|internal cumshot/.test(p) ? FINISH.inside : /cum on thighs/.test(p) ? FINISH.thighs : /cum on breasts/.test(p) ? FINISH.breasts : FINISH.stomach);
     const outfit = (meta.outk && OUTFITS[meta.outk] && meta.outk) || /white lace lingerie/.test(p) ? "lingerieWhite" : /black lace lingerie/.test(p) ? "lingerieBlack" : (Object.keys(OUTFITS).find((k) => OUTFITS[k] === (meta.of || g.of)) || (has(p, "loungewear") ? "lounge" : "work"));
