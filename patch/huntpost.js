@@ -227,8 +227,16 @@
     if (call) w = w.replace(/당신(이에요|이요|이랑|이|은|을|과)?/g, (m, j) => callJo(call, j));
     return w;
   };
-  const exchange = (k, o, si) => {
-    const third = thirdOf(o), e = pick(EX[k]);
+  // 아주 천박하게: 더 노골적인 주고받는 말
+  const EXX = {
+    fore: X("M:목구멍 열어. 끝까지 처박는다|W:으읍… 컥… 더 넣어 줘요…|M:침 질질 흘리는 거 봐|W:입보지 마음대로 써요…/W:보지 벌려 볼게요… 안쪽까지 봐요|M:벌렁거리네|W:빨리 쑤셔 줘요… 손가락 세 개요/M:불알까지 핥아|W:네… 냄새 너무 좋아요… 다 빨게요"),
+    sex: X("M:누구 보지야?|W:당신 자지 전용 보지예요…!|M:더 크게|W:당신 자지 전용 걸레 보지예요오…!/W:자궁 찧어 줘요… 망가뜨려 줘요…!|M:울면서 조르네|W:더요, 개처럼 박아 줘요…!/M:암캐처럼 엉덩이 흔들어|W:멍멍… 이렇게요? 박아 줘요, 주인님…!|M:착한 암캐네/W:보지에서 거품 나요… 계속 쑤셔요…!|M:싸 줄까|W:아직요… 더 쑤시고 싸요…!"),
+    cream: X("M:자궁에 다 싼다|W:임신시켜 줘요… 당신 정액받이 할래요…!|M:받아|W:꿀렁꿀렁… 배 터질 것 같아요…♡/W:안에 싸 줘서 고마워요… 한 방울도 안 흘릴게요|M:그대로 막고 있어|W:네… 보지로 꽉 물고 있을게요"),
+  };
+  const exchange = (k, o, si, lw) => {
+    const pool = lw === "soft" ? EX[k].filter((e) => !SOFT_BAN.test(e.map((x) => x[1]).join(" "))) : lw === "extreme" && EXX[k] ? EX[k].concat(EXX[k], EXX[k]) : EX[k];
+    if (!pool.length) return "";
+    const third = thirdOf(o), e = pick(pool);
     let first = true;
     return e.map(([who, x]) => {
       if (who === "W") return `\n"${herLine(x, o, si, third)}"`;
@@ -298,16 +306,22 @@
       s = s.replace(/두 남자의 손을 한꺼번에/g, "그 남자의 손을").replace(/두 남자/g, "그 남자").replace(/(남자의 (손|입)[이가]) 동시에/g, "$1").replace(/양옆 남자들?/g, "그 남자").replace(/남자들/g, "그 남자").replace(/둘 다… 둘 다 안에/g, "끝까지 안에").replace(/둘 다 안에/g, "안에").replace(/우리 없이는/g, "나 없이는").replace(/우리 쪽이/g, "내 쪽이").replace(/박자를 번갈아 받으며/g, "박자를 받으며");
     }
     const k = groupOf(sid, o);
-    if (k && L[k] && Math.random() < 0.4) {
-      s += `\n"${herLine(pick(L[k]), o, si, thirdOf(o))}"`;
+    const lw = (opt && opt.lw) || "crude", ar = (opt && opt.ar) || "normal", LP = LW_P[lw] || LW_P.crude, third = thirdOf(o);
+    if (k && L[k] && Math.random() < LP.L) {
+      s += `\n"${herLine(pick(L[k]), o, si, third)}"`;
     }
     const ms = opt && opt.ms === "polite" ? "polite" : "casual";
-    if (opt && opt.ob && opt.ob !== "none") s += obsLine(k || (/^warm_/.test(sid) ? "pre" : ""), o, si, opt.ob);   // 그녀의 집착
-    if (k && EX[k] && Math.random() < 0.9) s += exchange(k, o, si);   // 그녀 ↔ 상대 남자가 주고받는 말
+    const kk = k || (/^warm_/.test(sid) ? "pre" : "");
+    if (opt && opt.ob && opt.ob !== "none") s += obsLine(kk, o, si, opt.ob, ar);   // 그녀의 집착 (흥분도가 높으면 더 노골적)
+    s += arLine(kk, sid, o, si, ar, lw);   // 그녀의 흥분도
+    if (/^(datetoy|dt_)/.test(sid)) s += toyLine(sid, o, si, lw, ms);   // 로터: 음란도대로
+    if (k && EX[k] && Math.random() < 0.9) s += exchange(k, o, si, lw);   // 그녀 ↔ 상대 남자가 주고받는 말
     else {
       if (k && W2[k] && Math.random() < 0.6) { const G = window.BC_GEN2, x = pick(W2[k]); s += `\n"${G && G.lv ? G.lv(x, si) : x}"`; }   // 그녀의 말 하나 더
-      if (k && M2[k] && Math.random() < 0.6) s += `\n${pick(thirdOf(o) ? LEAD_HIM : LEAD_YOU)}. "${pick(ms === "casual" && MX2[k] && Math.random() < 0.6 ? MX2[k] : M2[k])}"`;   // 상대 남자의 말 (반말이면 더 거친 말을 자주)
+      if (k && M2[k] && Math.random() < 0.6) s += `\n${pick(third ? LEAD_HIM : LEAD_YOU)}. "${pick(ms === "casual" && MX2[k] && Math.random() < LP.MX ? MX2[k] : M2[k])}"`;   // 상대 남자의 말 (반말 · 음란도가 높으면 더 거친 말)
     }
+    if (kk && opt) s += tplLine(kk, o, si, opt, lw, third);   // 고른 복장 · 장소 이름이 든 말
+    if (lw === "soft") s = softFilter(s);
     if (ms === "polite") s = menQuotes(s, (q) => '"' + politeOf(q.slice(1, -1)) + '"');   // 남자: 존댓말
     if (o && o.place && o.place.bg && !/^(video|meet1|datetoy|dt_|ntrcall_date)/.test(sid)) s = bedless(s, o.place.bg);
     if (o && /^(ntr|ntori)$/.test(o.situ || "") && /^(climax|after|finish)/.test(sid)) s = ringOff(s, sid, o, si);
@@ -321,11 +335,64 @@
     extreme: { pre: S("어제 열한 시 사십 분에 왜 답장 안 했어요? 다 봤어요/집 앞에서 기다렸어요. 몇 시간이든 상관없어요/저 없으면 당신도 안 돼요. 그렇죠?/오늘 만난 사람들 이름 다 말해요. 기억해 둘게요"), sex: S("도망가면 끝까지 쫓아갈 거예요… 그러니까 도망가지 마요/평생 이렇게 붙어 있을래요. 떨어지면 저 망가져요/당신 냄새, 숨소리, 전부 제 거예요/저만 보고 저만 만지고 저만 가져요. 영원히요"), cream: S("아기 생기면 당신 평생 제 거죠?/다 줘요… 다른 여자 몫은 하나도 남기지 마요"), after: S("놓아줄 생각 없어요. 영원히요/휴대폰은 제가 가지고 있을게요/다른 여자 연락처 다 지웠어요. 고맙죠?/내일부터 같이 살아요. 짐은 제가 가져올게요") },
   };
   const OB_P = { mild: 0.35, strong: 0.55, extreme: 0.75 };
-  const obsLine = (k, o, si, ob) => {
+  // 흥분도가 높을 때(이미 달아오름) 체위 · 절정의 집착은 더 노골적으로
+  const OBS_HOT = S("다른 여자 보지에 넣으면 안 돼요… 이 자지는 제 거예요/저 말고 다른 데서 싸면 진짜 가만 안 둘 거예요… 다 제 안에요/박으면서 저만 생각해요. 딴생각하면 조여서 못 빼게 할 거예요/평생 제 보지에만 넣어요. 약속해요, 지금/이 자지 모양 기억할게요… 다른 사람 거 들어오면 바로 알 수 있게");
+  const obsLine = (k, o, si, ob, ar) => {
     const B = OBS[ob]; if (!B || !k) return "";
     const g = /^(pre)$/.test(k) ? "pre" : /^(fore|sex|deny)$/.test(k) ? "sex" : /^(cream|fin|out)$/.test(k) ? "cream" : k === "after" ? "after" : "";
     if (!g || !B[g] || Math.random() > OB_P[ob]) return "";
-    return `\n"${herLine(pick(B[g]), o, si, thirdOf(o))}"`;
+    const pool = ar === "high" && ob !== "mild" && (g === "sex" || g === "cream") && Math.random() < 0.5 ? OBS_HOT : B[g];
+    return `\n"${herLine(pick(pool), o, si, thirdOf(o))}"`;
+  };
+  // 음란도: 덧붙는 센 대사 · 거친 남자 말이 붙는 확률
+  const LW_P = { soft: { L: 0, MX: 0 }, normal: { L: 0.2, MX: 0.3 }, crude: { L: 0.4, MX: 0.6 }, extreme: { L: 0.75, MX: 0.9 } };
+  const SOFT_BAN = /자지|보지|좆|박아|박혀|박히|박는|처박|쑤셔|정액|질싸|싸 줘|싸요|싼다|걸레|암캐|년|구멍|오나홀|정액받이|임신/;
+  const softFilter = (s) => s.split("\n").filter((l) => !SOFT_BAN.test(l)).join("\n") || s;   // 순하게: 센 낱말이 든 줄을 뺌
+  // 그녀의 흥분도: 낮게 시작(초반 수줍음) · 이미 달아오름(초반부터 젖어 있고 여운에도 안 식음)
+  const AR = {
+    low: { pre: S("이런 거 아직 익숙하지 않아요… 천천히요/불 좀 꺼 주면 안 돼요? 부끄러워서요/손이 떨려요… 제가 이상한 거죠?/아직 마음의 준비가… 아니, 괜찮아요. 해요") },
+    high: { pre: S("만나기 전부터 젖어 있었어요… 진짜예요/오는 내내 허벅지 비비고 있었어요/키스만 해도 갈 것 같아요… 빨리요/오늘은 전희 짧게 해요. 빨리 넣어 줘요/팬티가 벌써 축축해요. 만져 봐요"),
+      after: S("한 번으론 모자라요… 또 해요/아직 안 식었어요. 5분만 있다가 또요/이렇게 갔는데도 또 하고 싶어요… 저 이상하죠?/다리 떨리는데… 그래도 또 넣어 줘요") },
+  };
+  const arLine = (k, sid, o, si, ar, lw) => {
+    const A = AR[ar]; if (!A || !k) return "";
+    const g = k === "pre" ? "pre" : k === "after" ? "after" : ""; if (!g || !A[g] || Math.random() > 0.55) return "";
+    const x = pick(A[g]); if (lw === "soft" && SOFT_BAN.test(x)) return "";
+    return `\n"${herLine(x, o, si, thirdOf(o))}"`;
+  };
+  // 로터 7단계: 단계별 그녀 · 리모컨을 쥔 남자의 음란한 말 (음란도대로 붙는 확률)
+  const TOY = {
+    give: { her: S("이거 넣고 밥 먹으라고요…? 벌써 젖는 거 같아요/진짜 변태… 근데 하고 싶어요/이거 들어가면 저 사람들 앞에서 어떡해요"), him: S("넣고 와. 화장실에서/오늘 밥 먹는 내내 보지 울리게 해 줄게/거부 안 하는 거 보니까 기대했네") },
+    wear: { her: S("보지에 넣었어요… 생각보다 커요/쑥 들어가요… 이미 미끈미끈해서/걸을 때마다 안에서 굴러요… 미치겠어요"), him: S("잘 들어갔어? 사진 보내 봐/팬티 위로 손 대 봐. 느껴지지?") },
+    back: { her: S("앉으니까 더 깊이 들어와요… 표정 관리 안 돼요/언제 켤 거예요… 기다리다 보지가 먼저 젖어요/다리 오므리니까 더 느껴져요"), him: S("표정 봐. 벌써 젖었네/다리 벌리고 앉아. 아무도 안 봐") },
+    low: { her: S("읏… 켰죠… 보지가 웅웅 울려요/약하게만 해도 허벅지가 떨려요/점원 오는데… 얼굴 다 빨개졌죠?"), him: S("이 정도로 그 표정이야?/참아 봐. 아직 제일 약한 거야") },
+    mid: { her: S("팬티 다 젖었어요… 의자까지 젖을 것 같아요/보지에서 소리 나는 거 들리면 어떡해요…/제발 한 칸만 내려요… 아니, 올려요"), him: S("허리 움찔거리는 거 다 보여/애액 흘리는 거 들킬라") },
+    high: { her: S("가, 가요… 사람들 앞에서 보지로 가 버려요…!/다리에 힘이 안 들어가요… 줄줄 흘러요/멈춰요… 아니, 멈추지 마요… 이대로 가고 싶어요…!"), him: S("여기서 가. 다들 보는 앞에서/더 올린다. 버텨 봐") },
+    cum: { her: S("길에서 갔어요… 허벅지까지 다 젖었어요/아직 안에서 떨려요… 빨리 진짜 거 넣어 줘요/빼지 말고 그대로 데려가요… 아무 데서나 박아 줘요"), him: S("길에서 가 버렸네. 변태/이제 진짜 박아 줄게. 따라와") },
+  };
+  const TOY_P = { soft: 0, normal: 0.4, crude: 0.7, extreme: 1 };
+  const toyLine = (sid, o, si, lw, ms) => {
+    const st = sid === "datetoy" ? "give" : sid.slice(3), T = TOY[st]; if (!T || Math.random() > TOY_P[lw]) return "";
+    const third = thirdOf(o) || (o && o.watch);
+    let out = `\n"${herLine(pick(T.her), o, si, third)}"`;
+    if (Math.random() < TOY_P[lw] * 0.7) out += `\n${third ? "그 남자가" : "당신이"} 리모컨을 쥔 채 속삭인다. "${pick(T.him)}"`;
+    return out;
+  };
+  // 고른 복장 · 장소 이름이 든 말 (모든 복장 · 장소에 맞게) — {O} 복장 · {P} 장소, 조사는 받침대로
+  const TPL = {
+    O: { pre: S("{O} 입고 온 거 일부러예요. 벗기라고요/{O} 위로 만지니까 더 야해요/{O을} 다 벗기지는 말아 줘요. 입은 채로 하고 싶어요/{O} 차림 어때요? 오늘 이거 입고 당신만 생각했어요"), fore: S("{O} 사이로 손 넣어 줘요/{O이} 젖어 버렸어요… 당신 때문에/{O} 걷어 올리고 핥아 줘요"), sex: S("{O} 입은 채로 박히니까 더 미칠 것 같아요/{O이} 다 구겨져요… 상관없어요, 더 세게요/{O} 입고 이러니까 진짜 천박한 여자 같아요… 좋아요"), deny: S("{O}까지 다 젖었는데 멈추면 어떡해요… 제발요"), cream: S("{O}에 다 흘러요… 이 옷 이제 못 입겠다/{O} 입은 채로 안에 받았어요"), after: S("{O} 다 망가졌어요… 책임져요/다음에도 {O} 입고 올까요?") },
+    P: { pre: S("{P}에서 이러는 거 처음이에요/여기 {P}인데… 진짜 해요?/{P}라서 더 떨려요"), fore: S("{P}에서 소리 내면 다 들릴 텐데…/{P} 한가운데서 다리 벌리고 있어요… 미쳤나 봐요"), sex: S("{P}에서 박히는 거… 평생 못 잊을 거예요/{P}이 우리 소리로 가득 차요/{P}만 오면 이제 이 생각만 날 거예요"), deny: S("{P}까지 와서 애태우기예요? 제발 움직여 줘요"), cream: S("{P}에서 안에 받았어요… 흘리면 안 되는데"), after: S("{P} 올 때마다 오늘 생각날 거예요/{P} 정리하고 가야 하는데… 다리가 안 움직여요") },
+    M: { sex: S("{O} 입은 채로 박아 줄게/{P}에서 이러니까 더 조이네/{O} 다 젖었네. 벗지 마, 그대로 해") },
+  };
+  const jong = (w) => (w.charCodeAt(w.length - 1) - 0xac00) % 28 !== 0;
+  const tfill = (x, O, P) => x.replace(/\{O을\}/g, O + (jong(O) ? "을" : "를")).replace(/\{O이\}/g, O + (jong(O) ? "이" : "가")).replace(/\{O\}/g, O).replace(/\{P이\}/g, P + (jong(P) ? "이" : "가")).replace(/\{P\}/g, P);
+  const tplLine = (k, o, si, opt, lw, third) => {
+    const O = String(opt.on || "").replace(/ \(.*\)$/, ""), P = String(opt.pn || "").replace(/^그녀의 /, si === 2 ? "내 " : "제 ");
+    let out = "";
+    if (O && TPL.O[k] && Math.random() < 0.45) { const x = tfill(pick(TPL.O[k]), O, P); if (lw !== "soft" || !SOFT_BAN.test(x)) out += `\n"${herLine(x, o, si, third)}"`; }
+    if (P && TPL.P[k] && Math.random() < 0.4) { const x = tfill(pick(TPL.P[k]), O, P); if (lw !== "soft" || !SOFT_BAN.test(x)) out += `\n"${herLine(x, o, si, third)}"`; }
+    if (O && P && TPL.M[k] && lw !== "soft" && Math.random() < 0.3) out += `\n${pick(third ? LEAD_HIM : LEAD_YOU)}. "${tfill(pick(TPL.M[k]), O, P)}"`;
+    return out;
   };
   // 침대 없는 장소에서 침대 · 시트 · 이불 · 베개 낱말을 그 장소에 있는 것으로 (조사도 맞춤)
   const hasJong = (w) => (w.charCodeAt(w.length - 1) - 0xac00) % 28 !== 0;

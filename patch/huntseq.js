@@ -793,13 +793,15 @@
   let multi = ls.get("multi", false), undress = ls.get("undress", true);
   let video = ls.get("video", false);
   let on = ls.get("on", {});
-  let sameSeed = ls.get("sameSeed", true), lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), leadSel = ls.get("leadin", "mutual"), obsSel = ls.get("obsess", "none"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
+  let sameSeed = ls.get("sameSeed", true), lineOn = ls.get("lineOn", true), speechSel = ls.get("speech", "auto"), mspeechSel = ls.get("mspeech", "casual"), dwearSel = ls.get("dwear", "char"), crSel = ls.get("callreact", "calm"), leadSel = ls.get("leadin", "mutual"), obsSel = ls.get("obsess", "none"), lewdSel = ls.get("lewd", "crude"), arSel = ls.get("arousal", "normal"), cycleSel = ls.get("cycle", "none"), sizeSel = ls.get("psize", "normal"), narrOn = ls.get("narrOn", true);
   // 대사 형식: Hunt 방식([장소] · 서술 · "말") / Wayward 방식([단계]서술 "소리" … "말" 『속마음』 — huntway.js)
   const FMTS = { hunt: "Hunt 방식", wayward: "Wayward 방식" };
   let fmtSel = FMTS[ls.get("fmt", "hunt")] ? ls.get("fmt", "hunt") : "hunt";
   let secs = Number(ls.get("secs", 14)) || 14;   // 한 장 평균 시간(초) — 실제 생성 시간으로 계속 고쳐짐
   const SPEECH = { auto: "캐릭터 말투", polite: "존댓말", formal: "격식체", casual: "반말" };
   const MSPEECH = { casual: "남자: 반말", polite: "남자: 존댓말" };
+  const LEWD = { soft: "음란도: 순하게", normal: "보통", crude: "천박하게", extreme: "아주 천박하게" };
+  const AROUSAL = { low: "흥분도: 낮게 시작", normal: "보통", high: "이미 달아오름" };
   const OBSESS = { none: "집착: 없음", mild: "약간", strong: "강함", extreme: "아주 강함" };
   const LEADIN = { mutual: "시작: 자연스럽게", her: "그녀가 먼저", him: "그가 먼저", drunk: "술김에" };
   const CALLREACT = { calm: "남편 반응: 모름", notice: "눈치챔", angry: "화냄" };
@@ -1129,7 +1131,7 @@
       const nb = m0[2].split("\n").map((ln) => (ln.match(/"[^"]*"|[^"]+/g) || []).map((tk) => (tk[0] === '"' ? tk : tk.split(/(?<=[.!?…])\s+/).filter((c) => { const k = c.trim(); if (k.length < 12 || /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다|목소리)\.?$/.test(k)) return true; /* 말한 사람을 알려 주는 문장은 남김 (빠지면 대사 색이 틀림) */ if (seenQ.has("n:" + k)) return false; seenQ.add("n:" + k); return true; }).join(" "))).join(" ").replace(/\s{2,}/g, " ").trim()).filter(Boolean).join("\n");
       if (nb.trim()) t = (m0[1] || "") + nb;
     }
-    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel, cr: crSel, ob: obsSel }) || t; } catch {} }
+    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel, cr: crSel, ob: obsSel, lw: lewdSel, ar: arSel, on: ({ work: "업무복", lounge: "실내복", officeDate: "출근 옷" }[o && o.outfit] || OUTFITS[o && o.outfit] || ""), pn: (o && o.place && o.place.n) || "" }) || t; } catch {} }
     return t;
   };
   const lineOf = (sid, ch, o) => { if (o && /^video/.test(sid)) o = { ...o, outfit: "lounge" }; return postLine(lineOfA(sid, ch, o), sid, ch, o); };
@@ -1286,6 +1288,8 @@
       <div style="margin-top:6px"><small class="muted">통화 중 남편(남자친구) 반응 — 네토라레 · 네토리 · 바람 · 불륜의 통화 · 사진 장면</small>${seg("hsCallReact", CALLREACT, crSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">관계 직전까지 — 술 한잔 · 대화 → 스킨십이 시작되는 순간 (누가 먼저 다가가는지)</small>${seg("hsLeadIn", LEADIN, leadSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">그녀의 집착 — 강할수록 질투 · 독점하는 말이 자주 (관계 직전부터 여운까지)</small>${seg("hsObsess", OBSESS, obsSel, false)}</div>
+      <div style="margin-top:6px"><small class="muted">음란도 — 대사의 천박함 (순하게면 센 낱말이 든 덧붙는 대사를 뺌)</small>${seg("hsLewd", LEWD, lewdSel, false)}</div>
+      <div style="margin-top:6px"><small class="muted">그녀의 흥분도 — 초반부터 달아올라 있는지</small>${seg("hsArousal", AROUSAL, arSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">그녀의 날 — 시작 전 · 안에 사정할 때 대사가 달라짐</small>${seg("hsCycle", CYCLES, cycleSel, false)}</div>
       <div style="margin-top:6px"><small class="muted">상대 자지 크기 — 그림과 삽입 · 절정 대사가 달라짐</small>${seg("hsSize", SIZES, sizeSel, false)}</div></div>
     <div class="field"><label>만들 단계 <small class="muted">(1인 장면은 화풍 참조 워크플로, 2인은 Duo 워크플로)</small> <button type="button" class="mini" id="hsStagesAll">✚ 전부 켜기/끄기</button></label><div id="hsStages" class="hs-stages"></div></div>
@@ -1475,6 +1479,8 @@
   bindSeg("hsCallReact", (v) => { crSel = v; ls.set("callreact", v); pick("hsCallReact", v); });
   bindSeg("hsLeadIn", (v) => { leadSel = v; ls.set("leadin", v); pick("hsLeadIn", v); });
   bindSeg("hsObsess", (v) => { obsSel = v; ls.set("obsess", v); pick("hsObsess", v); });
+  bindSeg("hsLewd", (v) => { lewdSel = v; ls.set("lewd", v); pick("hsLewd", v); });
+  bindSeg("hsArousal", (v) => { arSel = v; ls.set("arousal", v); pick("hsArousal", v); });
   bindSeg("hsCycle", (v) => { cycleSel = v; ls.set("cycle", v); pick("hsCycle", v); });
   bindSeg("hsSize", (v) => { sizeSel = v; ls.set("psize", v); pick("hsSize", v); draw(); });
   bindSeg("hsFmt", (v) => { fmtSel = v; ls.set("fmt", v); pick("hsFmt", v); });
