@@ -57,6 +57,7 @@
   async function wf(baseName, k) {
     try {
       const S = STYLES[k], ref = refOf(k), refOk = ref ? await upload(ref) : false, loraOk = await hasLora(S.lora);
+      const L = !!(window.BC_FAST && window.BC_FAST.lightningOn);   // 초고속이면 그림체를 세게
       const list = await _api("/api/workflows"), base = list.find((w) => w.name === baseName);
       if (!base || !base.prompt) return baseName;
       let graph = base.prompt;
@@ -65,13 +66,13 @@
       let n = 0;
       for (const id of Object.keys(graph)) {
         const nd = graph[id]; if (!nd || !/IPAdapter/.test(String(nd.class_type || "")) || !nd.inputs || typeof nd.inputs.weight !== "number") continue;
-        nd.inputs.weight = refOk ? (loraOk ? 0.45 : S.w) : 0; n++;   // LoRA가 그림체를 잡으면 참고 그림은 약하게 (구도 · 옷이 따라오지 않게)
+        nd.inputs.weight = refOk ? (loraOk ? (L ? 0.6 : 0.45) : (L ? 0.8 : S.w)) : 0; n++;   // LoRA가 그림체를 잡으면 참고 그림은 약하게 (구도 · 옷이 따라오지 않게)
         const li = Array.isArray(nd.inputs.image) && graph[nd.inputs.image[0]];   // 이 IPAdapter가 보는 그림
         if (refOk && li && li.class_type === "LoadImage") li.inputs.image = ref;
       }
-      if (loraOk && addLora(graph, S.lora, S.lw)) n++;
+      if (loraOk && addLora(graph, S.lora, L ? Math.min(1, S.lw + 0.2) : S.lw)) n++;
       if (!n) return baseName;   // 참조 그림 · LoRA 둘 다 없으면 그대로
-      const name = baseName + "~style_" + k, js = JSON.stringify(graph), old = list.find((w) => w.name === name);
+      const name = baseName + "~style_" + k + (L ? "_L" : ""), js = JSON.stringify(graph), old = list.find((w) => w.name === name);
       if (made.get(name) !== js && !(old && JSON.stringify(old.prompt) === js))
         await _api("/api/workflows", { json: { name, prompt: graph, positive: base.positive, negative: base.negative, seeds: base.seeds || [], checkpoint: base.checkpoint || null, latent: base.latent || "", sampler: base.sampler || "", source: "" } });
       made.set(name, js);
