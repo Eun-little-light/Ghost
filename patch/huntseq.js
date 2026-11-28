@@ -1122,16 +1122,18 @@
       if (others >= 2) t = String(t).replace(/이이가/g, "이분들이").replace(/이이는/g, "이분들은").replace(/이이를/g, "이분들을").replace(/이이(?!들)/g, "이분들");
       else if (callJagi) t = String(t).split('"').map((seg, i) => (i % 2 ? seg.replace(/이분(?!들)|이이/g, "자기") : seg)).join('"');
     }
+    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel, cr: crSel, ob: obsSel, lw: lewdSel, ar: arSel, on: ({ work: "업무복", lounge: "실내복", officeDate: "출근 옷" }[o && o.outfit] || OUTFITS[o && o.outfit] || ""), pn: (o && o.place && o.place.n) || "" }) || t; } catch {} }   // 덧붙는 말도 아래 중복 확인을 거치게 먼저
     if (seenQ && t) {   // 이미 나온 말은 빼고, 말이 빠져 '…말한다.'만 남은 줄도 뺌 (다 빠지면 그대로)
       const SV = /(말한다|묻는다|속삭인다|중얼거린다|웃는다|건넨다|되묻는다)\.?\s*$/;
-      const lines = String(t).split("\n").map((ln) => { const had = /"/.test(ln); const s = ln.replace(/"[^"]{6,}"/g, (q) => (seenQ.has(q) ? "" : q)).replace(/\s{2,}/g, " ").trim(); return had && !/"/.test(s) && SV.test(s) ? "" : s; }).filter(Boolean);
-      if (lines.join("").trim()) { t = lines.join("\n"); (t.match(/"[^"]{6,}"/g) || []).forEach((q) => seenQ.add(q)); }
+      // 같은 말 판단은 앞의 신음 · 입버릇과 끝 문장부호를 떼고 (예: "아앗… 이제 못 돌아가요…!" = "이제 못 돌아가요")
+      const QK = (q) => "q:" + q.slice(1, -1).replace(/^([\s…,.!~—-]|아+앗*|하+[아앗앙읏]*|흐+[읏응윽]*|으+[응읏]*|읏+|응+|있잖아요?,?|솔직히(?: 말하면)?,?|진짜,?|저기,?|잠깐만요?,?|음,?|야,?)+/, "").replace(/[\s…!?.~—-]+$/, "");
+      const lines = String(t).split("\n").map((ln) => { const had = /"/.test(ln); const s = ln.replace(/"[^"]{6,}"/g, (q) => (seenQ.has(QK(q)) ? "" : (seenQ.add(QK(q)), q))).replace(/\s{2,}/g, " ").trim(); return had && !/"/.test(s) && SV.test(s) ? "" : s; }).filter(Boolean);
+      if (lines.join("").trim()) t = lines.join("\n");
       // 서술 문장: 이미 나온 문장은 빼되, 줄이 비지 않게
       const m0 = String(t).match(/^(\[[^\]]*\])?([\s\S]*)$/);
       const nb = m0[2].split("\n").map((ln) => (ln.match(/"[^"]*"|[^"]+/g) || []).map((tk) => (tk[0] === '"' ? tk : tk.split(/(?<=[.!?…])\s+/).filter((c) => { const k = c.trim(); if (k.length < 12 || /(말한다|묻는다|중얼거린다|속삭인다|건넨다|웃는다|외친다|목소리)\.?$/.test(k)) return true; /* 말한 사람을 알려 주는 문장은 남김 (빠지면 대사 색이 틀림) */ if (seenQ.has("n:" + k)) return false; seenQ.add("n:" + k); return true; }).join(" "))).join(" ").replace(/\s{2,}/g, " ").trim()).filter(Boolean).join("\n");
       if (nb.trim()) t = (m0[1] || "") + nb;
     }
-    if (window.BC_POST) { try { t = BC_POST(t, sid, o, { near: nearOf(o), si: { polite: 0, formal: 1, casual: 2 }[speechOf(ch)] || 0, ms: mspeechSel, cr: crSel, ob: obsSel, lw: lewdSel, ar: arSel, on: ({ work: "업무복", lounge: "실내복", officeDate: "출근 옷" }[o && o.outfit] || OUTFITS[o && o.outfit] || ""), pn: (o && o.place && o.place.n) || "" }) || t; } catch {} }
     return t;
   };
   const lineOf = (sid, ch, o) => { if (o && /^video/.test(sid)) o = { ...o, outfit: "lounge" }; return postLine(lineOfA(sid, ch, o), sid, ch, o); };
